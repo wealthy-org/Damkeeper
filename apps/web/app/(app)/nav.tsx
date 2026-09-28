@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { useAccount } from "wagmi";
 
 const links = [
-  { href: "/app", label: "Dashboard" },
-  { href: "/positions", label: "Explore" },
-  { href: "/transparency", label: "Transparency" },
-  { href: "/status", label: "Status" },
+  { href: "/app", label: "Dashboard", match: (p: string) => p === "/app" || p.startsWith("/lock/") || p.startsWith("/vesting/") },
+  { href: "/positions", label: "Explore", match: (p: string) => p.startsWith("/positions") },
+  { href: "/transparency", label: "Transparency", match: (p: string) => p === "/transparency" },
+  { href: "/status", label: "Status", match: (p: string) => p === "/status" },
 ];
 
 export function AppNav() {
@@ -23,7 +23,7 @@ export function AppNav() {
         </Link>
         <nav className="app-nav-links">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} data-active={pathname === link.href}>
+            <Link key={link.href} href={link.href} data-active={link.match(pathname)}>
               {link.label}
             </Link>
           ))}

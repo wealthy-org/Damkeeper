@@ -36,6 +36,10 @@ export default async function ProofPage({
   return (
     <main className="wrap">
       <div className="page-head">
+        <a href="/positions" className="back-link">
+          <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+          Explore
+        </a>
         <div className="page-eyebrow">
           <span className="dot" />
           Public proof

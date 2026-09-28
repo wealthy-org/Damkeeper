@@ -216,6 +216,10 @@ export default function CreateVestingPage() {
 function Header() {
   return (
     <div className="page-head">
+      <a href="/app" className="back-link">
+        <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+        Dashboard
+      </a>
       <div className="page-eyebrow">
         <span className="dot" />
         Linear vesting
