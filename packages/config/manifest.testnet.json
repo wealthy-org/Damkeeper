@@ -1,0 +1,45 @@
+{
+  "_comment": "Real Robinhood Chain testnet deployment, 2026-09-28. Source of truth mirrored into the deployments table by apps/web/scripts/seed-testnet-deployment.ts.",
+  "deployments": [
+    {
+      "chainId": 46630,
+      "managerAddress": "0x335B2fba8845EfC3E74F8A4b4AD664D32Eba0AcF",
+      "kind": "lock",
+      "version": "0.1.0",
+      "deployTxHash": "0xee85b93a4d6d7d7b460d86366178848da4c79c790e99b24f49c96e1f8d457530",
+      "deployBlock": "125692754",
+      "abiHash": "a213f2bc29cbd3415436d3f830fd1d193d1c3b5c75e7079e5404c525ae04cf43",
+      "sourceCommit": "5574710f9791bc223a3a3e418c87d602f9e1c7e6",
+      "verifiedSourceUrl": null,
+      "verificationNote": "Robinhood's testnet Blockscout explorer has an expired TLS certificate as of 2026-09-28 — forge verify-contract cannot reach it. Retry once the cert is fixed.",
+      "admin": "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5"
+    },
+    {
+      "chainId": 46630,
+      "managerAddress": "0xfD91fe9daaC8BDb886cD89A53d3Ba40421cb6efd",
+      "kind": "vesting",
+      "version": "0.1.0",
+      "deployTxHash": "0x6f5daee28f019f724b7bc47a877064b358c0eff01fc355f742eae8c86826d808",
+      "deployBlock": "125692760",
+      "abiHash": "5cc1818d9bef484a9d075348199cbd4df6c6466bc9631ce2fb547ec09f0e420d",
+      "sourceCommit": "5574710f9791bc223a3a3e418c87d602f9e1c7e6",
+      "verifiedSourceUrl": null,
+      "verificationNote": "Same TLS issue as the lock manager above.",
+      "admin": "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5"
+    }
+  ],
+  "tokens": [
+    {
+      "chainId": 46630,
+      "address": "0xb5b0f97B643306D540cAe82F50970cF6F9D75538",
+      "symbol": "EXMPL",
+      "name": "Example Token",
+      "decimals": 18,
+      "note": "Plain ERC-20 deployed for testnet exercising only — not a real asset, not audited."
+    }
+  ],
+  "adminWallet": {
+    "_comment": "Single EOA for testnet convenience — NOT acceptable for mainnet, see docs/adr/0001-baseline-decisions.md.",
+    "address": "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5"
+  }
+}
