@@ -3,6 +3,7 @@ import { positions } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { vestedAmount, claimableAmount, vestingStatus, lockStatus } from "@damkeeper/domain/vesting";
 import { notFound } from "next/navigation";
+import { ProofAction } from "./proof-action";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,25 @@ export default async function ProofPage({
             />
           )}
         </dl>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h2>{isVesting ? "Claim" : "Withdraw"}</h2>
+        </div>
+        <ProofAction
+          kind={position.kind as "lock" | "vesting"}
+          manager={position.managerAddress}
+          positionId={position.positionId.toString()}
+          beneficiary={position.beneficiary}
+          amount={position.amount}
+          claimedAmount={position.claimedAmount}
+          unlockTime={position.unlockTime?.toString() ?? null}
+          startTime={position.startTime?.toString() ?? null}
+          cliffTime={position.cliffTime?.toString() ?? null}
+          endTime={position.endTime?.toString() ?? null}
+          withdrawn={position.withdrawn}
+        />
       </section>
 
       <p style={{ marginTop: 20, fontSize: 11, color: "var(--faint)", fontFamily: "var(--mono)", lineHeight: 1.8 }}>

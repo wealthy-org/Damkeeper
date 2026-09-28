@@ -1,16 +1,8 @@
 "use client";
 
 import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { useEffect, useState } from "react";
-
-interface ApiPosition {
-  chainId: number;
-  manager: string;
-  positionId: string;
-  kind: string;
-  amount: string;
-  withdrawn: boolean;
-}
+import { useCallback, useEffect, useState } from "react";
+import { PositionRow, type ApiPosition } from "./position-row";
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
@@ -19,7 +11,7 @@ export default function DashboardPage() {
   const [positions, setPositions] = useState<ApiPosition[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!address) return;
     setLoading(true);
     fetch(`/api/positions?wallet=${address}`)
@@ -28,6 +20,10 @@ export default function DashboardPage() {
       .catch(() => setPositions([]))
       .finally(() => setLoading(false));
   }, [address]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   return (
     <main className="wrap">
@@ -95,18 +91,17 @@ export default function DashboardPage() {
                     <th>Manager</th>
                     <th>Amount</th>
                     <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {positions.map((p) => (
-                    <tr key={`${p.chainId}-${p.manager}-${p.positionId}`}>
-                      <td style={{ textTransform: "capitalize" }}>{p.kind}</td>
-                      <td className="mono">{p.manager.slice(0, 6)}…{p.manager.slice(-4)}</td>
-                      <td className="mono">{p.amount}</td>
-                      <td>
-                        <span className="badge">{p.withdrawn ? "Withdrawn" : "Active"}</span>
-                      </td>
-                    </tr>
+                    <PositionRow
+                      key={`${p.chainId}-${p.manager}-${p.positionId}`}
+                      position={p}
+                      wallet={address as `0x${string}`}
+                      onSettled={reload}
+                    />
                   ))}
                 </tbody>
               </table>

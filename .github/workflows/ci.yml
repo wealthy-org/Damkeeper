@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    name: Web (lint, typecheck, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck --workspace=apps/web
+      - run: npm run lint --workspace=apps/web
+      - name: Build
+        run: npm run build --workspace=apps/web
+        env:
+          # A syntactically valid but unreachable URL — enough for build-time static
+          # analysis. Real builds/deploys use the DATABASE_URL secret instead.
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+
+  contracts:
+    name: Contracts (build, test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Install dependencies
+        working-directory: packages/contracts
+        run: |
+          forge install foundry-rs/forge-std --no-commit --no-git
+          forge install openzeppelin/openzeppelin-contracts --no-commit --no-git
+      - name: Build
+        working-directory: packages/contracts
+        run: forge build
+      - name: Test
+        working-directory: packages/contracts
+        run: forge test -vvv
