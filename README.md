@@ -77,13 +77,29 @@ interception was bypassed.
      requirement when we used it — 0.01 ETH per claim, once per 24h)
    - Alchemy's and QuickNode's faucets both reject a wallet with zero Ethereum mainnet balance
      (anti-bot), so they may not work for a brand-new wallet.
-3. Ask the project owner for a bit of EXMPL (or hold some already) — `cast send` a `transfer()`
-   from whoever holds the supply, same as `packages/contracts/.env`'s `DEPLOYER_PRIVATE_KEY` did
-   during setup.
+3. Get EXMPL from the in-app faucet: connect your wallet on `/app` and click **"Get test
+   tokens"** — sends 1000 EXMPL, rate-limited to once per wallet per 24h
+   (`apps/web/app/api/faucet/route.ts`). No need to ask anyone to manually transfer it.
 4. Open the app, connect the wallet, go to **Create lock**, paste the EXMPL address above, fill
    in a beneficiary/amount/unlock date, approve, create. It shows up on the dashboard once the
    indexer catches up. The UI blocks submission and shows a banner if the wallet is on the wrong
    network (brief.md section 10).
+
+### Transaction handling
+
+The create-lock/create-vesting forms implement the transaction state machine from brief.md
+section 10 (`lib/use-tx-flow.ts`): `Review → Awaiting wallet → Submitted → Included`, with
+`User rejected`, `Reverted`, `Replaced` and `Cancelled` all surfaced distinctly instead of a
+generic spinner. They also reset a stale non-zero allowance to zero before approving a new
+amount, for tokens (USDT-style) that reject changing a non-zero allowance directly.
+
+## Operations
+
+[`docs/runbooks/deployment.md`](docs/runbooks/deployment.md) and
+[`docs/runbooks/incident-response.md`](docs/runbooks/incident-response.md) cover redeploying
+contracts and handling the failure modes in brief.md section 13 (RPC issues, indexer lag, a
+misbehaving token, app downtime, suspected contract vulnerability). Written honestly — they flag
+what hasn't actually been tested yet (e.g. database restore) rather than pretending it has.
 
 ## Stack and why it differs from the brief where it does
 

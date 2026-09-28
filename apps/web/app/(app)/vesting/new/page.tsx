@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useAccount, useConnect, useReadContract } from "wagmi";
 import { erc20Abi, parseUnits } from "viem";
 import { vestingManagerAbi } from "@/lib/abi";
 import { useWrongNetwork } from "../../wrong-network-banner";
+import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 
 const VESTING_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS as
   | `0x${string}`
@@ -21,10 +22,9 @@ export default function CreateVestingPage() {
   const [cliff, setCliff] = useState("");
   const [end, setEnd] = useState("");
 
-  const { writeContract: approve, data: approveHash, isPending: approving } = useWriteContract();
-  const { writeContract: createVesting, data: createHash, isPending: creating } = useWriteContract();
-  const { isLoading: approveConfirming } = useWaitForTransactionReceipt({ hash: approveHash });
-  const { isSuccess: created, isLoading: createConfirming } = useWaitForTransactionReceipt({ hash: createHash });
+  const [resettingAllowance, setResettingAllowance] = useState(false);
+  const approveFlow = useTxFlow();
+  const createFlow = useTxFlow();
 
   const { data: tokenSymbol } = useReadContract({
     address: token as `0x${string}`,
@@ -33,7 +33,7 @@ export default function CreateVestingPage() {
     query: { enabled: token.length === 42 },
   });
 
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: token as `0x${string}`,
     abi: erc20Abi,
     functionName: "allowance",
@@ -42,11 +42,45 @@ export default function CreateVestingPage() {
   });
 
   const parsedAmount = amount ? parseUnits(amount, decimals) : 0n;
-  const isApproved = Boolean(allowance) && (allowance as bigint) >= parsedAmount && parsedAmount > 0n;
+  const currentAllowance = (allowance as bigint | undefined) ?? 0n;
+  const isApproved = currentAllowance >= parsedAmount && parsedAmount > 0n;
   const wrongNetwork = useWrongNetwork();
   const canSubmit = Boolean(token && beneficiary && amount && end) && !wrongNetwork;
   const toUnix = (v: string) => (v ? BigInt(Math.floor(new Date(v).getTime() / 1000)) : 0n);
   const fmt = (v: string) => (v ? new Date(v).toLocaleDateString(undefined, { dateStyle: "medium" }) : "—");
+
+  async function handleApprove() {
+    if (!token || !VESTING_MANAGER_ADDRESS) return;
+    if (currentAllowance > 0n && currentAllowance < parsedAmount) {
+      setResettingAllowance(true);
+      const receipt = await approveFlow.run({
+        address: token as `0x${string}`,
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [VESTING_MANAGER_ADDRESS, 0n],
+      });
+      setResettingAllowance(false);
+      if (!receipt) return;
+      await refetchAllowance();
+    }
+    await approveFlow.run({
+      address: token as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [VESTING_MANAGER_ADDRESS, parsedAmount],
+    });
+    await refetchAllowance();
+  }
+
+  async function handleCreate() {
+    if (!VESTING_MANAGER_ADDRESS) return;
+    await createFlow.run({
+      address: VESTING_MANAGER_ADDRESS,
+      abi: vestingManagerAbi,
+      functionName: "createVesting",
+      args: [token as `0x${string}`, beneficiary as `0x${string}`, parsedAmount, toUnix(start), toUnix(cliff), toUnix(end)],
+    });
+  }
 
   if (!VESTING_MANAGER_ADDRESS) {
     return (
@@ -64,6 +98,10 @@ export default function CreateVestingPage() {
       </main>
     );
   }
+
+  const approveBusy = approveFlow.status !== "idle" && !["included", "user_rejected", "reverted", "error", "cancelled"].includes(approveFlow.status);
+  const createBusy = createFlow.status !== "idle" && !["included", "user_rejected", "reverted", "error", "cancelled"].includes(createFlow.status);
+  const created = createFlow.status === "included";
 
   return (
     <main className="wrap">
@@ -156,42 +194,17 @@ export default function CreateVestingPage() {
                 </div>
 
                 {isApproved ? (
-                  <button
-                    className="btn btn-primary btn-block"
-                    disabled={!canSubmit || creating || createConfirming}
-                    onClick={() =>
-                      createVesting({
-                        address: VESTING_MANAGER_ADDRESS,
-                        abi: vestingManagerAbi,
-                        functionName: "createVesting",
-                        args: [
-                          token as `0x${string}`,
-                          beneficiary as `0x${string}`,
-                          parsedAmount,
-                          toUnix(start),
-                          toUnix(cliff),
-                          toUnix(end),
-                        ],
-                      })
-                    }
-                  >
-                    {creating ? "Confirm in wallet…" : createConfirming ? "Creating…" : "Create vesting"}
-                    <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+                  <button className="btn btn-primary btn-block" disabled={!canSubmit || createBusy} onClick={handleCreate}>
+                    {createBusy ? txStatusLabel(createFlow.status) : "Create vesting"}
+                    {!createBusy && <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>}
                   </button>
                 ) : (
-                  <button
-                    className="btn btn-primary btn-block"
-                    disabled={!canSubmit || approving || approveConfirming}
-                    onClick={() =>
-                      approve({
-                        address: token as `0x${string}`,
-                        abi: erc20Abi,
-                        functionName: "approve",
-                        args: [VESTING_MANAGER_ADDRESS, parsedAmount],
-                      })
-                    }
-                  >
-                    {approving ? "Confirm in wallet…" : approveConfirming ? "Approving…" : "Approve exact amount"}
+                  <button className="btn btn-primary btn-block" disabled={!canSubmit || approveBusy} onClick={handleApprove}>
+                    {approveBusy
+                      ? resettingAllowance
+                        ? "Resetting old allowance…"
+                        : txStatusLabel(approveFlow.status)
+                      : "Approve exact amount"}
                   </button>
                 )}
 
@@ -201,6 +214,15 @@ export default function CreateVestingPage() {
                   <span className={created ? "on" : undefined}>2 · Create vesting</span>
                 </div>
 
+                {createFlow.status === "user_rejected" && (
+                  <p style={{ color: "var(--muted)", fontSize: 12, textAlign: "center" }}>Signature rejected — nothing was sent.</p>
+                )}
+                {createFlow.status === "reverted" && (
+                  <p style={{ color: "var(--danger)", fontSize: 12, textAlign: "center" }}>Transaction reverted onchain — no schedule was created.</p>
+                )}
+                {createFlow.status === "error" && (
+                  <p style={{ color: "var(--danger)", fontSize: 12, textAlign: "center" }}>{createFlow.errorMessage}</p>
+                )}
                 {created && (
                   <p style={{ color: "var(--accent)", fontSize: 13, textAlign: "center" }}>
                     Vesting created. Check the dashboard once the indexer catches up.

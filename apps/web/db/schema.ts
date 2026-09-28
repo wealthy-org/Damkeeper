@@ -90,6 +90,16 @@ export const chainCheckpoints = pgTable("chain_checkpoints", {
   pk: primaryKey({ columns: [t.chainId, t.managerAddress] }),
 }));
 
+// Rate-limits the testnet EXMPL faucet (one claim per wallet per window).
+export const faucetClaims = pgTable("faucet_claims", {
+  chainId: integer("chain_id").notNull(),
+  address: text("address").notNull(),
+  lastClaimedAt: timestamp("last_claimed_at", { withTimezone: true }).defaultNow().notNull(),
+  txHash: text("tx_hash").notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.address] }),
+}));
+
 export const tokenPolicies = pgTable("token_policies", {
   chainId: integer("chain_id").notNull(),
   managerAddress: text("manager_address").notNull(),

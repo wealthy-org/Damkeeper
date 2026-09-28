@@ -3,6 +3,7 @@
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useCallback, useEffect, useState } from "react";
 import { PositionRow, type ApiPosition } from "./position-row";
+import { FaucetButton } from "./faucet-button";
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
@@ -64,15 +65,18 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginBottom: 20 }}>
-            <a href="/lock/new" className="btn btn-ghost">
-              <svg className="icon" aria-hidden="true"><use href="#i-lock" /></svg>
-              Create lock
-            </a>
-            <a href="/vesting/new" className="btn btn-ghost">
-              <svg className="icon" aria-hidden="true"><use href="#i-chart" /></svg>
-              Create vesting
-            </a>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+            <FaucetButton address={address as `0x${string}`} />
+            <div style={{ display: "flex", gap: 10 }}>
+              <a href="/lock/new" className="btn btn-ghost">
+                <svg className="icon" aria-hidden="true"><use href="#i-lock" /></svg>
+                Create lock
+              </a>
+              <a href="/vesting/new" className="btn btn-ghost">
+                <svg className="icon" aria-hidden="true"><use href="#i-chart" /></svg>
+                Create vesting
+              </a>
+            </div>
           </div>
 
           <div className="stat-row">

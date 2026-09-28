@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useAccount, useConnect, useReadContract } from "wagmi";
 import { erc20Abi, parseUnits } from "viem";
 import { lockManagerAbi } from "@/lib/abi";
 import { useWrongNetwork } from "../../wrong-network-banner";
+import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 
 // Manager address comes from the deployment manifest once a LockManager exists —
 // see packages/config/manifest.testnet.json. Empty until then; the form stays
@@ -19,11 +20,10 @@ export default function CreateLockPage() {
   const [amount, setAmount] = useState("");
   const [decimals] = useState(18);
   const [unlockDate, setUnlockDate] = useState("");
+  const [resettingAllowance, setResettingAllowance] = useState(false);
 
-  const { writeContract: approve, data: approveHash, isPending: approving } = useWriteContract();
-  const { writeContract: createLock, data: createHash, isPending: creating } = useWriteContract();
-  const { isLoading: approveConfirming } = useWaitForTransactionReceipt({ hash: approveHash });
-  const { isSuccess: created, isLoading: createConfirming } = useWaitForTransactionReceipt({ hash: createHash });
+  const approveFlow = useTxFlow();
+  const createFlow = useTxFlow();
 
   const { data: tokenSymbol } = useReadContract({
     address: token as `0x${string}`,
@@ -32,7 +32,7 @@ export default function CreateLockPage() {
     query: { enabled: token.length === 42 },
   });
 
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: token as `0x${string}`,
     abi: erc20Abi,
     functionName: "allowance",
@@ -41,13 +41,56 @@ export default function CreateLockPage() {
   });
 
   const parsedAmount = amount ? parseUnits(amount, decimals) : 0n;
-  const isApproved = Boolean(allowance) && (allowance as bigint) >= parsedAmount && parsedAmount > 0n;
+  const currentAllowance = (allowance as bigint | undefined) ?? 0n;
+  const isApproved = currentAllowance >= parsedAmount && parsedAmount > 0n;
   const wrongNetwork = useWrongNetwork();
   const canSubmit = Boolean(token && beneficiary && amount && unlockDate) && !wrongNetwork;
 
   const unlockLabel = unlockDate
     ? new Date(unlockDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
     : "—";
+
+  // brief.md section 10: "token tertentu mungkin memerlukan reset allowance ke nol
+  // terlebih dahulu" — some ERC-20s (USDT-style) reject approve() changing a
+  // non-zero allowance directly, so reset to zero first whenever there's a stale
+  // non-zero allowance that isn't already enough.
+  async function handleApprove() {
+    if (!token || !LOCK_MANAGER_ADDRESS) return;
+    if (currentAllowance > 0n && currentAllowance < parsedAmount) {
+      setResettingAllowance(true);
+      const receipt = await approveFlow.run({
+        address: token as `0x${string}`,
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [LOCK_MANAGER_ADDRESS, 0n],
+      });
+      setResettingAllowance(false);
+      if (!receipt) return; // rejected/reverted/errored — stop here, let the user retry
+      await refetchAllowance();
+    }
+    await approveFlow.run({
+      address: token as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [LOCK_MANAGER_ADDRESS, parsedAmount],
+    });
+    await refetchAllowance();
+  }
+
+  async function handleCreate() {
+    if (!LOCK_MANAGER_ADDRESS) return;
+    await createFlow.run({
+      address: LOCK_MANAGER_ADDRESS,
+      abi: lockManagerAbi,
+      functionName: "createLock",
+      args: [
+        token as `0x${string}`,
+        beneficiary as `0x${string}`,
+        parsedAmount,
+        BigInt(Math.floor(new Date(unlockDate).getTime() / 1000)),
+      ],
+    });
+  }
 
   if (!LOCK_MANAGER_ADDRESS) {
     return (
@@ -65,6 +108,10 @@ export default function CreateLockPage() {
       </main>
     );
   }
+
+  const approveBusy = approveFlow.status !== "idle" && !["included", "user_rejected", "reverted", "error", "cancelled"].includes(approveFlow.status);
+  const createBusy = createFlow.status !== "idle" && !["included", "user_rejected", "reverted", "error", "cancelled"].includes(createFlow.status);
+  const created = createFlow.status === "included";
 
   return (
     <main className="wrap">
@@ -148,40 +195,17 @@ export default function CreateLockPage() {
                 </div>
 
                 {isApproved ? (
-                  <button
-                    className="btn btn-primary btn-block"
-                    disabled={!canSubmit || creating || createConfirming}
-                    onClick={() =>
-                      createLock({
-                        address: LOCK_MANAGER_ADDRESS,
-                        abi: lockManagerAbi,
-                        functionName: "createLock",
-                        args: [
-                          token as `0x${string}`,
-                          beneficiary as `0x${string}`,
-                          parsedAmount,
-                          BigInt(Math.floor(new Date(unlockDate).getTime() / 1000)),
-                        ],
-                      })
-                    }
-                  >
-                    {creating ? "Confirm in wallet…" : createConfirming ? "Creating…" : "Create lock"}
-                    <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+                  <button className="btn btn-primary btn-block" disabled={!canSubmit || createBusy} onClick={handleCreate}>
+                    {createBusy ? txStatusLabel(createFlow.status) : "Create lock"}
+                    {!createBusy && <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>}
                   </button>
                 ) : (
-                  <button
-                    className="btn btn-primary btn-block"
-                    disabled={!canSubmit || approving || approveConfirming}
-                    onClick={() =>
-                      approve({
-                        address: token as `0x${string}`,
-                        abi: erc20Abi,
-                        functionName: "approve",
-                        args: [LOCK_MANAGER_ADDRESS, parsedAmount],
-                      })
-                    }
-                  >
-                    {approving ? "Confirm in wallet…" : approveConfirming ? "Approving…" : "Approve exact amount"}
+                  <button className="btn btn-primary btn-block" disabled={!canSubmit || approveBusy} onClick={handleApprove}>
+                    {approveBusy
+                      ? resettingAllowance
+                        ? "Resetting old allowance…"
+                        : txStatusLabel(approveFlow.status)
+                      : "Approve exact amount"}
                   </button>
                 )}
 
@@ -191,6 +215,15 @@ export default function CreateLockPage() {
                   <span className={created ? "on" : undefined}>2 · Create lock</span>
                 </div>
 
+                {createFlow.status === "user_rejected" && (
+                  <p style={{ color: "var(--muted)", fontSize: 12, textAlign: "center" }}>Signature rejected — nothing was sent.</p>
+                )}
+                {createFlow.status === "reverted" && (
+                  <p style={{ color: "var(--danger)", fontSize: 12, textAlign: "center" }}>Transaction reverted onchain — no lock was created.</p>
+                )}
+                {createFlow.status === "error" && (
+                  <p style={{ color: "var(--danger)", fontSize: 12, textAlign: "center" }}>{createFlow.errorMessage}</p>
+                )}
                 {created && (
                   <p style={{ color: "var(--accent)", fontSize: 13, textAlign: "center" }}>
                     Lock created. Check the dashboard once the indexer catches up.
