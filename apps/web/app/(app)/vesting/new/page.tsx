@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { erc20Abi, parseUnits } from "viem";
 import { vestingManagerAbi } from "@/lib/abi";
+import { useWrongNetwork } from "../../wrong-network-banner";
 
 const VESTING_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS as
   | `0x${string}`
@@ -42,7 +43,8 @@ export default function CreateVestingPage() {
 
   const parsedAmount = amount ? parseUnits(amount, decimals) : 0n;
   const isApproved = Boolean(allowance) && (allowance as bigint) >= parsedAmount && parsedAmount > 0n;
-  const canSubmit = Boolean(token && beneficiary && amount && end);
+  const wrongNetwork = useWrongNetwork();
+  const canSubmit = Boolean(token && beneficiary && amount && end) && !wrongNetwork;
   const toUnix = (v: string) => (v ? BigInt(Math.floor(new Date(v).getTime() / 1000)) : 0n);
   const fmt = (v: string) => (v ? new Date(v).toLocaleDateString(undefined, { dateStyle: "medium" }) : "—");
 

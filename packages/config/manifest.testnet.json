@@ -10,8 +10,8 @@
       "deployBlock": "125692754",
       "abiHash": "a213f2bc29cbd3415436d3f830fd1d193d1c3b5c75e7079e5404c525ae04cf43",
       "sourceCommit": "5574710f9791bc223a3a3e418c87d602f9e1c7e6",
-      "verifiedSourceUrl": null,
-      "verificationNote": "Robinhood's testnet Blockscout explorer has an expired TLS certificate as of 2026-09-28 — forge verify-contract cannot reach it. Retry once the cert is fixed.",
+      "verifiedSourceUrl": "https://explorer.testnet.chain.robinhood.com/address/0x335b2fba8845efc3e74f8a4b4ad664d32eba0acf",
+      "verificationNote": "Verified 2026-09-28 via forge verify-contract (blockscout). An earlier attempt from this dev environment failed with a TLS error that turned out to be an ISP block/captive-portal page (blockpage.xlaxiata.id) intercepting the connection, not an actual problem with Robinhood's explorer — resolved once that interception was bypassed.",
       "admin": "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5"
     },
     {
@@ -23,8 +23,8 @@
       "deployBlock": "125692760",
       "abiHash": "5cc1818d9bef484a9d075348199cbd4df6c6466bc9631ce2fb547ec09f0e420d",
       "sourceCommit": "5574710f9791bc223a3a3e418c87d602f9e1c7e6",
-      "verifiedSourceUrl": null,
-      "verificationNote": "Same TLS issue as the lock manager above.",
+      "verifiedSourceUrl": "https://explorer.testnet.chain.robinhood.com/address/0xfd91fe9daac8bdb886cd89a53d3ba40421cb6efd",
+      "verificationNote": "Verified 2026-09-28, same run as the lock manager above.",
       "admin": "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5"
     }
   ],

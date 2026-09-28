@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { erc20Abi, parseUnits } from "viem";
 import { lockManagerAbi } from "@/lib/abi";
+import { useWrongNetwork } from "../../wrong-network-banner";
 
 // Manager address comes from the deployment manifest once a LockManager exists —
 // see packages/config/manifest.testnet.json. Empty until then; the form stays
@@ -41,7 +42,8 @@ export default function CreateLockPage() {
 
   const parsedAmount = amount ? parseUnits(amount, decimals) : 0n;
   const isApproved = Boolean(allowance) && (allowance as bigint) >= parsedAmount && parsedAmount > 0n;
-  const canSubmit = Boolean(token && beneficiary && amount && unlockDate);
+  const wrongNetwork = useWrongNetwork();
+  const canSubmit = Boolean(token && beneficiary && amount && unlockDate) && !wrongNetwork;
 
   const unlockLabel = unlockDate
     ? new Date(unlockDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
