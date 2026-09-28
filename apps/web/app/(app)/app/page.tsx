@@ -64,21 +64,6 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <div className="stat-row">
-            <div className="stat-cell">
-              <span>Wallet</span>
-              <strong className="mono" style={{ fontSize: 13 }}>{address?.slice(0, 6)}…{address?.slice(-4)}</strong>
-            </div>
-            <div className="stat-cell accent">
-              <span>Total positions</span>
-              <strong>{positions.length}</strong>
-            </div>
-            <div className="stat-cell">
-              <span>Network</span>
-              <strong style={{ fontSize: 14 }}>Robinhood Testnet</strong>
-            </div>
-          </div>
-
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginBottom: 20 }}>
             <a href="/lock/new" className="btn btn-ghost">
               <svg className="icon" aria-hidden="true"><use href="#i-lock" /></svg>
@@ -88,7 +73,29 @@ export default function DashboardPage() {
               <svg className="icon" aria-hidden="true"><use href="#i-chart" /></svg>
               Create vesting
             </a>
-            <button className="btn btn-ghost" onClick={() => disconnect()}>Disconnect</button>
+          </div>
+
+          <div className="stat-row">
+            <div className="stat-cell">
+              <span>Wallet</span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                <strong className="mono" style={{ fontSize: 13 }}>{address?.slice(0, 6)}…{address?.slice(-4)}</strong>
+                <button
+                  onClick={() => disconnect()}
+                  style={{ background: "none", fontSize: 10, color: "var(--faint)", textDecoration: "underline", textUnderlineOffset: 3 }}
+                >
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div className="stat-cell accent">
+              <span>Total positions</span>
+              <strong>{positions.length}</strong>
+            </div>
+            <div className="stat-cell">
+              <span>Network</span>
+              <strong style={{ fontSize: 14 }}>Robinhood Testnet</strong>
+            </div>
           </div>
 
           <section className="card">
