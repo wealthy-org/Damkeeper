@@ -26,11 +26,17 @@ export default async function StatusPage() {
 
       <section className="card">
         <div className="card-head">
-          <h2>Deployed managers</h2>
+          <h2>
+            <svg className="icon" style={{ marginRight: 8, color: "var(--accent)" }} aria-hidden="true"><use href="#i-clock" /></svg>
+            Deployed managers
+          </h2>
         </div>
         {deploys.length === 0 ? (
-          <div className="empty-state">
-            <strong>Nothing to index yet</strong>
+          <div className="empty-hero">
+            <span className="ic">
+              <svg className="icon-lg" aria-hidden="true"><use href="#i-clock" /></svg>
+            </span>
+            <h2>Nothing to index yet</h2>
             <p>Populate the <code className="mono">deployments</code> table once a manager is deployed and verified.</p>
           </div>
         ) : (

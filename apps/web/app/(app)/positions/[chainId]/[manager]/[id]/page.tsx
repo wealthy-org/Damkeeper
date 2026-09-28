@@ -41,6 +41,9 @@ export default async function ProofPage({
           Public proof
         </div>
         <span className="badge" style={{ width: "fit-content" }}>
+          <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true">
+            <use href={isVesting ? "#i-chart" : "#i-lock"} />
+          </svg>
           {isVesting ? "VESTING" : "LOCK"} · POSITION #{position.positionId.toString()}
         </span>
         <h1 className="mono" style={{ fontSize: 20, wordBreak: "break-all" }}>
@@ -108,7 +111,12 @@ export default async function ProofPage({
 
       <section className="card">
         <div className="card-head">
-          <h2>{isVesting ? "Claim" : "Withdraw"}</h2>
+          <h2>
+            <svg className="icon" style={{ marginRight: 8, color: "var(--accent)" }} aria-hidden="true">
+              <use href={isVesting ? "#i-up" : "#i-lock"} />
+            </svg>
+            {isVesting ? "Claim" : "Withdraw"}
+          </h2>
         </div>
         <ProofAction
           kind={position.kind as "lock" | "vesting"}

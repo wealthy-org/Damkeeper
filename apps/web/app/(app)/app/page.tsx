@@ -40,34 +40,55 @@ export default function DashboardPage() {
       </div>
 
       {!isConnected ? (
-        <div className="card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-          <div>
-            <h2 style={{ fontSize: 15, fontWeight: 500, marginBottom: 6 }}>No wallet connected</h2>
-            <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 420 }}>
-              Connect a wallet to see the locks and vesting schedules tied to your address. Reading
-              a public proof page never requires a wallet — this is only for your personal view.
+        <div className="stage">
+          <div className="card edge float empty-hero" style={{ maxWidth: 520, marginInline: "auto" }}>
+            <span className="ic">
+              <svg className="icon-lg" aria-hidden="true"><use href="#i-wallet" /></svg>
+            </span>
+            <h2>No wallet connected</h2>
+            <p>
+              Connect a wallet to see the locks and vesting schedules tied to your address.
+              Reading a public proof page never requires a wallet — this is only for your
+              personal view.
             </p>
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: 4 }}
+              disabled={isPending}
+              onClick={() => connect({ connector: connectors[0] })}
+            >
+              {isPending ? "Connecting…" : "Connect wallet"}
+              <svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+            </button>
           </div>
-          <button
-            className="btn btn-primary"
-            disabled={isPending}
-            onClick={() => connect({ connector: connectors[0] })}
-          >
-            {isPending ? "Connecting…" : "Connect wallet"}
-          </button>
         </div>
       ) : (
         <>
-          <div className="card" style={{ marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="status-dot live" />
-              <span className="mono" style={{ fontSize: 13, color: "var(--text-2)" }}>{address}</span>
+          <div className="stat-row">
+            <div className="stat-cell">
+              <span>Wallet</span>
+              <strong className="mono" style={{ fontSize: 13 }}>{address?.slice(0, 6)}…{address?.slice(-4)}</strong>
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <a href="/lock/new" className="btn btn-ghost">Create lock</a>
-              <a href="/vesting/new" className="btn btn-ghost">Create vesting</a>
-              <button className="btn btn-ghost" onClick={() => disconnect()}>Disconnect</button>
+            <div className="stat-cell accent">
+              <span>Total positions</span>
+              <strong>{positions.length}</strong>
             </div>
+            <div className="stat-cell">
+              <span>Network</span>
+              <strong style={{ fontSize: 14 }}>Robinhood Testnet</strong>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginBottom: 20 }}>
+            <a href="/lock/new" className="btn btn-ghost">
+              <svg className="icon" aria-hidden="true"><use href="#i-lock" /></svg>
+              Create lock
+            </a>
+            <a href="/vesting/new" className="btn btn-ghost">
+              <svg className="icon" aria-hidden="true"><use href="#i-chart" /></svg>
+              Create vesting
+            </a>
+            <button className="btn btn-ghost" onClick={() => disconnect()}>Disconnect</button>
           </div>
 
           <section className="card">
@@ -76,11 +97,15 @@ export default function DashboardPage() {
               {loading && <span style={{ fontSize: 11, color: "var(--muted)" }}>Loading…</span>}
             </div>
             {!loading && positions.length === 0 ? (
-              <div className="empty-state">
-                <strong>Nothing here yet</strong>
+              <div className="empty-hero">
+                <span className="ic">
+                  <svg className="icon-lg" aria-hidden="true"><use href="#i-layers" /></svg>
+                </span>
+                <h2>Nothing here yet</h2>
                 <p>
-                  No lock or vesting schedule references this wallet as creator or beneficiary. Once
-                  you create one, or someone names this address as a beneficiary, it shows up here.
+                  No lock or vesting schedule references this wallet as creator or beneficiary.
+                  Once you create one, or someone names this address as a beneficiary, it shows
+                  up here.
                 </p>
               </div>
             ) : (

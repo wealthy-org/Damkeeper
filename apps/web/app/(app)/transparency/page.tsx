@@ -25,11 +25,17 @@ export default async function TransparencyPage() {
 
       <section className="card">
         <div className="card-head">
-          <h2>Deployments</h2>
+          <h2>
+            <svg className="icon" style={{ marginRight: 8, color: "var(--accent)" }} aria-hidden="true"><use href="#i-code" /></svg>
+            Deployments
+          </h2>
         </div>
         {deploys.length === 0 ? (
-          <div className="empty-state">
-            <strong>No manager deployed yet</strong>
+          <div className="empty-hero">
+            <span className="ic">
+              <svg className="icon-lg" aria-hidden="true"><use href="#i-code" /></svg>
+            </span>
+            <h2>No manager deployed yet</h2>
             <p>
               This will list chain, address, version, verified source and admin once a deployment
               manifest exists (brief.md section 12).
@@ -73,11 +79,17 @@ export default async function TransparencyPage() {
 
       <section className="card">
         <div className="card-head">
-          <h2>Token policy</h2>
+          <h2>
+            <svg className="icon" style={{ marginRight: 8, color: "var(--accent)" }} aria-hidden="true"><use href="#i-shield" /></svg>
+            Token policy
+          </h2>
         </div>
         {policies.length === 0 ? (
-          <div className="empty-state">
-            <strong>No token admitted yet</strong>
+          <div className="empty-hero">
+            <span className="ic">
+              <svg className="icon-lg" aria-hidden="true"><use href="#i-shield" /></svg>
+            </span>
+            <h2>No token admitted yet</h2>
             <p>A token needs to be reviewed and enabled onchain before it can be used to create a position.</p>
           </div>
         ) : (

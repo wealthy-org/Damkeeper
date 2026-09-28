@@ -23,8 +23,11 @@ export default async function PositionsPage() {
 
       <section className="card">
         {rows.length === 0 ? (
-          <div className="empty-state">
-            <strong>No positions indexed yet</strong>
+          <div className="empty-hero">
+            <span className="ic">
+              <svg className="icon-lg" aria-hidden="true"><use href="#i-layers" /></svg>
+            </span>
+            <h2>No positions indexed yet</h2>
             <p>
               Once a manager is deployed and the cron indexer runs (<code className="mono">/api/cron/index</code>),
               created locks and vesting schedules will appear here automatically.
@@ -44,13 +47,21 @@ export default async function PositionsPage() {
             <tbody>
               {rows.map((p) => (
                 <tr key={`${p.chainId}-${p.managerAddress}-${p.positionId}`}>
-                  <td style={{ textTransform: "capitalize" }}>{p.kind}</td>
+                  <td>
+                    <span className="badge">
+                      <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true">
+                        <use href={p.kind === "lock" ? "#i-lock" : "#i-chart"} />
+                      </svg>
+                      {p.kind}
+                    </span>
+                  </td>
                   <td className="mono">{p.token.slice(0, 6)}…{p.token.slice(-4)}</td>
                   <td className="mono">{p.amount}</td>
                   <td className="mono">{p.beneficiary.slice(0, 6)}…{p.beneficiary.slice(-4)}</td>
                   <td>
                     <Link href={`/positions/${p.chainId}/${p.managerAddress}/${p.positionId}`} className="btn btn-ghost" style={{ minHeight: 32, fontSize: 12 }}>
                       View proof
+                      <svg className="icon" style={{ width: 12, height: 12 }} aria-hidden="true"><use href="#i-up" /></svg>
                     </Link>
                   </td>
                 </tr>

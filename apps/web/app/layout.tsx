@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { IconSprite } from "./icon-sprite";
 
 export const metadata: Metadata = {
   title: "Damkeeper · Token locks and vesting on Robinhood Chain",
@@ -22,7 +23,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <IconSprite />
+        {children}
+      </body>
     </html>
   );
 }

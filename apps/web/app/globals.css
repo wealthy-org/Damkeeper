@@ -428,6 +428,254 @@ tbody tr:last-child td {
   overflow-wrap: anywhere;
 }
 
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.icon-lg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---- architectural surfaces (matches the landing page's .stage/.card treatment) ---- */
+
+.stage {
+  position: relative;
+  padding: 28px;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 50% 30%, #93c66d0b, transparent 70%);
+  border: 1px solid #d0eabd07;
+  isolation: isolate;
+}
+
+.stage::before,
+.stage::after {
+  position: absolute;
+  content: "";
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+.stage::before {
+  top: 0;
+  left: 0;
+  border-top: 1px solid #bfdc9b25;
+  border-left: 1px solid #bfdc9b25;
+}
+
+.stage::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid #bfdc9b25;
+  border-right: 1px solid #bfdc9b25;
+}
+
+.edge {
+  border-color: #ceeab223;
+  background: linear-gradient(145deg, #1a261b, #111a14 75%);
+}
+
+.float {
+  box-shadow: 0 24px 64px -30px #000, 0 1px 0 #ffffff08 inset;
+}
+
+/* ---- split layout: copy on one side, a live surface on the other ---- */
+
+.form-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 56px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .form-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+
+.check {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.check li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.check .icon {
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.steps-mini {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+
+.steps-mini .bar {
+  height: 1px;
+  width: 32px;
+  margin: 0 10px;
+  background: var(--hair-2);
+}
+
+.steps-mini .on {
+  color: var(--accent);
+}
+
+/* token identity row inside a form */
+
+.tok-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tok-ic {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #b8f36b33;
+  border-radius: 50%;
+  background: #b8f36b0d;
+  color: var(--accent);
+  font: 10px var(--mono);
+  flex: none;
+}
+
+.ok-tag {
+  font-size: 10px;
+  color: #b4cda0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ok-tag .icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* summary/review panel, e.g. before a wallet signature */
+
+.review {
+  border: 1px solid var(--hair);
+  padding: 16px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 11px;
+  background: #b8f36b04;
+}
+
+.review > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.review dt {
+  color: var(--muted);
+}
+
+.review dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* stat row, e.g. dashboard header */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--hair);
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.stat-cell {
+  background: var(--surface);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-cell span {
+  font: 9px var(--mono);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-cell strong {
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-cell.accent strong {
+  color: var(--accent);
+}
+
+/* larger, illustrated empty state used on the dashboard */
+
+.empty-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 56px 24px;
+}
+
+.empty-hero .ic {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--hair-2);
+  border-radius: 50%;
+  color: var(--accent);
+  background: #b8f36b08;
+}
+
+.empty-hero h2 {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.empty-hero p {
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 360px;
+  line-height: 1.7;
+}
+
 @media (max-width: 720px) {
   .app-nav-links {
     display: none;
@@ -435,5 +683,9 @@ tbody tr:last-child td {
 
   .wrap {
     padding: 28px 20px 64px;
+  }
+
+  .stage {
+    padding: 18px;
   }
 }
