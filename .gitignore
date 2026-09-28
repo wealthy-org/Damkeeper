@@ -9,3 +9,6 @@ packages/contracts/cache/
 packages/contracts/lib/
 *.log
 *.tsbuildinfo
+
+/brief.md
+/reference-landing.html
