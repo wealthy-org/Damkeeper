@@ -1,0 +1,17 @@
+{
+  "_comment": "One entry per deployed manager. Copy to manifest.testnet.json / manifest.mainnet.json once addresses exist. Never invent addresses — brief.md section 12.",
+  "deployments": [
+    {
+      "chainId": 46630,
+      "managerAddress": "0x0000000000000000000000000000000000dead",
+      "kind": "lock",
+      "version": "0.1.0",
+      "deployTxHash": "0x",
+      "deployBlock": "0",
+      "abiHash": "",
+      "sourceCommit": "",
+      "verifiedSourceUrl": null,
+      "admin": "0x0000000000000000000000000000000000dead"
+    }
+  ]
+}

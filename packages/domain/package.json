@@ -1,0 +1,7 @@
+{
+  "name": "@damkeeper/domain",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./vesting.ts",
+  "types": "./vesting.ts"
+}
