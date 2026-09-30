@@ -123,25 +123,38 @@ export async function loginWithBrowser(): Promise<SessionData> {
               <head>
                 <title>Damkeeper CLI Authenticated</title>
                 <style>
-                  body { background: #0c0e12; color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-                  .card { background: #14171f; border: 1px solid #232836; border-radius: 12px; padding: 32px; text-align: center; max-width: 420px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
-                  h2 { color: #b8f36b; margin-top: 0; font-size: 20px; }
-                  p { color: #9da3ae; font-size: 14px; line-height: 1.5; }
-                  .badge { display: inline-block; background: rgba(184,243,107,0.1); color: #b8f36b; border: 1px solid rgba(184,243,107,0.25); border-radius: 20px; padding: 4px 12px; font-size: 12px; margin-bottom: 16px; }
+                  body { background: #070a08; color: #e6ede8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                  .card { background: #0d1410; border: 1px solid #1a2820; border-radius: 20px; padding: 40px; text-align: center; max-width: 440px; box-shadow: 0 24px 60px rgba(0,0,0,0.6); position: relative; }
+                  .glow { position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, #b8f36b, transparent); }
+                  .icon-wrap { width: 56px; height: 56px; border-radius: 50%; background: rgba(184, 243, 107, 0.15); border: 1px solid rgba(184, 243, 107, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #b8f36b; font-size: 26px; font-weight: bold; }
+                  h2 { color: #b8f36b; margin: 0 0 10px 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+                  p { color: #8ca094; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0; }
+                  .wallet { color: #fff; font-weight: 600; font-family: monospace; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; }
+                  .badge { display: inline-block; background: rgba(184,243,107,0.1); color: #b8f36b; border: 1px solid rgba(184,243,107,0.25); border-radius: 100px; padding: 4px 12px; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 20px; }
+                  .cli-box { background: rgba(184,243,107,0.06); border: 1px dashed rgba(184,243,107,0.3); border-radius: 12px; padding: 14px; color: #b8f36b; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; }
                 </style>
               </head>
               <body>
                 <div class="card">
-                  <div class="badge">Damkeeper CLI</div>
-                  <h2>✓ Successfully Authenticated!</h2>
-                  <p>Wallet <strong>${authorizedBy.slice(0, 6)}…${authorizedBy.slice(-4)}</strong> authorized this terminal session.</p>
-                  <p style="margin-top: 24px; color: #6b7280; font-size: 12px;">You can close this tab and return to your terminal.</p>
+                  <div class="glow"></div>
+                  <div class="badge">DAMKEEPER CLI</div>
+                  <div class="icon-wrap">✓</div>
+                  <h2>Authentication Successful!</h2>
+                  <p>Wallet <span class="wallet">${authorizedBy.slice(0, 6)}…${authorizedBy.slice(-4)}</span> is now authorized for this terminal session.</p>
+                  <div class="cli-box">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #b8f36b; box-shadow: 0 0 8px #b8f36b; display: inline-block;"></span>
+                    <span>Please check your CLI terminal now.</span>
+                  </div>
+                  <p style="margin-top: 24px; margin-bottom: 0; color: #526359; font-size: 12px;">You can safely close this browser window.</p>
                 </div>
               </body>
             </html>
           `);
 
-          server.close();
+          // Delay closing server slightly so browser completes network read
+          setTimeout(() => {
+            try { server.close(); } catch {}
+          }, 2000);
           resolve(session);
         });
         return;

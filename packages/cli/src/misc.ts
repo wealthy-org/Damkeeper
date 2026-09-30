@@ -53,7 +53,9 @@ export async function faucetCmd(address?: string) {
 }
 
 export async function balanceCmd(o: { wallet?: string }) {
-  const target = (o.wallet ?? account().address) as `0x${string}`;
+  const session = loadSession();
+  const target = (o.wallet ?? session?.authorizedBy ?? account().address) as `0x${string}`;
+  const signer = account().address;
   const pc = publicClient();
   const tokensRes = await api<{ tokens: { address: string; symbol: string | null; decimals: number | null }[] }>(`/api/tokens?chainId=${TESTNET.id}`).catch(() => ({ tokens: [] }));
   
@@ -84,7 +86,12 @@ export async function balanceCmd(o: { wallet?: string }) {
   ];
 
   out({ address: target, eth: formatEther(eth), tokens: tokenBalances }, () => {
-    console.log(`\n  ${c.bold("Balances")} ${c.dim(`for ${short(target)} · Robinhood Chain Testnet`)}\n`);
+    console.log(`\n  ${c.bold("Balances")} ${c.dim(`for ${c.lime(target)} · Robinhood Chain Testnet`)}`);
+    if (session?.authorizedBy && target.toLowerCase() === session.authorizedBy.toLowerCase()) {
+      console.log(`  ${c.dim(`Authorized via Phantom · CLI Signer Key: ${short(signer)}`)}\n`);
+    } else {
+      console.log("");
+    }
     table(["ASSET", "CONTRACT", "BALANCE"], rows);
     console.log("");
   });
@@ -92,9 +99,10 @@ export async function balanceCmd(o: { wallet?: string }) {
 
 export async function homeCmd() {
   await statusCmd();
-  const key = process.env.DAMKEEPER_PRIVATE_KEY;
-  if (key) await positionsCmd({ wallet: account().address });
-  else console.log(c.dim("  Set DAMKEEPER_PRIVATE_KEY (or run `damkeeper positions --wallet 0x…`) to see positions.\n"));
+  const session = loadSession();
+  const target = session?.authorizedBy ?? (process.env.DAMKEEPER_PRIVATE_KEY ? account().address : undefined);
+  if (target) await positionsCmd({ wallet: target });
+  else console.log(c.dim("  Connect via `damkeeper login` (or run `damkeeper positions --wallet 0x…`) to see positions.\n"));
 }
 
 export async function shareCmd(kind: string, id: string) {

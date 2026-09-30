@@ -5,6 +5,7 @@ import { claimCmd, lockCreate, vestingCreate, withdrawCmd } from "./write";
 import { contractsCmd, exploreCmd, positionsCmd, showCmd, statusCmd, tokensCmd } from "./read";
 import { balanceCmd, faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
 import { showcaseCmd } from "./showcase";
+import { loadSession } from "./session";
 
 const VERSION = "0.1.0";
 
@@ -47,10 +48,11 @@ const PANEL = `
 
 function statusLine() {
   try {
-    const a = account().address;
-    return c.dim(`  v${VERSION} · ${TESTNET.name} (${TESTNET.id}) · wallet ${a.slice(0, 6)}…${a.slice(-4)}`);
+    const session = loadSession();
+    const a = session?.authorizedBy ?? account().address;
+    return c.dim(`  v${VERSION} · ${TESTNET.name} (${TESTNET.id}) · wallet ${a.slice(0, 6)}…${a.slice(-4)}${session?.authorizedBy ? " (Phantom)" : ""}`);
   } catch {
-    return c.dim(`  v${VERSION} · ${TESTNET.name} (${TESTNET.id}) · wallet: not connected — set DAMKEEPER_PRIVATE_KEY`);
+    return c.dim(`  v${VERSION} · ${TESTNET.name} (${TESTNET.id}) · wallet: not connected — run damkeeper login`);
   }
 }
 
@@ -98,7 +100,11 @@ vesting.command("create").description("Release tokens per second, optional cliff
 
 program.command("positions").description("Your locks and vesting")
   .option("--wallet <address>", "look up another wallet").option("--type <lock|vesting>").option("--incoming", "you are the beneficiary").option("--outgoing", "you created it")
-  .action(run(async (o) => positionsCmd({ ...o, wallet: o.wallet ?? account().address })));
+  .action(run(async (o) => {
+    const session = loadSession();
+    const target = o.wallet ?? session?.authorizedBy ?? account().address;
+    return positionsCmd({ ...o, wallet: target });
+  }));
 program.command("withdraw <lock-id>").description("Take tokens out of an unlocked lock").option("-y, --yes").action(run(withdrawCmd));
 program.command("claim <vesting-id>").description("Claim what has vested").option("-y, --yes").action(run(claimCmd));
 program.command("share <kind> <id>").description("Caption and link for a position").action(run(shareCmd));

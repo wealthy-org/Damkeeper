@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
+    "cli": "npm run start --workspace=packages/cli --",
+    "cli:link": "npm link --workspace=packages/cli",
     "db:generate": "npm run db:generate --workspace=apps/web",
     "db:migrate": "npm run db:migrate --workspace=apps/web",
     "contracts:build": "cd packages/contracts && forge build",

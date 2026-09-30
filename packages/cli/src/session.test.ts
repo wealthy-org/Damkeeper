@@ -3,6 +3,9 @@ import { test } from "node:test";
 import { saveSession, loadSession, clearSession, type SessionData } from "./session.ts";
 
 test("Session save, load, and clear lifecycle", () => {
+  // Preserve any existing real session before running test
+  const existing = loadSession();
+
   const dummy: SessionData = {
     deviceKey: "0x1111111111111111111111111111111111111111111111111111111111111111",
     deviceAddress: "0x1111111111111111111111111111111111111111",
@@ -18,4 +21,9 @@ test("Session save, load, and clear lifecycle", () => {
   const cleared = clearSession();
   assert.equal(cleared, true);
   assert.equal(loadSession(), null);
+
+  // Restore original if there was one
+  if (existing) {
+    saveSession(existing);
+  }
 });

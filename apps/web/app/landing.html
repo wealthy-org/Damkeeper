@@ -46,6 +46,32 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
 .reservoir-svg-mobile .rb-front{fill:url(#mobile-bar)}
 @media(max-width:640px){.reservoir-svg{display:none}.reservoir-svg-mobile{display:block}}
 @media(max-width:420px){.vchart .ax{font-size:18px}.vchart .ax text:nth-child(2),.vchart .ax text:nth-child(4){display:none}}
+/* CLI terminal section */
+.term{border:1px solid var(--hair-2);border-radius:14px;overflow:hidden;background:#080d0a;font-family:var(--mono);font-size:12px;line-height:1.7;max-width:560px;box-shadow:0 24px 64px -30px #000}
+.term-bar{display:flex;align-items:center;gap:7px;padding:11px 16px;background:#0e1510;border-bottom:1px solid var(--hair)}
+.term-dot{width:9px;height:9px;border-radius:50%;border:1px solid #2a3829}
+.term-dot:nth-child(1){background:#e26d6d30;border-color:#e26d6d40}
+.term-dot:nth-child(2){background:#e2c96d30;border-color:#e2c96d40}
+.term-dot:nth-child(3){background:#6de28a30;border-color:#6de28a40}
+.term-title{flex:1;text-align:center;font-size:10px;color:var(--faint);letter-spacing:.02em}
+.term-body{padding:16px 18px;min-height:310px;overflow:hidden;position:relative}
+.term-line{display:block;white-space:pre-wrap;word-break:break-all}
+.term-line .prompt{color:var(--accent)}
+.term-line .cmd{color:var(--text)}
+.term-line .dim{color:var(--muted)}
+.term-line .ok{color:var(--accent)}
+.term-line .hl{color:var(--accent-pale)}
+.term-line .val{color:var(--text-2)}
+.term-cursor{display:inline-block;width:7px;height:14px;background:var(--accent);animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:1px}
+@keyframes blink{50%{opacity:0}}
+@keyframes termFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.term-line.typed{animation:termFade .3s var(--ease) both}
+.cli-features{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.cli-feat{padding:14px;border:1px solid var(--hair);border-radius:10px;background:#0a120c}
+.cli-feat b{display:block;font-size:11px;font-weight:500;color:var(--text);margin-bottom:4px}
+.cli-feat span{font-size:10px;color:var(--muted);line-height:1.6}
+@media(max-width:720px){.cli-features{grid-template-columns:1fr}.term-body{min-height:280px}}
+@media(max-width:420px){.term{font-size:11px}.term-body{min-height:250px;padding:12px 14px}}
 
 </style>
 </head>
@@ -323,11 +349,44 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
 <article class="vitem"><span class="ic"><svg class="icon icon-lg" aria-hidden="true"><use href="#i-shield"/></svg></span><h3>Independent review</h3><p>Security review status will be accompanied by a public report when available.</p><div class="val">Review report not yet published</div></article>
 </div></div></section><section class="sec" id="explore" aria-labelledby="explore-h" style="padding-top:0"><div class="wrap"><div class="explore-head"><div class="head"><div class="idx"><b>06</b><i></i>Explore</div><h2 class="h2" id="explore-h">Every allocation.<br><span class="kw">In clear view.</span></h2></div><p class="lead">A closer look at how positions will appear. Filter the examples and open a schedule to see its terms.</p></div>
 <div class="explorer"><div class="explorer-bar"><div class="filters" role="group" aria-label="Filter sample positions"><button type="button" class="filter" data-filter="all" aria-pressed="true">All positions<span>3</span></button><button type="button" class="filter" data-filter="lock" aria-pressed="false">Locks<span>1</span></button><button type="button" class="filter" data-filter="vesting" aria-pressed="false">Vesting<span>2</span></button></div><label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Search sample positions</span><input id="positionSearch" type="search" placeholder="Search positions…" autocomplete="off"></label></div>
-<div class="position-head" aria-hidden="true"><span>Allocation</span><span>Type</span><span>Total tokens</span><span>Progress</span><span></span></div><div id="positionList" aria-label="Sample positions"><button type="button" class="position-row" data-position="team" data-kind="vesting" data-search="team allocation exmpl 0001"><span class="position-name"><span class="token-tile"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span><b>Team allocation</b><small>EXMPL · #0001</small></span></span><span class="position-kind">Vesting</span><span class="position-amount">1,000,000<small>EXMPL</small></span><span class="position-progress"><span><b style="font-weight:400">Vested</b><b style="font-weight:400">50%</b></span><i style="--filled:50%"></i></span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button><button type="button" class="position-row" data-position="treasury" data-kind="lock" data-search="treasury reserve exmpl 0002"><span class="position-name"><span class="token-tile"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></span><span><b>Treasury reserve</b><small>EXMPL · #0002</small></span></span><span class="position-kind">Token lock</span><span class="position-amount">500,000<small>EXMPL</small></span><span class="position-progress"><span><b style="font-weight:400">Unlocked</b><b style="font-weight:400">0%</b></span><i style="--filled:0%"></i></span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button><button type="button" class="position-row" data-position="contributors" data-kind="vesting" data-search="contributor allocation exmpl 0003"><span class="position-name"><span class="token-tile"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span><b>Contributor allocation</b><small>EXMPL · #0003</small></span></span><span class="position-kind">Vesting</span><span class="position-amount">240,000<small>EXMPL</small></span><span class="position-progress"><span><b style="font-weight:400">Vested</b><b style="font-weight:400">25%</b></span><i style="--filled:25%"></i></span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button></div><p class="empty" id="emptyPositions" role="status" hidden>No positions match. Try a different name or filter.</p><div class="explorer-foot"><span id="positionCount" role="status">3 sample positions · Illustrative data</span><span>ROBINHOOD CHAIN</span></div></div></div></section><!-- ===================== 8. FAQ ===================== -->
+<div class="position-head" aria-hidden="true"><span>Allocation</span><span>Type</span><span>Total tokens</span><span>Progress</span><span></span></div><div id="positionList" aria-label="Sample positions"><button type="button" class="position-row" data-position="team" data-kind="vesting" data-search="team allocation exmpl 0001"><span class="position-name"><span class="token-tile"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span><b>Team allocation</b><small>EXMPL · #0001</small></span></span><span class="position-kind">Vesting</span><span class="position-amount">1,000,000<small>EXMPL</small></span><span class="position-progress"><span><b style="font-weight:400">Vested</b><b style="font-weight:400">50%</b></span><i style="--filled:50%"></i></span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button><button type="button" class="position-row" data-position="treasury" data-kind="lock" data-search="treasury reserve exmpl 0002"><span class="position-name"><span class="token-tile"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></span><span><b>Treasury reserve</b><small>EXMPL · #0002</small></span></span><span class="position-kind">Token lock</span><span class="position-amount">500,000<small>EXMPL</small></span><span class="position-progress"><span><b style="font-weight:400">Unlocked</b><b style="font-weight:400">0%</b></span><i style="--filled:0%"></i></span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button><button type="button" class="position-row" data-position="contributors" data-kind="vesting" data-search="contributor allocation exmpl 0003"><span class="position-name"><span class="token-tile"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span><b>Contributor allocation</b><small>EXMPL · #0003</small></span></span><span class="position-kind">Vesting</span><span class="position-amount">240,000<small>EXMPL</small></span><span class="position-progress"><span><b style="font-weight:400">Vested</b><b style="font-weight:400">25%</b></span><i style="--filled:25%"></i></span><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button></div><p class="empty" id="emptyPositions" role="status" hidden>No positions match. Try a different name or filter.</p><div class="explorer-foot"><span id="positionCount" role="status">3 sample positions · Illustrative data</span><span>ROBINHOOD CHAIN</span></div></div></div></section>
+<!-- ===================== 7B. CLI ===================== -->
+<section class="sec" id="cli" aria-labelledby="cli-h">
+  <div class="wrap split flip">
+    <div class="split-copy">
+      <div class="head">
+        <div class="idx"><b>07</b><i></i>Command line</div>
+        <h2 class="h2" id="cli-h">Your terminal.<br><span class="kw">Your controls.</span></h2>
+      </div>
+      <p class="lead">Create locks, vest tokens, check balances and explore positions without leaving your terminal. Authenticate once with Phantom and manage everything from the command line.</p>
+      <ul class="check">
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8F36B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Browser-based wallet login, session stored locally</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8F36B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Create, withdraw and claim directly from the shell</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8F36B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Full JSON output for scripts and automation</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8F36B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Same contracts, same proof pages, no separate setup</li>
+      </ul>
+      <div class="cli-features">
+        <div class="cli-feat"><b>lock create</b><span>Hold tokens until a fixed date</span></div>
+        <div class="cli-feat"><b>vesting create</b><span>Linear release with optional cliff</span></div>
+        <div class="cli-feat"><b>explore</b><span>Browse all positions onchain</span></div>
+        <div class="cli-feat"><b>show lock 1</b><span>Full proof for any position</span></div>
+      </div>
+    </div>
+    <div class="visual">
+      <div class="stage">
+        <div class="term" id="cliTerm">
+          <div class="term-bar"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="term-title">damkeeper -- zsh</span></div>
+          <div class="term-body" id="cliTermBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ===================== 8. FAQ ===================== -->
 <section class="sec" id="faq" aria-labelledby="faq-h" style="padding-top:0">
   <div class="wrap faq">
     <div class="head faq-side">
-      <div class="idx"><b>07</b><i></i>FAQ</div>
+      <div class="idx"><b>08</b><i></i>FAQ</div>
       <h2 class="h2" id="faq-h">A few things<br><span class="kw">worth knowing.</span></h2>
       <p class="lead">The essentials of locks, vesting and public proof.</p>
     </div>
@@ -343,7 +402,7 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
   </div>
 </section>
 
-<section aria-labelledby="cta-h"><div class="wrap"><div class="cta" id="cta"><div class="idx"><b>08</b><i></i>Built for what comes next</div><h2 id="cta-h">Your supply.<br>A clear path forward.</h2><p class="lead">Give your token a schedule your community can follow. Start with a lock or explore a vesting plan.</p><div class="btns"><a href="/app?create=lock" class="btn btn-primary">Create a lock <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a><a href="/app?create=vesting" class="btn btn-ghost">Create vesting</a></div><div class="cta-art" aria-hidden="true"><i style="--n:0"></i><i style="--n:1"></i><i style="--n:2"></i><i style="--n:3"></i><i style="--n:4"></i><i style="--n:5"></i></div></div></div></section></main>
+<section aria-labelledby="cta-h"><div class="wrap"><div class="cta" id="cta"><div class="idx"><b>09</b><i></i>Built for what comes next</div><h2 id="cta-h">Your supply.<br>A clear path forward.</h2><p class="lead">Give your token a schedule your community can follow. Start with a lock or explore a vesting plan.</p><div class="btns"><a href="/app?create=lock" class="btn btn-primary">Create a lock <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a><a href="/app?create=vesting" class="btn btn-ghost">Create vesting</a></div><div class="cta-art" aria-hidden="true"><i style="--n:0"></i><i style="--n:1"></i><i style="--n:2"></i><i style="--n:3"></i><i style="--n:4"></i><i style="--n:5"></i></div></div></div></section></main>
 <footer><div class="wrap"><div class="foot-top"><div><a href="#top" class="logo"><img src="/logo-symbol.png" alt="" class="brand-mark" style="object-fit:contain" width="617" height="625">Damkeeper</a><p class="foot-caption">Token locks and vesting.<br>Built on Robinhood Chain.</p></div><nav class="foot-links" aria-label="Footer"><div><b>Product</b><a href="/app?create=lock">Token locks</a><a href="/app?create=vesting">Token vesting</a><a href="/positions">Explore positions</a></div><div><b>Learn</b><a href="#how">How it works</a><a href="#proof">Public proof</a><a href="#faq">Questions</a></div><div><b>Transparency</b><a href="/transparency">Contract status</a><a href="/transparency">Security review</a><a href="/status">Network status</a></div></nav></div><div class="foot-bottom"><p class="disc">Damkeeper is an independent product built on Robinhood Chain. It is not affiliated with, sponsored by or endorsed by Robinhood.</p><span class="copyright">© 2026 DAMKEEPER</span></div><div class="wordmark" aria-hidden="true">Damkeeper</div></div></footer><dialog id="demoDialog" aria-labelledby="demoTitle"><div class="dialog-top"><span class="idx"><b>Damkeeper</b><i></i>Interactive preview</span><button type="button" class="icon-btn" data-close-dialog aria-label="Close demo"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div><div class="dialog-body"><h2 id="demoTitle">Shape your token schedule.</h2><p id="demoIntro">Try the creation flow with EXMPL, an example token.</p>
 <form class="demo-form" id="demoForm"><label>Schedule type<select id="demoMode" name="mode"><option value="lock">Token lock</option><option value="vesting">Linear vesting</option></select></label><div class="two"><label>Amount in EXMPL<input id="demoAmount" name="amount" type="number" min="1" max="1000000000" step="1" value="500000" required></label><label>Duration<select id="demoDuration" name="duration"><option value="6">6 months</option><option value="12" selected>12 months</option><option value="24">24 months</option></select></label></div><div class="demo-summary" aria-live="polite"><small id="demoSummaryLabel">AVAILABLE AT THE END</small><strong id="demoSummaryValue">500,000 EXMPL</strong><p id="demoSummaryText">The full amount becomes withdrawable after 12 months.</p></div><button class="btn btn-primary" type="submit">Review schedule <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button><p class="demo-note">Demo only. No wallet connection, approval or transaction.</p></form>
 <div class="demo-review" id="demoReview" hidden><div class="success-icon"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></div><p style="font-size:14px;color:var(--text-2)">Your example terms are ready to review.</p><dl><div><dt>Type</dt><dd id="reviewType"></dd></div><div><dt>Deposit</dt><dd id="reviewAmount"></dd></div><div><dt>Duration</dt><dd id="reviewDuration"></dd></div><div><dt>Available halfway through</dt><dd id="reviewHalfway"></dd></div><div><dt>Recipient</dt><dd>Example beneficiary</dd></div></dl><div class="dialog-actions"><button type="button" class="btn btn-ghost" id="editDemo">Edit terms</button><button type="button" class="btn btn-primary" data-close-dialog>Done <svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></button></div><p class="dialog-footnote">In the live product, you would review token and contract addresses, approve the exact amount, and sign the creation transaction. This preview does not create a position.</p></div></div></dialog>
@@ -599,6 +658,140 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
   });
 })();
 
+  // ── CLI terminal animation ──
+  (() => {
+    const byId = id => document.getElementById(id);
+    const body = byId('cliTermBody');
+    if (!body) return;
+    const scenes = [
+      // Scene 1: login
+      { cmd: 'damkeeper login', lines: [
+        '',
+        { t: '  CLI Signer     ', c: 'dim' }, { t: '0x7EB4...7619', c: 'val', nl: true },
+        { t: '  Authorized By  ', c: 'dim' }, { t: '0xb91e...b5ae', c: 'hl' }, { t: ' (Phantom)', c: 'dim', nl: true },
+        { t: '  Network        ', c: 'dim' }, { t: 'Robinhood Chain Testnet (46630)', c: 'val', nl: true },
+        { t: '  ETH (gas)      ', c: 'dim' }, { t: '0.0084', c: 'val', nl: true },
+        '',
+        { t: '  Ready! Next:  damkeeper faucet', c: 'dim', nl: true },
+      ] },
+      // Scene 2: balance
+      { cmd: 'damkeeper balance', lines: [
+        '',
+        { t: '  Balances for ', c: 'dim' }, { t: '0xb91e...b5ae', c: 'hl' }, { t: ' · Robinhood Chain Testnet', c: 'dim', nl: true },
+        '',
+        { t: '  ASSET  CONTRACT      BALANCE', c: 'dim', nl: true },
+        { t: '  ETH    Native (gas)  ', c: 'val' }, { t: '0.0084 ETH', c: 'val', nl: true },
+        { t: '  EXMPL  0xb5b0...5538 ', c: 'val' }, { t: '110,000 EXMPL', c: 'ok', nl: true },
+      ] },
+      // Scene 3: lock create
+      { cmd: 'damkeeper lock create --amount 1000 --unlock +1y --yes', lines: [
+        '',
+        { t: '  [*] Approving exact amount............ ', c: 'dim' }, { t: 'SUCCESS', c: 'ok', nl: true },
+        { t: '  [*] Creating lock..................... ', c: 'dim' }, { t: 'SUCCESS', c: 'ok' }, { t: ' block 126758380', c: 'dim', nl: true },
+        { t: '  [*] Saving title...................... ', c: 'dim' }, { t: 'SUCCESS', c: 'ok', nl: true },
+        '',
+        { t: '  Lock #4 created', c: 'ok', nl: true },
+        { t: '    Proof  ', c: 'dim' }, { t: 'damkeeper.com/positions/46630/.../4', c: 'hl', nl: true },
+      ] },
+      // Scene 4: explore
+      { cmd: 'damkeeper explore', lines: [
+        '',
+        { t: '  Explore ', c: 'dim' }, { t: '4 results', c: 'val', nl: true },
+        '',
+        { t: '  #  KIND     AMOUNT       STATUS', c: 'dim', nl: true },
+        { t: '  1  lock     100 EXMPL    ', c: 'val' }, { t: 'Withdrawn', c: 'dim', nl: true },
+        { t: '  1  vesting  100 EXMPL    ', c: 'val' }, { t: 'Fully claimed', c: 'dim', nl: true },
+        { t: '  2  lock     500 EXMPL    ', c: 'val' }, { t: 'Locked', c: 'ok', nl: true },
+        { t: '  3  vesting  10 EXMPL     ', c: 'val' }, { t: 'Vesting', c: 'ok', nl: true },
+      ] },
+    ];
+
+    let running = false, sceneIdx = 0;
+    const motionOk = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function addLine(html, cls) {
+      const span = document.createElement('span');
+      span.className = 'term-line' + (cls ? ' ' + cls : '');
+      span.innerHTML = html;
+      body.appendChild(span);
+    }
+
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function typeCmd(text) {
+      const line = document.createElement('span');
+      line.className = 'term-line';
+      line.innerHTML = '<span class="prompt">$ </span><span class="cmd"></span>';
+      const cursor = document.createElement('span');
+      cursor.className = 'term-cursor';
+      line.appendChild(cursor);
+      body.appendChild(line);
+      const cmdSpan = line.querySelector('.cmd');
+      for (let i = 0; i < text.length; i++) {
+        cmdSpan.textContent += text[i];
+        await delay(motionOk ? 35 + Math.random() * 25 : 0);
+      }
+      cursor.remove();
+    }
+
+    async function renderOutput(lines) {
+      for (const item of lines) {
+        if (typeof item === 'string') {
+          addLine('', 'typed');
+          await delay(motionOk ? 40 : 0);
+          continue;
+        }
+        // Build a full "row" from consecutive non-newline spans
+        let html = '';
+        let idx = lines.indexOf(item);
+        // Simple approach: each item is one span
+        html = `<span class="${item.c || ''}">${item.t}</span>`;
+        if (item.nl) {
+          // Find preceding spans on same line (already rendered), just append
+        }
+        const span = document.createElement('span');
+        span.className = 'term-line typed';
+        span.innerHTML = html;
+        // If the previous child doesn't end with nl, append to it
+        const prev = body.lastElementChild;
+        if (prev && !prev.dataset.nl) {
+          prev.innerHTML += html;
+          if (item.nl) prev.dataset.nl = '1';
+        } else {
+          body.appendChild(span);
+          if (item.nl) span.dataset.nl = '1';
+        }
+        await delay(motionOk ? 30 : 0);
+      }
+    }
+
+    async function playScene(scene) {
+      await typeCmd(scene.cmd);
+      await delay(motionOk ? 400 : 0);
+      await renderOutput(scene.lines);
+    }
+
+    async function loop() {
+      if (running) return;
+      running = true;
+      while (running) {
+        body.innerHTML = '';
+        const scene = scenes[sceneIdx];
+        await playScene(scene);
+        sceneIdx = (sceneIdx + 1) % scenes.length;
+        await delay(3000);
+      }
+    }
+
+    // Start when visible
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !running) {
+        loop();
+        observer.disconnect();
+      }
+    }, { threshold: 0.3 });
+    observer.observe(byId('cliTerm'));
+  })();
 </script>
 </body>
 </html>
