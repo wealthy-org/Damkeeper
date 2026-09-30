@@ -54,7 +54,7 @@ export default async function HomePage() {
             Hold tokens until one fixed unlock date. Only the withdrawal wallet you name can take
             them out, and only after that date.
           </p>
-          <Link href="/lock/new" className="btn btn-primary">Create lock</Link>
+          <Link href="/app?create=lock" scroll={false} className="btn btn-primary">Create lock</Link>
         </article>
         <article className="start-card">
           <span className="tile">
@@ -65,7 +65,7 @@ export default async function HomePage() {
             Release tokens second by second from a start date to an end date, with an optional
             cliff. The beneficiary claims what has vested.
           </p>
-          <Link href="/vesting/new" className="btn btn-primary">Create vesting</Link>
+          <Link href="/app?create=vesting" scroll={false} className="btn btn-primary">Create vesting</Link>
         </article>
       </div>
 

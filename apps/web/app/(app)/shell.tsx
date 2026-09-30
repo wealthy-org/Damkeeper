@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { robinhoodTestnet } from "@/lib/chains";
 import { WrongNetworkBanner } from "./wrong-network-banner";
+import { CreateModal } from "./create/create-modal";
 
 interface NavItem {
   href: string;
@@ -20,13 +21,13 @@ const productNav: NavItem[] = [
     href: "/positions?type=lock",
     label: "Locks",
     icon: "i-lock",
-    match: (p, t) => (p === "/positions" && t === "lock") || p.startsWith("/lock/"),
+    match: (p, t) => p === "/positions" && t === "lock",
   },
   {
     href: "/positions?type=vesting",
     label: "Vesting",
     icon: "i-chart",
-    match: (p, t) => (p === "/positions" && t === "vesting") || p.startsWith("/vesting/"),
+    match: (p, t) => p === "/positions" && t === "vesting",
   },
   { href: "/positions", label: "Explore", icon: "i-layers", match: (p, t) => p.startsWith("/positions") && !t },
 ];
@@ -52,11 +53,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Link>
 
         <div className="sb-ctas">
-          <Link href="/lock/new" className="btn btn-primary">
+          <Link href={`${pathname}?create=lock`} scroll={false} className="btn btn-primary" onClick={() => setOpen(false)}>
             <svg className="icon" aria-hidden="true"><use href="#i-lock" /></svg>
             Create lock
           </Link>
-          <Link href="/vesting/new" className="btn btn-ghost">
+          <Link href={`${pathname}?create=vesting`} scroll={false} className="btn btn-ghost" onClick={() => setOpen(false)}>
             <svg className="icon" aria-hidden="true"><use href="#i-chart" /></svg>
             Create vesting
           </Link>
@@ -97,6 +98,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <WrongNetworkBanner />
         {children}
       </div>
+
+      <Suspense fallback={null}>
+        <CreateModal />
+      </Suspense>
     </div>
   );
 }
