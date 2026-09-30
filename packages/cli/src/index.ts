@@ -3,7 +3,7 @@ import { banner, c, fail, isJson } from "./ui";
 import { account, TESTNET } from "./config";
 import { claimCmd, lockCreate, vestingCreate, withdrawCmd } from "./write";
 import { contractsCmd, exploreCmd, positionsCmd, showCmd, statusCmd, tokensCmd } from "./read";
-import { faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
+import { balanceCmd, faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
 import { showcaseCmd } from "./showcase";
 
 const VERSION = "0.1.0";
@@ -14,6 +14,7 @@ const PANEL = `
   ${c.lime("START HERE")}
     login                    Check or connect your wallet via browser/Phantom
     logout                   Disconnect active terminal session
+    balance                  Check your gas ETH and token balances
     faucet                   Get 1,000 EXMPL test tokens (once per 24h)
     home                     Platform status + your positions
 
@@ -72,6 +73,9 @@ const run = <A extends unknown[]>(fn: (...a: A) => Promise<void>) => async (...a
 
 program.command("login").description("Check your wallet, network and gas balance").action(run(loginCmd));
 program.command("logout").description("Disconnect active terminal session").action(run(logoutCmd));
+program.command("balance").description("Check your gas ETH and token balances")
+  .option("--wallet <address>", "look up another wallet")
+  .action(run(balanceCmd));
 program.command("faucet [address]").description("Get 1,000 EXMPL test tokens (once per 24h)")
   .addHelpText("after", "\nExamples:\n  damkeeper faucet\n  damkeeper faucet 0xb91E…B5AE").action(run(faucetCmd));
 program.command("home").description("Platform status + your positions").action(run(homeCmd));

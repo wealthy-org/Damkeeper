@@ -1,7 +1,7 @@
 import { api } from "./api";
 import { account, cfg, publicClient, TESTNET } from "./config";
-import { c, kv, out, short, CliError, ok } from "./ui";
-import { formatEther } from "viem";
+import { c, kv, out, short, CliError, ok, table } from "./ui";
+import { formatEther, erc20Abi } from "viem";
 import { formatAmount, releaseAt, tokenLabel, type PositionView } from "@/lib/position-view";
 import { cardDate } from "./caption";
 import { positionsCmd, statusCmd } from "./read";
@@ -50,6 +50,44 @@ export async function faucetCmd(address?: string) {
   const to = address ?? account().address;
   const res = await api<{ txHash: string; amount: string }>("/api/faucet", { method: "POST", body: JSON.stringify({ address: to }) });
   out(res, () => console.log(`\n  ${c.lime("✓")} Sent ${res.amount} EXMPL to ${short(to)}  ${c.dim(`tx ${short(res.txHash)}`)}\n`));
+}
+
+export async function balanceCmd(o: { wallet?: string }) {
+  const target = (o.wallet ?? account().address) as `0x${string}`;
+  const pc = publicClient();
+  const tokensRes = await api<{ tokens: { address: string; symbol: string | null; decimals: number | null }[] }>(`/api/tokens?chainId=${TESTNET.id}`).catch(() => ({ tokens: [] }));
+  
+  const [eth, ...tokenBalances] = await Promise.all([
+    pc.getBalance({ address: target }),
+    ...tokensRes.tokens.map(async (t) => {
+      try {
+        const bal = await pc.readContract({
+          address: t.address as `0x${string}`,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [target],
+        });
+        return { ...t, balance: bal };
+      } catch {
+        return { ...t, balance: 0n };
+      }
+    }),
+  ]);
+
+  const rows: string[][] = [
+    ["ETH", "Native (gas)", `${Number(formatEther(eth)).toFixed(4)} ETH`],
+    ...tokenBalances.map((t) => [
+      t.symbol ?? "CUSTOM",
+      short(t.address),
+      `${(Number(t.balance) / 10 ** (t.decimals ?? 18)).toLocaleString()} ${t.symbol ?? ""}`,
+    ]),
+  ];
+
+  out({ address: target, eth: formatEther(eth), tokens: tokenBalances }, () => {
+    console.log(`\n  ${c.bold("Balances")} ${c.dim(`for ${short(target)} · Robinhood Chain Testnet`)}\n`);
+    table(["ASSET", "CONTRACT", "BALANCE"], rows);
+    console.log("");
+  });
 }
 
 export async function homeCmd() {
