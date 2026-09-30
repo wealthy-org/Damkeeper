@@ -3,5 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "main": "./vesting.ts",
-  "types": "./vesting.ts"
+  "types": "./vesting.ts",
+  "exports": {
+    ".": "./vesting.ts",
+    "./vesting": "./vesting.ts"
+  },
+  "scripts": {
+    "test": "tsx --test *.test.ts"
+  }
 }

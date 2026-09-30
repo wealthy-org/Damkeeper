@@ -1,0 +1,122 @@
+import { Command } from "commander";
+import { banner, c, fail, isJson } from "./ui";
+import { account, TESTNET } from "./config";
+import { claimCmd, lockCreate, vestingCreate, withdrawCmd } from "./write";
+import { contractsCmd, exploreCmd, positionsCmd, showCmd, statusCmd, tokensCmd } from "./read";
+import { faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
+import { showcaseCmd } from "./showcase";
+
+const VERSION = "0.1.0";
+
+const PANEL = `
+  ${c.bold("USAGE")}   damkeeper <command> [options]
+
+  ${c.lime("START HERE")}
+    login                    Check or connect your wallet via browser/Phantom
+    logout                   Disconnect active terminal session
+    faucet                   Get 1,000 EXMPL test tokens (once per 24h)
+    home                     Platform status + your positions
+
+  ${c.lime("CREATE")}
+    lock create              Hold tokens until one fixed unlock date
+    vesting create           Release tokens per second, optional cliff
+
+  ${c.lime("MANAGE")}
+    positions                Your locks and vesting  [--incoming --outgoing --type]
+    withdraw <lock-id>       Take tokens out of an unlocked lock
+    claim <vesting-id>       Claim what has vested
+    share <kind> <id>        Caption and link for a position
+
+  ${c.lime("LOOK UP")}  ${c.dim("(no wallet needed)")}
+    show <kind> <id>         Full proof page for one position
+    explore                  Every lock and vesting  [--type --q]
+    tokens                   Tokens with positions   [--q]
+    contracts                Addresses, verified source, admin
+    status                   Indexer progress and freshness
+
+  ${c.lime("OPTIONS")}
+    --json      Machine-readable output (no banner, no colors)
+    --yes       Skip the confirmation prompt (for scripts)
+    --help      Help with examples for any command:  damkeeper lock create --help
+
+  ${c.lime("DATES")}   +10m minutes · +2h · +3d · +1w · +3mo months · +1y · or 2027-03-30 17:00
+
+  ${c.dim("New here?  Run  damkeeper faucet  then  damkeeper lock create")}
+`;
+
+function statusLine() {
+  try {
+    const a = account().address;
+    return c.dim(`  v${VERSION} · ${TESTNET.name} (${TESTNET.id}) · wallet ${a.slice(0, 6)}…${a.slice(-4)}`);
+  } catch {
+    return c.dim(`  v${VERSION} · ${TESTNET.name} (${TESTNET.id}) · wallet: not connected — set DAMKEEPER_PRIVATE_KEY`);
+  }
+}
+
+const program = new Command();
+program
+  .name("damkeeper")
+  .version(VERSION, "-v, --version")
+  .option("--json", "machine-readable output")
+  .showSuggestionAfterError(true)
+  .showHelpAfterError(false)
+  .configureOutput({ outputError: (s) => process.stderr.write(`\n  ${c.red("✗")} ${s.replace(/^error: /, "")}`) });
+
+const run = <A extends unknown[]>(fn: (...a: A) => Promise<void>) => async (...a: A) => {
+  try {
+    await fn(...a);
+  } catch (e) {
+    fail(e);
+  }
+};
+
+program.command("login").description("Check your wallet, network and gas balance").action(run(loginCmd));
+program.command("logout").description("Disconnect active terminal session").action(run(logoutCmd));
+program.command("faucet [address]").description("Get 1,000 EXMPL test tokens (once per 24h)")
+  .addHelpText("after", "\nExamples:\n  damkeeper faucet\n  damkeeper faucet 0xb91E…B5AE").action(run(faucetCmd));
+program.command("home").description("Platform status + your positions").action(run(homeCmd));
+
+const lock = program.command("lock").description("Token locks");
+lock.command("create").description("Hold tokens until one fixed unlock date")
+  .option("--token <address>").option("--amount <n>").option("--to <address|self>", "withdrawal wallet", undefined)
+  .option("--unlock <when>", "+10m, +3mo, +1y or 2027-03-30 17:00").option("--title <text>", "optional offchain label, signed by you")
+  .option("-y, --yes", "skip the confirmation prompt")
+  .addHelpText("after", "\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper lock create\n  damkeeper lock create --token 0xb5b0… --amount 1000 --to self --unlock +1y --title \"Team tokens\" --yes")
+  .action(run(lockCreate));
+
+const vesting = program.command("vesting").description("Linear vesting");
+vesting.command("create").description("Release tokens per second, optional cliff")
+  .option("--token <address>").option("--amount <n>").option("--to <address|self>", "beneficiary")
+  .option("--start <when>", "now, +1d or a date").option("--cliff <when>", "optional; measured from the start").option("--end <when>", "+1y, +2y or a date")
+  .option("--title <text>").option("-y, --yes", "skip the confirmation prompt")
+  .addHelpText("after", "\nExamples:\n  damkeeper vesting create\n  damkeeper vesting create --token 0xb5b0… --amount 1200 --to 0xAlice… --start now --cliff +3mo --end +1y")
+  .action(run(vestingCreate));
+
+program.command("positions").description("Your locks and vesting")
+  .option("--wallet <address>", "look up another wallet").option("--type <lock|vesting>").option("--incoming", "you are the beneficiary").option("--outgoing", "you created it")
+  .action(run(async (o) => positionsCmd({ ...o, wallet: o.wallet ?? account().address })));
+program.command("withdraw <lock-id>").description("Take tokens out of an unlocked lock").option("-y, --yes").action(run(withdrawCmd));
+program.command("claim <vesting-id>").description("Claim what has vested").option("-y, --yes").action(run(claimCmd));
+program.command("share <kind> <id>").description("Caption and link for a position").action(run(shareCmd));
+program.command("show <kind> <id>").description("Full proof page for one position")
+  .addHelpText("after", "\nExamples:\n  damkeeper show lock 1\n  damkeeper show vesting 1 --json").action(run(showCmd));
+program.command("explore").description("Every lock and vesting").option("--type <lock|vesting>").option("--q <text>", "address, symbol, label or position number").action(run(exploreCmd));
+program.command("tokens").description("Tokens with positions").option("--q <text>").action(run(tokensCmd));
+program.command("showcase").description("Hacker-style deployment & verification demo showcase")
+  .option("--live", "live interaction")
+  .option("--replay", "replay verified onchain transaction log (default)")
+  .action(run(showcaseCmd));
+program.command("contracts").description("Addresses, verified source, admin").action(run(contractsCmd));
+program.command("status").description("Indexer progress and freshness").action(run(statusCmd));
+
+const args = process.argv.slice(2).filter((a) => a !== "--json");
+if (args.length === 0) {
+  banner();
+  if (!isJson()) {
+    console.log(statusLine());
+    console.log(PANEL);
+  }
+} else {
+  if (!["-h", "--help", "-v", "--version", "help"].includes(args[0]) && process.stdout.isTTY && !isJson()) banner();
+  program.parseAsync(process.argv).catch(fail);
+}

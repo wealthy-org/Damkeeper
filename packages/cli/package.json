@@ -1,0 +1,23 @@
+{
+  "name": "@damkeeper/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Command-line interface for Damkeeper token locks and vesting",
+  "type": "module",
+  "bin": { "damkeeper": "./bin/damkeeper.mjs" },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@damkeeper/domain": "*",
+    "commander": "^12.1.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}

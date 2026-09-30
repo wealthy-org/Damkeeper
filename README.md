@@ -169,6 +169,51 @@ forge script script/DeployTestToken.s.sol:DeployTestToken --rpc-url $TESTNET_RPC
 forge script script/EnableToken.s.sol:EnableToken --rpc-url $TESTNET_RPC_URL --broadcast
 ```
 
+## Damkeeper CLI (`@damkeeper/cli`)
+
+A dedicated command-line interface mirroring every web app flow (read proof, create lock, create vesting with cliff, withdraw, claim, share, status).
+
+```bash
+# Start CLI panel
+node packages/cli/bin/damkeeper.mjs
+# or run in workspace:
+npm run start --workspace=packages/cli
+
+# Setup wallet (testnet private key)
+export DAMKEEPER_PRIVATE_KEY="0x..."
+export DAMKEEPER_API="http://localhost:3000" # or your deployed web URL
+
+# Core commands
+damkeeper login                       # Check wallet address & gas ETH balance
+damkeeper faucet                      # Request 1,000 test EXMPL tokens (24h cooldown)
+damkeeper home                        # Status overview & wallet positions
+damkeeper lock create                 # Interactive lock creation wizard
+damkeeper vesting create              # Interactive vesting creation with cliff table
+damkeeper positions                   # List your active/withdrawn/claimed positions
+damkeeper withdraw <lock-id>          # Withdraw an unlocked lock
+damkeeper claim <vesting-id>          # Claim vested tokens
+damkeeper show <lock|vesting> <id>    # Full proof details for one position
+damkeeper share <lock|vesting> <id>   # Copy social caption and verified link
+damkeeper showcase                    # Terminal demo showcase with live/replay mode
+damkeeper status                      # Check indexer block & freshness
+
+# Non-interactive / automation
+damkeeper lock create --token 0xb5b0... --amount 1000 --to self --unlock +1y --yes
+damkeeper vesting create --token 0xb5b0... --amount 1200 --to 0xAlice... --start now --cliff +3mo --end +1y --yes
+damkeeper show lock 1 --json
+```
+
+**Relative Duration Formats:**
+- `+30s` = seconds
+- `+10m` = minutes (`m` is minutes)
+- `+2h` = hours
+- `+3d` = days
+- `+1w` = weeks
+- `+3mo` = calendar months (`mo` is months)
+- `+1y` = calendar years
+- Absolute dates: `2027-03-30 17:00`
+
+
 ## Deploying the web app to Vercel
 
 1. Push this repo, import it in Vercel, set **Root Directory** to `apps/web`.

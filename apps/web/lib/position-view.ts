@@ -1,5 +1,5 @@
 import { claimableAmount, lockStatus, vestedAmount, vestingStatus } from "@damkeeper/domain/vesting";
-import { formatTokenAmount } from "@/lib/amounts";
+import { formatTokenAmount } from "./amounts";
 
 /** A position as the UI and share card see it. All amounts/timestamps are strings (JSON-safe BigInts). */
 export interface PositionView {
