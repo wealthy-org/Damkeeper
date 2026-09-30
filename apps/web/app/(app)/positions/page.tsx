@@ -1,24 +1,77 @@
 import { db } from "@/db/client";
 import { positions } from "@/db/schema";
+import { and, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function PositionsPage() {
-  const rows = await db.select().from(positions).limit(50);
+const COPY = {
+  all: { eyebrow: "Explore", title: "Every position, in clear view" },
+  lock: { eyebrow: "Locks", title: "Token locks" },
+  vesting: { eyebrow: "Vesting", title: "Vesting schedules" },
+} as const;
+
+export default async function PositionsPage({
+  searchParams,
+}: {
+  searchParams: { type?: string; q?: string };
+}) {
+  const type = searchParams.type === "lock" || searchParams.type === "vesting" ? searchParams.type : "all";
+  const q = searchParams.q?.trim().slice(0, 66) ?? "";
+
+  const conditions: SQL[] = [];
+  if (type !== "all") conditions.push(eq(positions.kind, type));
+  if (q) {
+    const like = `%${q.toLowerCase()}%`;
+    const matches = [ilike(positions.token, like), ilike(positions.creator, like), ilike(positions.beneficiary, like)];
+    if (/^\d{1,18}$/.test(q)) matches.push(eq(positions.positionId, BigInt(q)));
+    conditions.push(or(...matches)!);
+  }
+
+  const rows = await db
+    .select()
+    .from(positions)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(positions.createdAt))
+    .limit(50);
+
+  const tabHref = (t: "all" | "lock" | "vesting") => {
+    const params = new URLSearchParams();
+    if (t !== "all") params.set("type", t);
+    if (q) params.set("q", q);
+    const s = params.toString();
+    return s ? `/positions?${s}` : "/positions";
+  };
 
   return (
     <main className="wrap">
       <div className="page-head">
         <div className="page-eyebrow">
           <span className="dot" />
-          Explore
+          {COPY[type].eyebrow}
         </div>
-        <h1>Every position, in clear view</h1>
+        <h1>{COPY[type].title}</h1>
         <p className="page-lede">
-          Locks and vesting schedules read directly from indexed contract state. No wallet
-          required to look.
+          Read directly from indexed contract state. No wallet required to look.
         </p>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+        <nav className="filter-tabs" aria-label="Filter by type">
+          {(["all", "lock", "vesting"] as const).map((t) => (
+            <Link key={t} href={tabHref(t)} aria-current={type === t ? "page" : undefined}>
+              {t === "all" ? "All" : t === "lock" ? "Locks" : "Vesting"}
+            </Link>
+          ))}
+        </nav>
+        {q && (
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            Results for <span className="mono" style={{ color: "var(--text-2)" }}>{q}</span> ·{" "}
+            <Link href={type === "all" ? "/positions" : `/positions?type=${type}`} style={{ color: "var(--accent)" }}>
+              Clear
+            </Link>
+          </span>
+        )}
       </div>
 
       <section className="card">
@@ -27,10 +80,11 @@ export default async function PositionsPage() {
             <span className="ic">
               <svg className="icon-lg" aria-hidden="true"><use href="#i-layers" /></svg>
             </span>
-            <h2>No positions indexed yet</h2>
+            <h2>{q ? "No positions match" : "No positions indexed yet"}</h2>
             <p>
-              Once a manager is deployed and the cron indexer runs (<code className="mono">/api/cron/index</code>),
-              created locks and vesting schedules will appear here automatically.
+              {q
+                ? "Try a full wallet or token address, or a position number."
+                : "Created locks and vesting schedules appear here once the indexer picks them up."}
             </p>
           </div>
         ) : (
@@ -38,6 +92,7 @@ export default async function PositionsPage() {
             <thead>
               <tr>
                 <th>Kind</th>
+                <th>#</th>
                 <th>Token</th>
                 <th>Amount</th>
                 <th>Beneficiary</th>
@@ -55,6 +110,7 @@ export default async function PositionsPage() {
                       {p.kind}
                     </span>
                   </td>
+                  <td className="mono">{p.positionId.toString()}</td>
                   <td className="mono">{p.token.slice(0, 6)}…{p.token.slice(-4)}</td>
                   <td className="mono">{p.amount}</td>
                   <td className="mono">{p.beneficiary.slice(0, 6)}…{p.beneficiary.slice(-4)}</td>

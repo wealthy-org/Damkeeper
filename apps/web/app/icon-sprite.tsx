@@ -63,6 +63,23 @@ export function IconSprite() {
             <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-5a2 2 0 1 0 0 4h6" />
           </g>
         </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" />
+          </g>
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="m16 16 5 5" />
+          </g>
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </symbol>
+        <symbol id="i-drop" viewBox="0 0 24 24">
+          <path d="M12 3.5s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        </symbol>
       </defs>
     </svg>
   );

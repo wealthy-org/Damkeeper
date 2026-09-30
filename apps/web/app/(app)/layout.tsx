@@ -1,13 +1,10 @@
 import { Providers } from "./providers";
-import { AppNav } from "./nav";
-import { WrongNetworkBanner } from "./wrong-network-banner";
+import { Shell } from "./shell";
 
 export default function AppGroupLayout({ children }: { children: React.ReactNode }) {
   return (
     <Providers>
-      <AppNav />
-      <WrongNetworkBanner />
-      {children}
+      <Shell>{children}</Shell>
     </Providers>
   );
 }
