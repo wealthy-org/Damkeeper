@@ -90,6 +90,20 @@ export const chainCheckpoints = pgTable("chain_checkpoints", {
   pk: primaryKey({ columns: [t.chainId, t.managerAddress] }),
 }));
 
+// Optional human label for a position ("Team vesting — Alice"). Offchain only and
+// never part of the onchain proof; only accepted with a signature from the
+// position's onchain creator (see app/api/labels/route.ts).
+export const positionLabels = pgTable("position_labels", {
+  chainId: integer("chain_id").notNull(),
+  managerAddress: text("manager_address").notNull(),
+  positionId: bigint("position_id", { mode: "bigint" }).notNull(),
+  label: text("label").notNull(),
+  setBy: text("set_by").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.managerAddress, t.positionId] }),
+}));
+
 // Rate-limits the testnet EXMPL faucet (one claim per wallet per window).
 export const faucetClaims = pgTable("faucet_claims", {
   chainId: integer("chain_id").notNull(),

@@ -1,7 +1,8 @@
-import { db } from "@/db/client";
-import { positions } from "@/db/schema";
-import { and, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import Link from "next/link";
+import { listPositions } from "@/lib/positions-query";
+import { formatShort } from "@/lib/dates";
+import { formatAmount, proofPath, releaseAt, shortAddress, statusOf, STATUS_LABEL, tokenLabel } from "@/lib/position-view";
+import { ShareButton } from "../share/share-button";
 
 export const dynamic = "force-dynamic";
 
@@ -19,21 +20,7 @@ export default async function PositionsPage({
   const type = searchParams.type === "lock" || searchParams.type === "vesting" ? searchParams.type : "all";
   const q = searchParams.q?.trim().slice(0, 66) ?? "";
 
-  const conditions: SQL[] = [];
-  if (type !== "all") conditions.push(eq(positions.kind, type));
-  if (q) {
-    const like = `%${q.toLowerCase()}%`;
-    const matches = [ilike(positions.token, like), ilike(positions.creator, like), ilike(positions.beneficiary, like)];
-    if (/^\d{1,18}$/.test(q)) matches.push(eq(positions.positionId, BigInt(q)));
-    conditions.push(or(...matches)!);
-  }
-
-  const rows = await db
-    .select()
-    .from(positions)
-    .where(conditions.length ? and(...conditions) : undefined)
-    .orderBy(desc(positions.createdAt))
-    .limit(50);
+  const rows = await listPositions({ kind: type === "all" ? undefined : type, q: q || undefined, limit: 100 });
 
   const tabHref = (t: "all" | "lock" | "vesting") => {
     const params = new URLSearchParams();
@@ -92,36 +79,45 @@ export default async function PositionsPage({
             <thead>
               <tr>
                 <th>Kind</th>
-                <th>#</th>
-                <th>Token</th>
+                <th>Position</th>
                 <th>Amount</th>
+                <th>Releases</th>
                 <th>Beneficiary</th>
+                <th>Status</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((p) => (
-                <tr key={`${p.chainId}-${p.managerAddress}-${p.positionId}`}>
-                  <td>
-                    <span className="badge">
-                      <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true">
-                        <use href={p.kind === "lock" ? "#i-lock" : "#i-chart"} />
-                      </svg>
-                      {p.kind}
-                    </span>
-                  </td>
-                  <td className="mono">{p.positionId.toString()}</td>
-                  <td className="mono">{p.token.slice(0, 6)}…{p.token.slice(-4)}</td>
-                  <td className="mono">{p.amount}</td>
-                  <td className="mono">{p.beneficiary.slice(0, 6)}…{p.beneficiary.slice(-4)}</td>
-                  <td>
-                    <Link href={`/positions/${p.chainId}/${p.managerAddress}/${p.positionId}`} className="btn btn-ghost" style={{ minHeight: 32, fontSize: 12 }}>
-                      View proof
-                      <svg className="icon" style={{ width: 12, height: 12 }} aria-hidden="true"><use href="#i-up" /></svg>
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((p) => {
+                const status = statusOf(p);
+                const release = releaseAt(p);
+                return (
+                  <tr key={`${p.chainId}-${p.manager}-${p.positionId}`}>
+                    <td>
+                      <span className="badge">
+                        <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true">
+                          <use href={p.kind === "lock" ? "#i-lock" : "#i-chart"} />
+                        </svg>
+                        {p.kind}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ display: "block" }}>{p.label ?? tokenLabel(p)}</span>
+                      <span className="mono" style={{ fontSize: 10, color: "var(--faint)" }}>#{p.positionId} · {shortAddress(p.token)}</span>
+                    </td>
+                    <td className="mono">{formatAmount(p)} {tokenLabel(p)}</td>
+                    <td className="mono">{release ? formatShort(release) : "—"}</td>
+                    <td className="mono">{shortAddress(p.beneficiary)}</td>
+                    <td><span className={status === "withdrawn" || status === "fully_claimed" ? "badge badge-muted" : "badge"}>{STATUS_LABEL[status]}</span></td>
+                    <td>
+                      <div className="pos-actions">
+                        <ShareButton position={p} />
+                        <Link href={proofPath(p)} className="btn btn-ghost btn-sm">Proof</Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getPlatformStats } from "@/lib/platform-stats";
 import { FaucetCard } from "./faucet-button";
-import { YourPositions } from "./your-positions";
+import { MyPositions } from "../my-positions";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +91,11 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      <YourPositions />
+      <div className="section-title">
+        <h2>Your positions</h2>
+        <Link href="/locks" className="live-tag">All locks and vesting →</Link>
+      </div>
+      <MyPositions />
     </main>
   );
 }

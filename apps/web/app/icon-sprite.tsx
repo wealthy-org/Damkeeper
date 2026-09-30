@@ -77,6 +77,14 @@ export function IconSprite() {
         <symbol id="i-menu" viewBox="0 0 24 24">
           <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
         </symbol>
+        <symbol id="i-coins" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <ellipse cx="9" cy="7" rx="5.5" ry="2.5" />
+            <path d="M3.5 7v5c0 1.4 2.5 2.5 5.5 2.5M3.5 12v5c0 1.4 2.5 2.5 5.5 2.5" />
+            <ellipse cx="15" cy="13" rx="5.5" ry="2.5" />
+            <path d="M9.5 13v5c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5" />
+          </g>
+        </symbol>
         <symbol id="i-drop" viewBox="0 0 24 24">
           <path d="M12 3.5s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
         </symbol>

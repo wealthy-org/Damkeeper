@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useConnect, useReadContract } from "wagmi";
+import { useAccount, useConnect, useReadContract, useSignMessage } from "wagmi";
 import { erc20Abi } from "viem";
 import { lockManagerAbi } from "@/lib/abi";
 import { useWrongNetwork } from "../wrong-network-banner";
@@ -9,6 +9,11 @@ import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 import { DateTimePicker, type DatePreset } from "../date-time-picker";
 import { addDays, addMinutes, addMonths, formatLocal, formatUtc, relativeFromNow, roundUpToStep, toUnixSeconds } from "@/lib/dates";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
+import { robinhoodTestnet } from "@/lib/chains";
+import { cleanLabel, labelMessage, LABEL_MAX } from "@/lib/label-message";
+import { positionIdFromReceipt } from "@/lib/receipt";
+import { proofPath, type PositionView } from "@/lib/position-view";
+import { ShareButton } from "../share/share-button";
 
 export const LOCK_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_LOCK_MANAGER_ADDRESS as `0x${string}` | undefined;
 
@@ -35,6 +40,10 @@ export function LockForm({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
   const [unlockAt, setUnlockAt] = useState<Date | null>(null);
   const [resettingAllowance, setResettingAllowance] = useState(false);
+  const [title, setTitle] = useState("");
+  const [createdView, setCreatedView] = useState<PositionView | null>(null);
+  const [labelNote, setLabelNote] = useState<string | null>(null);
+  const { signMessageAsync } = useSignMessage();
 
   const approveFlow = useTxFlow();
   const createFlow = useTxFlow();
@@ -120,32 +129,87 @@ export function LockForm({ onClose }: { onClose: () => void }) {
   }
 
   async function handleCreate() {
-    if (!LOCK_MANAGER_ADDRESS || !unlockAt || parsedAmount === null) return;
-    await createFlow.run({
+    if (!LOCK_MANAGER_ADDRESS || !unlockAt || parsedAmount === null || !address) return;
+    const receipt = await createFlow.run({
       address: LOCK_MANAGER_ADDRESS,
       abi: lockManagerAbi,
       functionName: "createLock",
       args: [token as `0x${string}`, beneficiary as `0x${string}`, parsedAmount, toUnixSeconds(unlockAt)],
     });
+    if (!receipt || typeof receipt === "string") return;
+    const id = positionIdFromReceipt(receipt, LOCK_MANAGER_ADDRESS, lockManagerAbi, "LockCreated");
+    const label = id ? await saveLabel(id) : null;
+    setCreatedView({
+      chainId: robinhoodTestnet.id,
+      manager: LOCK_MANAGER_ADDRESS.toLowerCase(),
+      positionId: id ?? "0",
+      kind: "lock",
+      token: token.toLowerCase(),
+      tokenSymbol: symbol || null,
+      tokenName: null,
+      tokenDecimals: decimals,
+      creator: address.toLowerCase(),
+      beneficiary: beneficiary.toLowerCase(),
+      amount: parsedAmount.toString(),
+      claimedAmount: "0",
+      createdAt: String(Math.floor(Date.now() / 1000)),
+      unlockTime: toUnixSeconds(unlockAt).toString(),
+      startTime: null,
+      cliffTime: null,
+      endTime: null,
+      withdrawn: false,
+      label,
+      source: "chain",
+    });
+  }
+
+  // Optional offchain label: the creator signs it so nobody else can rename the lock.
+  async function saveLabel(id: string) {
+    const clean = cleanLabel(title);
+    if (!clean || !LOCK_MANAGER_ADDRESS) return null;
+    try {
+      const message = labelMessage(robinhoodTestnet.id, LOCK_MANAGER_ADDRESS, id, clean);
+      const signature = await signMessageAsync({ message });
+      const res = await fetch("/api/labels", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chainId: robinhoodTestnet.id, manager: LOCK_MANAGER_ADDRESS, positionId: id, label: clean, signature }),
+      });
+      if (!res.ok) {
+        setLabelNote((await res.json().catch(() => null))?.error ?? "The title couldn't be saved.");
+        return null;
+      }
+      return clean;
+    } catch {
+      setLabelNote("Title not saved — the signature was declined. The lock itself is created.");
+      return null;
+    }
   }
 
   const approveBusy = !SETTLED.includes(approveFlow.status);
   const createBusy = !SETTLED.includes(createFlow.status);
-  const created = createFlow.status === "included";
-
-  if (created) {
+  if (createdView) {
     return (
       <div className="empty-hero" style={{ padding: "24px 8px" }}>
         <span className="ic">
           <svg className="icon-lg" aria-hidden="true"><use href="#i-check" /></svg>
         </span>
-        <h2>Lock created</h2>
+        <h2>Lock created{createdView.positionId !== "0" ? ` · #${createdView.positionId}` : ""}</h2>
         <p>
-          {parsedAmount ? formatTokenAmount(parsedAmount, decimals) : ""} {symbol} is held until{" "}
-          {unlockAt ? formatLocal(unlockAt) : "the unlock date"}. It shows on your dashboard once the indexer catches up.
+          {formatTokenAmount(BigInt(createdView.amount), decimals)} {symbol} is held until {unlockAt ? formatLocal(unlockAt) : "the unlock date"}.
+          The proof page works right away; your dashboard updates once the indexer catches up.
         </p>
+        {labelNote && <p className="field-note" style={{ color: "var(--danger)" }}>{labelNote}</p>}
         {createFlow.hash && <span className="mono field-note">Tx {createFlow.hash.slice(0, 10)}…{createFlow.hash.slice(-6)}</span>}
-        <button className="btn btn-primary" onClick={onClose}>Done</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          {createdView.positionId !== "0" && (
+            <>
+              <ShareButton position={createdView} className="btn btn-primary" />
+              <a href={proofPath(createdView)} className="btn btn-ghost">View proof page</a>
+            </>
+          )}
+          <button className="btn btn-ghost" onClick={onClose}>Done</button>
+        </div>
       </div>
     );
   }
@@ -153,8 +217,16 @@ export function LockForm({ onClose }: { onClose: () => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div className="field">
+        <div className="field-row">
+          <label className="field-label" htmlFor="lock-title">Title (optional)</label>
+          <span className="field-note">Offchain label, signed by you</span>
+        </div>
+        <input id="lock-title" autoFocus className="input" value={title} maxLength={LABEL_MAX} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Team tokens — 12 month lock" />
+      </div>
+
+      <div className="field">
         <label className="field-label" htmlFor="lock-token">Token address</label>
-        <input id="lock-token" autoFocus className="input" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="0x…" />
+        <input id="lock-token" className="input" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="0x…" />
         {symbol ? (
           <div className="tok-row" style={{ marginTop: 2 }}>
             <span className="tok-ic">{symbol.slice(0, 2).toUpperCase()}</span>

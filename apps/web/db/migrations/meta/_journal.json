@@ -15,6 +15,13 @@
       "when": 1790604714886,
       "tag": "0001_cloudy_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790764907330,
+      "tag": "0002_aspiring_silver_fox",
+      "breakpoints": true
     }
   ]
 }

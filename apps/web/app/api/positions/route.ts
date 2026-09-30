@@ -1,43 +1,34 @@
 import { db } from "@/db/client";
-import { positions, chainCheckpoints } from "@/db/schema";
-import { and, eq, or } from "drizzle-orm";
-import { serializePosition } from "@/lib/serialize";
+import { chainCheckpoints } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { listPositions } from "@/lib/positions-query";
 
-// GET /api/positions?chainId=&wallet=&role=creator|beneficiary&type=&cursor=
+// GET /api/positions?chainId=&wallet=&role=creator|beneficiary&type=lock|vesting&token=&q=
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const chainId = searchParams.get("chainId");
-  const wallet = searchParams.get("wallet")?.toLowerCase();
-  const role = searchParams.get("role"); // creator | beneficiary
-  const type = searchParams.get("type"); // lock | vesting
+  const chainId = Number(searchParams.get("chainId")) || undefined;
+  const wallet = searchParams.get("wallet") ?? undefined;
+  const role = searchParams.get("role");
+  const type = searchParams.get("type");
+  const token = searchParams.get("token") ?? undefined;
+  const q = searchParams.get("q")?.trim().slice(0, 66) || undefined;
 
-  const conditions = [];
-  if (chainId) conditions.push(eq(positions.chainId, Number(chainId)));
-  if (type) conditions.push(eq(positions.kind, type));
-  if (wallet) {
-    if (role === "creator") conditions.push(eq(positions.creator, wallet));
-    else if (role === "beneficiary") conditions.push(eq(positions.beneficiary, wallet));
-    else conditions.push(or(eq(positions.creator, wallet), eq(positions.beneficiary, wallet)));
-  }
+  const rows = await listPositions({
+    chainId,
+    wallet,
+    role: role === "creator" || role === "beneficiary" ? role : undefined,
+    kind: type === "lock" || type === "vesting" ? type : undefined,
+    token,
+    q,
+    limit: 100,
+  });
 
-  const rows = await db
-    .select()
-    .from(positions)
-    .where(conditions.length ? and(...conditions) : undefined)
-    .limit(50);
-
-  const checkpoint = chainId
-    ? await db
-        .select()
-        .from(chainCheckpoints)
-        .where(eq(chainCheckpoints.chainId, Number(chainId)))
-        .limit(1)
+  const [asOf] = chainId
+    ? await db.select().from(chainCheckpoints).where(eq(chainCheckpoints.chainId, chainId)).limit(1)
     : [];
 
-  const asOf = checkpoint[0];
-
   return Response.json({
-    positions: rows.map(serializePosition),
+    positions: rows,
     asOfBlock: asOf ? asOf.lastBlock.toString() : null,
     asOfBlockHash: asOf?.lastBlockHash ?? null,
     indexedAt: asOf?.updatedAt ?? null,

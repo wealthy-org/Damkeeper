@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useConnect, useReadContract } from "wagmi";
+import { useAccount, useConnect, useReadContract, useSignMessage } from "wagmi";
 import { erc20Abi } from "viem";
 import { vestingManagerAbi } from "@/lib/abi";
 import { vestedAmount } from "@damkeeper/domain/vesting";
@@ -10,6 +10,11 @@ import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 import { DateTimePicker, type DatePreset } from "../date-time-picker";
 import { addDays, addMinutes, addMonths, formatLocal, formatShort, roundUpToStep, toUnixSeconds } from "@/lib/dates";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
+import { robinhoodTestnet } from "@/lib/chains";
+import { cleanLabel, labelMessage, LABEL_MAX } from "@/lib/label-message";
+import { positionIdFromReceipt } from "@/lib/receipt";
+import { proofPath, type PositionView } from "@/lib/position-view";
+import { ShareButton } from "../share/share-button";
 
 export const VESTING_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS as `0x${string}` | undefined;
 
@@ -28,6 +33,10 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
   const [cliff, setCliff] = useState<Date | null>(null);
   const [end, setEnd] = useState<Date | null>(null);
   const [resettingAllowance, setResettingAllowance] = useState(false);
+  const [title, setTitle] = useState("");
+  const [createdView, setCreatedView] = useState<PositionView | null>(null);
+  const [labelNote, setLabelNote] = useState<string | null>(null);
+  const { signMessageAsync } = useSignMessage();
 
   const approveFlow = useTxFlow();
   const createFlow = useTxFlow();
@@ -145,8 +154,8 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
   }
 
   async function handleCreate() {
-    if (!VESTING_MANAGER_ADDRESS || !end || parsedAmount === null) return;
-    await createFlow.run({
+    if (!VESTING_MANAGER_ADDRESS || !end || parsedAmount === null || !address) return;
+    const receipt = await createFlow.run({
       address: VESTING_MANAGER_ADDRESS,
       abi: vestingManagerAbi,
       functionName: "createVesting",
@@ -159,24 +168,82 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
         toUnixSeconds(end),
       ],
     });
+    if (!receipt || typeof receipt === "string") return;
+    const id = positionIdFromReceipt(receipt, VESTING_MANAGER_ADDRESS, vestingManagerAbi, "VestingCreated");
+    const label = id ? await saveLabel(id) : null;
+    const nowSec = String(Math.floor(Date.now() / 1000));
+    setCreatedView({
+      chainId: robinhoodTestnet.id,
+      manager: VESTING_MANAGER_ADDRESS.toLowerCase(),
+      positionId: id ?? "0",
+      kind: "vesting",
+      token: token.toLowerCase(),
+      tokenSymbol: symbol || null,
+      tokenName: null,
+      tokenDecimals: decimals,
+      creator: address.toLowerCase(),
+      beneficiary: beneficiary.toLowerCase(),
+      amount: parsedAmount.toString(),
+      claimedAmount: "0",
+      createdAt: nowSec,
+      unlockTime: null,
+      startTime: start ? toUnixSeconds(start).toString() : nowSec,
+      cliffTime: cliff ? toUnixSeconds(cliff).toString() : "0",
+      endTime: toUnixSeconds(end).toString(),
+      withdrawn: false,
+      label,
+      source: "chain",
+    });
+  }
+
+  // Optional offchain label: the creator signs it so nobody else can rename the schedule.
+  async function saveLabel(id: string) {
+    const clean = cleanLabel(title);
+    if (!clean || !VESTING_MANAGER_ADDRESS) return null;
+    try {
+      const message = labelMessage(robinhoodTestnet.id, VESTING_MANAGER_ADDRESS, id, clean);
+      const signature = await signMessageAsync({ message });
+      const res = await fetch("/api/labels", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chainId: robinhoodTestnet.id, manager: VESTING_MANAGER_ADDRESS, positionId: id, label: clean, signature }),
+      });
+      if (!res.ok) {
+        setLabelNote((await res.json().catch(() => null))?.error ?? "The title couldn't be saved.");
+        return null;
+      }
+      return clean;
+    } catch {
+      setLabelNote("Title not saved — the signature was declined. The schedule itself is created.");
+      return null;
+    }
   }
 
   const approveBusy = !SETTLED.includes(approveFlow.status);
   const createBusy = !SETTLED.includes(createFlow.status);
 
-  if (createFlow.status === "included") {
+  if (createdView) {
     return (
       <div className="empty-hero" style={{ padding: "24px 8px" }}>
         <span className="ic">
           <svg className="icon-lg" aria-hidden="true"><use href="#i-check" /></svg>
         </span>
-        <h2>Vesting schedule created</h2>
+        <h2>Vesting schedule created{createdView.positionId !== "0" ? ` · #${createdView.positionId}` : ""}</h2>
         <p>
-          {parsedAmount ? formatTokenAmount(parsedAmount, decimals) : ""} {symbol} releases until{" "}
-          {end ? formatLocal(end) : "the end date"}. It shows on your dashboard once the indexer catches up.
+          {formatTokenAmount(BigInt(createdView.amount), decimals)} {symbol} releases until {end ? formatLocal(end) : "the end date"}.
+          The proof page works right away; your dashboard updates once the indexer catches up.
         </p>
+        {labelNote && <p className="field-note" style={{ color: "var(--danger)" }}>{labelNote}</p>}
         {createFlow.hash && <span className="mono field-note">Tx {createFlow.hash.slice(0, 10)}…{createFlow.hash.slice(-6)}</span>}
-        <button className="btn btn-primary" onClick={onClose}>Done</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          {createdView.positionId !== "0" && (
+            <>
+              <ShareButton position={createdView} className="btn btn-primary" />
+              <a href={proofPath(createdView)} className="btn btn-ghost">View proof page</a>
+            </>
+          )}
+          <button className="btn btn-ghost" onClick={onClose}>Done</button>
+        </div>
       </div>
     );
   }
@@ -184,8 +251,16 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div className="field">
+        <div className="field-row">
+          <label className="field-label" htmlFor="v-title">Title (optional)</label>
+          <span className="field-note">Offchain label, signed by you</span>
+        </div>
+        <input id="v-title" autoFocus className="input" value={title} maxLength={LABEL_MAX} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Team vesting — Alice" />
+      </div>
+
+      <div className="field">
         <label className="field-label" htmlFor="v-token">Token address</label>
-        <input id="v-token" autoFocus className="input" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="0x…" />
+        <input id="v-token" className="input" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="0x…" />
         {symbol ? (
           <div className="tok-row" style={{ marginTop: 2 }}>
             <span className="tok-ic">{symbol.slice(0, 2).toUpperCase()}</span>

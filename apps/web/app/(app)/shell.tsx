@@ -18,19 +18,10 @@ interface NavItem {
 
 const productNav: NavItem[] = [
   { href: "/app", label: "Home", icon: "i-home", match: (p) => p === "/app" },
-  {
-    href: "/positions?type=lock",
-    label: "Locks",
-    icon: "i-lock",
-    match: (p, t) => p === "/positions" && t === "lock",
-  },
-  {
-    href: "/positions?type=vesting",
-    label: "Vesting",
-    icon: "i-chart",
-    match: (p, t) => p === "/positions" && t === "vesting",
-  },
-  { href: "/positions", label: "Explore", icon: "i-layers", match: (p, t) => p.startsWith("/positions") && !t },
+  { href: "/locks", label: "Locks", icon: "i-lock", match: (p) => p === "/locks" },
+  { href: "/vesting", label: "Vesting", icon: "i-chart", match: (p) => p === "/vesting" },
+  { href: "/tokens", label: "Tokens", icon: "i-coins", match: (p) => p === "/tokens" },
+  { href: "/positions", label: "Explore", icon: "i-layers", match: (p) => p.startsWith("/positions") },
 ];
 
 const recordsNav: NavItem[] = [
@@ -98,6 +89,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </button>
           <SearchBox />
           <div className="topbar-end">
+            <ShareDashboard />
             <WalletControl />
           </div>
         </header>
@@ -192,6 +184,31 @@ function WalletControl() {
   return (
     <button className="btn btn-primary btn-sm" disabled={isPending} onClick={() => connect({ connector: connectors[0] })}>
       {isPending ? "Connecting…" : "Connect wallet"}
+    </button>
+  );
+}
+
+/** Copies a public link to every position this wallet created or receives. */
+function ShareDashboard() {
+  const { address, isConnected } = useAccount();
+  const [copied, setCopied] = useState(false);
+  if (!isConnected || !address) return null;
+
+  async function copy() {
+    const url = `${window.location.origin}/positions?q=${address!.toLowerCase()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      window.prompt("Copy this link", url);
+    }
+  }
+
+  return (
+    <button className="btn btn-ghost btn-sm share-dash" onClick={copy} title="Copy a public link to this wallet's positions">
+      <svg className="icon" aria-hidden="true"><use href={copied ? "#i-check" : "#i-link"} /></svg>
+      {copied ? "Link copied" : "Share dashboard"}
     </button>
   );
 }

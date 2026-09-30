@@ -1,6 +1,7 @@
 import { createPublicClient, http, parseAbiItem } from "viem";
 import { db } from "@/db/client";
 import { positions, positionEvents, chainCheckpoints, deployments } from "@/db/schema";
+import { ensureTokenMetadata } from "@/lib/token-metadata";
 import { and, eq } from "drizzle-orm";
 import { chainById } from "@/lib/chains";
 
@@ -108,6 +109,9 @@ export async function GET(request: Request) {
         .onConflictDoNothing();
 
       if (log.eventName === "LockCreated" || log.eventName === "VestingCreated") {
+        // Addresses are stored lowercase so wallet/token lookups match (brief.md 11.3).
+        const tokenAddress = (args.token as string).toLowerCase();
+        await ensureTokenMetadata(client, manager.chainId, tokenAddress);
         await db
           .insert(positions)
           .values({
@@ -115,9 +119,9 @@ export async function GET(request: Request) {
             managerAddress: manager.managerAddress,
             positionId,
             kind: manager.kind,
-            token: args.token as string,
-            creator: args.creator as string,
-            beneficiary: args.beneficiary as string,
+            token: tokenAddress,
+            creator: (args.creator as string).toLowerCase(),
+            beneficiary: (args.beneficiary as string).toLowerCase(),
             amount: ((args.amount as bigint) ?? 0n).toString(),
             createdAt: args.createdAt as bigint,
             unlockTime: (args.unlockTime as bigint) ?? null,
@@ -184,3 +188,4 @@ export async function GET(request: Request) {
 
   return Response.json({ ok: true, results });
 }
+

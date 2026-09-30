@@ -1,7 +1,7 @@
 import { db } from "@/db/client";
-import { positions, positionEvents, chainCheckpoints } from "@/db/schema";
+import { positionEvents, chainCheckpoints } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { serializePosition } from "@/lib/serialize";
+import { getPosition } from "@/lib/positions-query";
 
 export async function GET(
   _request: Request,
@@ -9,19 +9,12 @@ export async function GET(
 ) {
   const chainId = Number(params.chainId);
   const manager = params.manager.toLowerCase();
-  const positionId = BigInt(params.id);
+  const positionId = /^\d{1,18}$/.test(params.id) ? BigInt(params.id) : 0n;
 
-  const [position] = await db
-    .select()
-    .from(positions)
-    .where(
-      and(
-        eq(positions.chainId, chainId),
-        eq(positions.managerAddress, manager),
-        eq(positions.positionId, positionId)
-      )
-    )
-    .limit(1);
+  if (!/^\d{1,18}$/.test(params.id)) {
+    return Response.json({ error: "Position not found" }, { status: 404 });
+  }
+  const position = await getPosition(chainId, manager, positionId);
 
   if (!position) {
     return Response.json({ error: "Position not found" }, { status: 404 });
@@ -46,7 +39,7 @@ export async function GET(
     .limit(1);
 
   return Response.json({
-    position: serializePosition(position),
+    position,
     events: events.map((e) => ({
       blockNumber: e.blockNumber.toString(),
       txHash: e.txHash,
