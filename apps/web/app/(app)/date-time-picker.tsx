@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { formatLocal, formatUtc, relativeFromNow, roundUpToStep, sameDay, startOfDay } from "@/lib/dates";
 
 export interface DatePreset {
@@ -30,7 +30,44 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export function DateTimePicker({ id, label, value, onChange, min, presets, emptyLabel, placeholder, error }: Props) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(() => monthStart(value ?? new Date()));
+  const [popStyle, setPopStyle] = useState<CSSProperties>({ visibility: "hidden" });
   const rootRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  // The popover is position: fixed so it can extend past a scrolling container
+  // (e.g. the create modal's body) instead of being clipped by it. It stays in
+  // this component's DOM, so inside a modal <dialog> it's still interactive.
+  useLayoutEffect(() => {
+    if (!open) {
+      setPopStyle({ visibility: "hidden" });
+      return;
+    }
+    const place = () => {
+      const anchor = anchorRef.current?.getBoundingClientRect();
+      const pop = popRef.current;
+      if (!anchor || !pop) return;
+      const gap = 6;
+      const margin = 8;
+      const width = Math.min(320, window.innerWidth - margin * 2);
+      const height = pop.offsetHeight;
+      const below = window.innerHeight - anchor.bottom - gap - margin;
+      const above = anchor.top - gap - margin;
+      const top =
+        height <= below || below >= above
+          ? Math.min(anchor.bottom + gap, window.innerHeight - margin - height)
+          : Math.max(margin, anchor.top - gap - height);
+      const left = Math.min(Math.max(margin, anchor.left), window.innerWidth - margin - width);
+      setPopStyle({ top: Math.max(margin, top), left, width });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, view]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,7 +126,7 @@ export function DateTimePicker({ id, label, value, onChange, min, presets, empty
     <div className="field" ref={rootRef} onKeyDown={onKeyDown}>
       <label className="field-label" htmlFor={id}>{label}</label>
 
-      <div className="dtp-anchor">
+      <div className="dtp-anchor" ref={anchorRef}>
       <button
         id={id}
         type="button"
@@ -105,7 +142,7 @@ export function DateTimePicker({ id, label, value, onChange, min, presets, empty
       </button>
 
       {open && (
-        <div className="dtp-pop" role="dialog" aria-label={`Choose ${label.toLowerCase()}`}>
+        <div className="dtp-pop" ref={popRef} style={popStyle} role="dialog" aria-label={`Choose ${label.toLowerCase()}`}>
           {presets && presets.length > 0 && (
             <div className="dtp-presets" role="group" aria-label="Quick picks">
               {presets.map((p) => {

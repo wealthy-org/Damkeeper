@@ -7,6 +7,7 @@ import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { robinhoodTestnet } from "@/lib/chains";
 import { WrongNetworkBanner } from "./wrong-network-banner";
 import { CreateModal } from "./create/create-modal";
+import { WelcomeModal } from "./welcome-modal";
 
 interface NavItem {
   href: string;
@@ -71,7 +72,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <span className="sb-label">Network</span>
           <div className="sb-network-card">
             <span className="sb-chain">
-              <svg className="icon" aria-hidden="true"><use href="#i-layers" /></svg>
+              <img
+                src="https://cdn.robinhood.com/assets/generated_assets/hoodchain_docsite/feather-dark.svg"
+                alt=""
+                width={12}
+                height={16}
+              />
             </span>
             <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.35 }}>
               <span style={{ fontSize: 12, color: "var(--text-2)" }}>Robinhood Chain</span>
@@ -101,6 +107,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <Suspense fallback={null}>
         <CreateModal />
+        <WelcomeModal />
       </Suspense>
     </div>
   );
