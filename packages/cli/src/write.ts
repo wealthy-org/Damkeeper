@@ -4,12 +4,12 @@ import { account, cfg, publicClient, TESTNET, walletClient } from "./config";
 import { ask, confirm, interactive } from "./prompt";
 import { parseWhen } from "./time";
 import { c, CliError, kv, out, short, step, ok, table } from "./ui";
-import { lockManagerAbi, vestingManagerAbi } from "@/lib/abi";
-import { addMinutes, formatLocal, formatUtc, relativeFromNow, toUnixSeconds } from "@/lib/dates";
-import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
-import { cleanLabel, labelMessage } from "@/lib/label-message";
-import { vestedAmount } from "@damkeeper/domain/vesting";
-import { claimableOf, formatAmount, tokenLabel, type PositionView } from "@/lib/position-view";
+import { lockManagerAbi, vestingManagerAbi } from "./shared/abi";
+import { addMinutes, formatLocal, formatUtc, relativeFromNow, toUnixSeconds } from "./shared/dates";
+import { formatTokenAmount, safeParseUnits } from "./shared/amounts";
+import { cleanLabel, labelMessage } from "./shared/label-message";
+import { vestedAmount } from "./shared/vesting";
+import { claimableOf, formatAmount, tokenLabel, type PositionView } from "./shared/position-view";
 import { remember } from "./recent";
 
 const MIN_LEAD_MINUTES = 2;

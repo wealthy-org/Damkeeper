@@ -1,23 +1,36 @@
 {
   "name": "@damkeeper/cli",
   "version": "0.1.0",
-  "private": true,
-  "description": "Command-line interface for Damkeeper token locks and vesting",
+  "description": "Command-line interface for Damkeeper token locks and vesting on Robinhood Chain",
   "type": "module",
+  "homepage": "https://damkeeper.xyz",
   "bin": { "damkeeper": "./bin/damkeeper.mjs" },
+  "files": ["bin/", "dist/", "README.md"],
   "scripts": {
     "start": "tsx src/index.ts",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@damkeeper/domain": "*",
     "commander": "^12.1.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
+    "tsup": "^8.3.0",
     "typescript": "^5.5.0",
     "@types/node": "^20.14.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["damkeeper", "token-lock", "vesting", "robinhood-chain", "cli", "web3"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wealthy-org/Damkeeper.git",
+    "directory": "packages/cli"
   }
 }

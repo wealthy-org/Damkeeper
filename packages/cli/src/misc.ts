@@ -1,8 +1,8 @@
 import { api } from "./api";
-import { account, cfg, publicClient, TESTNET } from "./config";
+import { account, cfg, DEFAULT_DEPLOYMENTS, publicClient, TESTNET } from "./config";
 import { c, kv, out, short, CliError, ok, table } from "./ui";
 import { formatEther, erc20Abi } from "viem";
-import { formatAmount, releaseAt, tokenLabel, type PositionView } from "@/lib/position-view";
+import { formatAmount, releaseAt, tokenLabel, type PositionView } from "./shared/position-view";
 import { cardDate } from "./caption";
 import { positionsCmd, statusCmd } from "./read";
 import { clearSession, loadSession, loginWithBrowser } from "./session";
@@ -107,7 +107,9 @@ export async function homeCmd() {
 
 export async function shareCmd(kind: string, id: string) {
   if (kind !== "lock" && kind !== "vesting") throw new CliError(`Unknown kind "${kind}".`, "Use lock or vesting.");
-  const dep = (await api<{ deployments: { kind: string; managerAddress: string }[] }>(`/api/deployments?chainId=${TESTNET.id}`)).deployments.find((d) => d.kind === kind);
+  const deployments = await api<{ deployments: { kind: string; managerAddress: string }[] }>(`/api/deployments?chainId=${TESTNET.id}`)
+    .catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
+  const dep = deployments.deployments.find((d) => d.kind === kind);
   if (!dep) throw new CliError(`No ${kind} contract is recorded for this network.`);
   const p = (await api<{ position: PositionView }>(`/api/positions/${TESTNET.id}/${dep.managerAddress}/${id}`).catch(() => {
     throw new CliError(`No ${kind} #${id} exists.`);

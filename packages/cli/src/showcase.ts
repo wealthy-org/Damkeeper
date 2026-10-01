@@ -1,6 +1,6 @@
 import { c, ok, step, table } from "./ui";
 import { publicClient, TESTNET, cfg } from "./config";
-import { formatLocal, formatUtc } from "@/lib/dates";
+import { formatLocal, formatUtc } from "./shared/dates";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

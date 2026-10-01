@@ -1,11 +1,11 @@
 import { api } from "./api";
-import { cfg } from "./config";
+import { cfg, DEFAULT_DEPLOYMENTS } from "./config";
 import { c, isJson, kv, out, short, table, CliError } from "./ui";
-import { formatShort } from "@/lib/dates";
+import { formatShort } from "./shared/dates";
 import {
   formatAmount, proofPath, releaseAt, shortAddress, statusOf, STATUS_LABEL, tokenLabel, claimableOf, type PositionView,
-} from "@/lib/position-view";
-import { formatLocal, formatUtc } from "@/lib/dates";
+} from "./shared/position-view";
+import { formatLocal, formatUtc } from "./shared/dates";
 import { pending } from "./recent";
 
 const CHAIN = 46630;
@@ -53,7 +53,8 @@ export async function positionsCmd(o: { wallet: string; type?: string; incoming?
 }
 
 export async function showCmd(kind: string, id: string) {
-  const deployments = await api<{ deployments: { kind: string; managerAddress: string }[] }>(`/api/deployments?chainId=${CHAIN}`);
+  const deployments = await api<{ deployments: { kind: string; managerAddress: string }[] }>(`/api/deployments?chainId=${CHAIN}`)
+    .catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   const dep = deployments.deployments.find((d) => d.kind === asKind(kind));
   if (!dep) throw new CliError(`No ${kind} contract is recorded for this network.`);
   if (!/^\d+$/.test(id)) throw new CliError(`"${id}" isn't a position number.`);
@@ -121,7 +122,7 @@ export async function tokensCmd(o: { q?: string }) {
 export async function contractsCmd() {
   const data = await api<{ deployments: { kind: string; managerAddress: string; version: string; verifiedSourceUrl: string | null; admin: string; deployBlock: string }[] }>(
     `/api/deployments?chainId=${CHAIN}`
-  );
+  ).catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   out(data.deployments, () => {
     console.log(`\n  ${c.bold("Contracts")} ${c.dim("Robinhood Chain Testnet · 46630")}\n`);
     for (const d of data.deployments) {
