@@ -78,6 +78,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
         </div>
+
+        <div style={{ padding: "0 14px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11 }}>
+          <a
+            href="https://x.com/damkeeper_fi"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--muted)", textDecoration: "none" }}
+            title="Follow on X (@damkeeper_fi)"
+          >
+            <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true"><use href="#i-x" /></svg>
+            @damkeeper_fi
+          </a>
+          <span style={{ fontSize: 10, color: "var(--faint)" }}>© 2026</span>
+        </div>
       </aside>
 
       <button className="sb-scrim" aria-label="Close menu" onClick={() => setOpen(false)} />
