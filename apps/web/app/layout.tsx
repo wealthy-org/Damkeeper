@@ -3,8 +3,9 @@ import "./globals.css";
 import { IconSprite } from "./icon-sprite";
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://damkeeper.xyz");
+  (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith("http"))
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : "https://www.damkeeper.xyz";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

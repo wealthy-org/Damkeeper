@@ -54,15 +54,21 @@ export async function generateMetadata({
       ? `${amount} ${token} is locked on Robinhood Chain until ${dateStr}. The terms are fixed onchain — verify proof on Damkeeper.`
       : `${amount} ${token} linear vesting schedule on Robinhood Chain. Fixed onchain terms — verify proof on Damkeeper.`;
 
-  const ogUrl = `/api/og?chainId=${chainId}&manager=${manager}&id=${params.id}`;
+  const siteUrl =
+    (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith("http"))
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : "https://www.damkeeper.xyz";
+
+  const ogUrl = `${siteUrl}/api/og?chainId=${chainId}&manager=${manager}&id=${params.id}`;
 
   return {
+    metadataBase: new URL(siteUrl),
     title,
     description,
     openGraph: {
       title,
       description,
-      url: `/positions/${chainId}/${manager}/${params.id}`,
+      url: `${siteUrl}/positions/${chainId}/${manager}/${params.id}`,
       siteName: "Damkeeper",
       images: [
         {
