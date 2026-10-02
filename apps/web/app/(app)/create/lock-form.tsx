@@ -9,7 +9,7 @@ import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 import { DateTimePicker, type DatePreset } from "../date-time-picker";
 import { addDays, addMinutes, addMonths, formatLocal, formatUtc, relativeFromNow, roundUpToStep, toUnixSeconds } from "@/lib/dates";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
-import { robinhoodMainnet, robinhoodTestnet } from "@/lib/chains";
+import { chainById, robinhoodMainnet, robinhoodTestnet } from "@/lib/chains";
 import { cleanLabel, labelMessage, LABEL_MAX } from "@/lib/label-message";
 import { positionIdFromReceipt } from "@/lib/receipt";
 import { proofPath, type PositionView } from "@/lib/position-view";
@@ -205,19 +205,41 @@ export function LockForm({ onClose }: { onClose: () => void }) {
   const approveBusy = !SETTLED.includes(approveFlow.status);
   const createBusy = !SETTLED.includes(createFlow.status);
   if (createdView) {
+    const explorer = chainById(activeChainId ?? robinhoodMainnet.id)?.blockExplorers?.default?.url ?? "https://robinhoodchain.blockscout.com";
     return (
-      <div className="empty-hero" style={{ padding: "24px 8px" }}>
-        <span className="ic">
+      <div className="empty-hero" style={{ padding: "20px 8px" }}>
+        <span className="ic" style={{ color: "var(--accent)", background: "rgba(184, 243, 107, 0.12)" }}>
           <svg className="icon-lg" aria-hidden="true"><use href="#i-check" /></svg>
         </span>
-        <h2>Lock created{createdView.positionId !== "0" ? ` · #${createdView.positionId}` : ""}</h2>
-        <p>
-          {formatTokenAmount(BigInt(createdView.amount), decimals)} {symbol} is held until {unlockAt ? formatLocal(unlockAt) : "the unlock date"}.
-          The proof page works right away; your dashboard updates once the indexer catches up.
+        <h2 style={{ marginTop: 8 }}>Lock created{createdView.positionId !== "0" ? ` · #${createdView.positionId}` : ""}</h2>
+        <p className="field-note" style={{ color: "var(--muted)", maxWidth: 380, margin: "4px auto 14px", lineHeight: 1.5 }}>
+          {unlockAt ? `Tokens held onchain until ${formatLocal(unlockAt)}.` : "Your lock is confirmed onchain."}
         </p>
-        {labelNote && <p className="field-note" style={{ color: "var(--danger)" }}>{labelNote}</p>}
-        {createFlow.hash && <span className="mono field-note">Tx {createFlow.hash.slice(0, 10)}…{createFlow.hash.slice(-6)}</span>}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+
+        <div className="wsm-amount-card" style={{ width: "100%", maxWidth: 380, margin: "0 auto 16px" }}>
+          <small className="wsm-amount-label">AMOUNT LOCKED</small>
+          <div className="wsm-amount-val">
+            <span className="wsm-amount-num">{formatTokenAmount(BigInt(createdView.amount), decimals)}</span>
+            <span className="wsm-amount-sym">{symbol}</span>
+          </div>
+        </div>
+
+        {labelNote && <p className="field-note" style={{ color: "var(--danger)", marginBottom: 8 }}>{labelNote}</p>}
+        {createFlow.hash && (
+          <div style={{ marginBottom: 16 }}>
+            <a
+              href={`${explorer}/tx/${createFlow.hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mono field-note"
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent)", textDecoration: "none" }}
+            >
+              Tx {createFlow.hash.slice(0, 10)}…{createFlow.hash.slice(-6)} ↗
+            </a>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
           {createdView.positionId !== "0" && (
             <>
               <ShareButton position={createdView} className="btn btn-primary" />
