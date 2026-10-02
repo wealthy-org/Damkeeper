@@ -1,9 +1,37 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import fs from "fs";
+import path from "path";
 import { getPosition } from "@/lib/positions-query";
-import { formatAmount, tokenLabel, statusOf, STATUS_LABEL } from "@/lib/position-view";
+import {
+  durationLabel,
+  formatAmount,
+  releaseAt,
+  shortAddress,
+  statusOf,
+  STATUS_LABEL,
+  tokenLabel,
+} from "@/lib/position-view";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+
+const cardDate = (d: Date) =>
+  d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+function getAssetDataUri(filename: string): string {
+  try {
+    const possiblePaths = [
+      path.join(process.cwd(), "public", filename),
+      path.join(process.cwd(), "apps/web/public", filename),
+    ];
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        return `data:image/png;base64,${fs.readFileSync(p).toString("base64")}`;
+      }
+    }
+  } catch {}
+  return `https://www.damkeeper.xyz/${filename}`;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,13 +40,21 @@ export async function GET(req: NextRequest) {
     const managerParam = searchParams.get("manager");
     const idParam = searchParams.get("id");
 
-    let title = "Damkeeper Protocol";
-    let subtitle = "Token locks and linear vesting on Robinhood Chain";
-    let amount = "";
-    let token = "";
-    let statusText = "Onchain Proof";
-    let positionKind = "Token Vault";
-    let netName = "Robinhood Chain Mainnet";
+    const wordmarkUri = getAssetDataUri("logo-wordmark.png");
+    const symbolUri = getAssetDataUri("logo-symbol.png");
+
+    let kindEyebrow = "T O K E N   L O C K S   &   V E S T I N G";
+    let label = "Robinhood Chain Protocol";
+    let amount = "Damkeeper";
+    let symbol = "Protocol";
+    let tokenSubtitle = "Non-custodial smart contracts · verified onchain";
+    let unlocksLabel = "SECURITY";
+    let unlocksValue = "Non-Custodial";
+    let durationValue = "Verifiable";
+    let statusValue = "MAINNET ACTIVE";
+    let statusColor = "#b8f36b";
+    let netPosition = "ROBINHOOD CHAIN (4663)";
+    let proofShortUrl = "www.damkeeper.xyz";
 
     if (chainIdParam && managerParam && idParam) {
       const chainId = Number(chainIdParam);
@@ -26,16 +62,24 @@ export async function GET(req: NextRequest) {
       const pos = await getPosition(chainId, managerParam.toLowerCase(), positionId);
 
       if (pos) {
-        amount = formatAmount(pos);
-        token = tokenLabel(pos);
-        positionKind = pos.kind === "lock" ? `Token Lock #${pos.positionId}` : `Vesting Schedule #${pos.positionId}`;
+        kindEyebrow = pos.kind === "lock" ? "T O K E N   L O C K" : "L I N E A R   V E S T I N G";
+        label = pos.label ?? `${tokenLabel(pos)} ${pos.kind === "lock" ? "Lock" : "Vesting Schedule"}`;
+        amount = formatAmount(pos, pos.amount, 2);
+        symbol = tokenLabel(pos);
+        tokenSubtitle = `${pos.tokenName ?? "ERC-20"} · ${shortAddress(pos.token)}`;
+
+        const release = releaseAt(pos);
+        unlocksLabel = pos.kind === "lock" ? "UNLOCKS" : "FULLY VESTED";
+        unlocksValue = release ? cardDate(release) : "—";
+        durationValue = durationLabel(pos);
+
         const st = statusOf(pos);
-        statusText = STATUS_LABEL[st];
-        title = `${amount} ${token}`;
-        subtitle = pos.kind === "lock" 
-          ? `Locked until ${pos.unlockTime ? new Date(Number(pos.unlockTime) * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "unlock date"}`
-          : `Linear vesting from ${pos.startTime ? new Date(Number(pos.startTime) * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "start"}`;
-        netName = chainId === 4663 ? "Robinhood Chain (4663)" : "Robinhood Testnet (46630)";
+        statusValue = STATUS_LABEL[st].toUpperCase();
+        statusColor = st === "withdrawn" || st === "fully_claimed" ? "#95a595" : "#b8f36b";
+
+        const netLabel = chainId === 46630 ? "ROBINHOOD CHAIN TESTNET" : "ROBINHOOD CHAIN";
+        netPosition = `${netLabel} · #${pos.positionId}`;
+        proofShortUrl = `www.damkeeper.xyz/positions/${chainId}/${shortAddress(pos.manager)}/${pos.positionId}`;
       }
     }
 
@@ -43,118 +87,254 @@ export async function GET(req: NextRequest) {
       (
         <div
           style={{
-            height: "100%",
-            width: "100%",
+            width: "1200px",
+            height: "630px",
+            backgroundColor: "#070b09",
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            backgroundColor: "#0b110e",
-            backgroundImage: "radial-gradient(circle at 25px 25px, #17221b 2%, transparent 0%), radial-gradient(circle at 75px 75px, #17221b 2%, transparent 0%)",
-            backgroundSize: "100px 100px",
-            padding: "60px 80px",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
             fontFamily: "sans-serif",
             color: "#f2f5ee",
           }}
         >
-          {/* Top Row: Brand & Network Badge */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div
+          {/* Inner Card matching the Share Modal Preview */}
+          <div
+            style={{
+              width: "1152px",
+              height: "582px",
+              borderRadius: "24px",
+              border: "1px solid rgba(226, 240, 220, 0.14)",
+              backgroundColor: "#0b110e",
+              backgroundImage:
+                "radial-gradient(circle at 82% 18%, rgba(184, 243, 107, 0.16) 0%, rgba(11, 17, 14, 0) 65%)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: "36px 48px",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Watermark Logo Symbol */}
+            {symbolUri ? (
+              <img
+                src={symbolUri}
+                alt=""
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "12px",
-                  backgroundColor: "#b8f36b",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#0b110e",
-                  fontWeight: "bold",
-                  fontSize: "24px",
+                  position: "absolute",
+                  right: "-20px",
+                  bottom: "-40px",
+                  width: "520px",
+                  height: "520px",
+                  opacity: "0.07",
                 }}
-              >
-                DK
-              </div>
-              <div style={{ fontSize: "28px", fontWeight: "700", letterSpacing: "-0.5px" }}>
-                Damkeeper
-              </div>
-            </div>
+              />
+            ) : null}
 
+            {/* Top Row: Wordmark & Network info */}
             <div
               style={{
                 display: "flex",
+                justifyContent: "space-between",
                 alignItems: "center",
-                gap: "8px",
-                padding: "8px 18px",
-                borderRadius: "999px",
-                backgroundColor: "rgba(184, 243, 107, 0.1)",
-                border: "1px solid rgba(184, 243, 107, 0.25)",
-                fontSize: "16px",
-                color: "#b8f36b",
+                width: "100%",
+                zIndex: 1,
               }}
             >
+              {wordmarkUri ? (
+                <img
+                  src={wordmarkUri}
+                  alt="Damkeeper"
+                  style={{
+                    height: "38px",
+                    width: "173px",
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "28px", fontWeight: "700", color: "#b8f36b" }}>Damkeeper</span>
+                </div>
+              )}
+
               <div
                 style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: "#b8f36b",
-                }}
-              />
-              {netName}
-            </div>
-          </div>
-
-          {/* Center Card: Main Information */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              padding: "40px",
-              backgroundColor: "rgba(17, 26, 20, 0.8)",
-              borderRadius: "20px",
-              border: "1px solid rgba(226, 240, 220, 0.12)",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "18px", color: "#95a595", textTransform: "uppercase", letterSpacing: "1px" }}>
-                {positionKind}
-              </span>
-              <span
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.06)",
+                  fontFamily: "monospace",
                   fontSize: "16px",
-                  fontWeight: "600",
-                  color: "#b8f36b",
+                  color: "#819181",
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
                 }}
               >
-                {statusText}
-              </span>
+                {netPosition}
+              </div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "baseline", gap: "16px" }}>
-              <span style={{ fontSize: "64px", fontWeight: "800", color: "#f2f5ee", letterSpacing: "-1.5px" }}>
-                {title}
-              </span>
+            {/* Middle Section: Eyebrow, Label, Amount + Symbol, Token details */}
+            <div style={{ display: "flex", flexDirection: "column", zIndex: 1 }}>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontFamily: "monospace",
+                  color: "#b8f36b",
+                  fontWeight: "600",
+                  letterSpacing: "5px",
+                  textTransform: "uppercase",
+                  marginBottom: "6px",
+                }}
+              >
+                {kindEyebrow}
+              </div>
+
+              <div
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "500",
+                  color: "#d1dacf",
+                  marginBottom: "12px",
+                }}
+              >
+                {label}
+              </div>
+
+              <div style={{ display: "flex", alignItems: "baseline" }}>
+                <span
+                  style={{
+                    fontSize: "76px",
+                    fontWeight: "800",
+                    color: "#f2f5ee",
+                    letterSpacing: "-2px",
+                    lineHeight: "1",
+                  }}
+                >
+                  {amount}
+                </span>
+                <span
+                  style={{
+                    fontSize: "76px",
+                    fontWeight: "800",
+                    color: "#b8f36b",
+                    letterSpacing: "-1px",
+                    lineHeight: "1",
+                    marginLeft: "18px",
+                  }}
+                >
+                  {symbol}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  fontSize: "17px",
+                  color: "#95a595",
+                  marginTop: "10px",
+                }}
+              >
+                {tokenSubtitle}
+              </div>
             </div>
 
-            <div style={{ fontSize: "22px", color: "#aab8aa" }}>
-              {subtitle}
-            </div>
-          </div>
+            {/* Divider */}
+            <div
+              style={{
+                width: "100%",
+                height: "1px",
+                borderBottom: "1px solid rgba(226, 240, 220, 0.14)",
+                margin: "18px 0 16px 0",
+                zIndex: 1,
+              }}
+            />
 
-          {/* Bottom Row: Trust & Verified Footer */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#819181", fontSize: "16px" }}>
-            <div style={{ display: "flex", gap: "24px" }}>
-              <span>✓ Cryptographically Anchored</span>
-              <span>✓ Non-Custodial Vault</span>
-              <span>✓ Blockscout Verified</span>
-            </div>
-            <div style={{ color: "#b8f36b", fontWeight: "600" }}>
-              damkeeper.xyz
+            {/* Bottom Row: 3 Facts & Monospace Footer Links */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                width: "100%",
+                zIndex: 1,
+              }}
+            >
+              {/* Facts Columns */}
+              <div style={{ display: "flex" }}>
+                <div style={{ display: "flex", flexDirection: "column", width: "260px" }}>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontFamily: "monospace",
+                      color: "#819181",
+                      letterSpacing: "2px",
+                      fontWeight: "600",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {unlocksLabel}
+                  </span>
+                  <span style={{ fontSize: "22px", fontWeight: "600", color: "#f2f5ee" }}>
+                    {unlocksValue}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", width: "200px" }}>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontFamily: "monospace",
+                      color: "#819181",
+                      letterSpacing: "2px",
+                      fontWeight: "600",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    DURATION
+                  </span>
+                  <span style={{ fontSize: "22px", fontWeight: "600", color: "#f2f5ee" }}>
+                    {durationValue}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", width: "220px" }}>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontFamily: "monospace",
+                      color: "#819181",
+                      letterSpacing: "2px",
+                      fontWeight: "600",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    STATUS
+                  </span>
+                  <span style={{ fontSize: "22px", fontWeight: "700", color: statusColor, textTransform: "uppercase" }}>
+                    {statusValue}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sub-footer text */}
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    color: "#819181",
+                    marginBottom: "3px",
+                  }}
+                >
+                  Non-custodial · verifiable onchain
+                </span>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    color: "#b8f36b",
+                  }}
+                >
+                  {proofShortUrl}
+                </span>
+              </div>
             </div>
           </div>
         </div>
