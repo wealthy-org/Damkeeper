@@ -10,7 +10,7 @@ export default function PreviewWithdrawPage() {
     amount: "5,000",
     tokenSymbol: "DAM",
     beneficiary: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
-    txHash: "0xddb78f4bd247fbf4f2c01460f52c4407407a304ef312944c1320767929949f4e",
+    txHash: "0x80b975f1612eadec11651a28fec5987f9e2332a0a596fc8c1038f4aa59d3e4c0",
     chainId: 4663,
     managerAddress: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
   });
@@ -35,7 +35,7 @@ export default function PreviewWithdrawPage() {
                 amount: "5,000",
                 tokenSymbol: "DAM",
                 beneficiary: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
-                txHash: "0xddb78f4bd247fbf4f2c01460f52c4407407a304ef312944c1320767929949f4e",
+                txHash: "0x80b975f1612eadec11651a28fec5987f9e2332a0a596fc8c1038f4aa59d3e4c0",
                 chainId: 4663,
                 managerAddress: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
               })
@@ -53,9 +53,9 @@ export default function PreviewWithdrawPage() {
                 amount: "250,000",
                 tokenSymbol: "DAM",
                 beneficiary: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
-                txHash: "0xddb78f4bd247fbf4f2c01460f52c4407407a304ef312944c1320767929949f4e",
+                txHash: "0x80b975f1612eadec11651a28fec5987f9e2332a0a596fc8c1038f4aa59d3e4c0",
                 chainId: 4663,
-                managerAddress: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+                managerAddress: "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
               })
             }
           >

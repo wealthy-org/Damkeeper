@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
@@ -20,6 +21,68 @@ import { ShareButton } from "../../../../share/share-button";
 import { ProofAction } from "./proof-action";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { chainId: string; manager: string; id: string };
+}): Promise<Metadata> {
+  const chainId = Number(params.chainId);
+  if (!chainId || !/^\d{1,18}$/.test(params.id)) {
+    return { title: "Position" };
+  }
+  const manager = params.manager.toLowerCase();
+  const positionId = BigInt(params.id);
+
+  const p = await getPosition(chainId, manager, positionId);
+  if (!p) {
+    return {
+      title: "Position Not Found",
+      description: `Position #${params.id} does not exist or has not been indexed yet.`,
+    };
+  }
+
+  const amount = formatAmount(p);
+  const token = tokenLabel(p);
+  const kind = p.kind === "lock" ? "Token Lock" : "Vesting Schedule";
+  const release = releaseAt(p);
+  const dateStr = release ? formatUtc(release) : "";
+
+  const title = `${amount} ${token} · ${kind} #${params.id}`;
+  const description =
+    p.kind === "lock"
+      ? `${amount} ${token} is locked on Robinhood Chain until ${dateStr}. The terms are fixed onchain — verify proof on Damkeeper.`
+      : `${amount} ${token} linear vesting schedule on Robinhood Chain. Fixed onchain terms — verify proof on Damkeeper.`;
+
+  const ogUrl = `/api/og?chainId=${chainId}&manager=${manager}&id=${params.id}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/positions/${chainId}/${manager}/${params.id}`,
+      siteName: "Damkeeper",
+      images: [
+        {
+          url: ogUrl,
+          width: 1200,
+          height: 630,
+          alt: `${amount} ${token} Proof`,
+        },
+      ],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogUrl],
+      creator: "@damkeeper_fi",
+    },
+  };
+}
 
 const EVENT_LABEL: Record<string, string> = {
   LockCreated: "Lock created",
