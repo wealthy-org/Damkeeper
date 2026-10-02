@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPlatformStats } from "@/lib/platform-stats";
 import { FaucetCard } from "./faucet-button";
 import { MyPositions } from "../my-positions";
+import { DamCaBadge } from "../dam-ca-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,13 @@ export default async function HomePage() {
   return (
     <main className="wrap">
       <section className="hero-banner">
-        <span className="pill">
-          <span className="status-dot live" />
-          Robinhood Chain Mainnet
-        </span>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+          <span className="pill">
+            <span className="status-dot live" />
+            Robinhood Chain Mainnet
+          </span>
+          <DamCaBadge />
+        </div>
         <h1>Token locks and vesting on Robinhood Chain</h1>
         <p>
           Hold an allocation in a contract with terms fixed before you sign, then share a proof
