@@ -59,7 +59,7 @@ export async function generateMetadata({
       ? process.env.NEXT_PUBLIC_APP_URL
       : "https://www.damkeeper.xyz";
 
-  const ogUrl = `${siteUrl}/api/og?chainId=${chainId}&manager=${manager}&id=${params.id}`;
+  const ogUrl = `${siteUrl}/api/og?chainId=${chainId}&manager=${manager}&id=${params.id}&v=share-card`;
 
   return {
     metadataBase: new URL(siteUrl),
