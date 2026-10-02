@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { cfg, DEFAULT_DEPLOYMENTS } from "./config";
+import { cfg, DEFAULT_DEPLOYMENTS, activeChain } from "./config";
 import { c, isJson, kv, out, short, table, CliError } from "./ui";
 import { formatShort } from "./shared/dates";
 import {
@@ -8,7 +8,7 @@ import {
 import { formatLocal, formatUtc } from "./shared/dates";
 import { pending } from "./recent";
 
-const CHAIN = 46630;
+const CHAIN = activeChain().id;
 type Kind = "lock" | "vesting";
 const asKind = (s: string): Kind => {
   if (s === "lock" || s === "vesting") return s;
@@ -124,13 +124,13 @@ export async function contractsCmd() {
     `/api/deployments?chainId=${CHAIN}`
   ).catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   out(data.deployments, () => {
-    console.log(`\n  ${c.bold("Contracts")} ${c.dim("Robinhood Chain Testnet · 46630")}\n`);
+    console.log(`\n  ${c.bold("Contracts")} ${c.dim(`${activeChain().name} · ${activeChain().id}`)}\n`);
     for (const d of data.deployments) {
       console.log(`  ${c.lime(d.kind === "lock" ? "LockManager" : "VestingManager")} ${c.dim(`v${d.version}`)}`);
       kv([
         ["Address", d.managerAddress],
         ["Source", d.verifiedSourceUrl ? c.green("verified") + c.dim(`  ${d.verifiedSourceUrl}`) : c.yellow("not verified yet")],
-        ["Admin", `${d.admin}  ${c.dim("(single wallet — testnet only)")}`],
+        ["Admin", d.admin],
         ["Deployed", `block ${d.deployBlock}`],
       ], 4);
       console.log("");

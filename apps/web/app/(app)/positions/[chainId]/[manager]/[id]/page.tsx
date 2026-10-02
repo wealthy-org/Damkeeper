@@ -153,6 +153,9 @@ export default async function ProofPage({ params }: { params: { chainId: string;
           cliffTime={p.cliffTime}
           endTime={p.endTime}
           withdrawn={p.withdrawn}
+          tokenSymbol={sym}
+          tokenDecimals={p.tokenDecimals ?? 18}
+          chainId={p.chainId}
         />
       </section>
 

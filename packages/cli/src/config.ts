@@ -6,43 +6,57 @@ import { createPublicClient, createWalletClient, http, type Chain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { CliError } from "./ui";
 
+export const MAINNET: Chain = {
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://robinhood-mainnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT"] } },
+  blockExplorers: { default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" } },
+  testnet: false,
+};
+
 export const TESTNET: Chain = {
   id: 46630,
   name: "Robinhood Chain Testnet",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: [] } },
+  rpcUrls: { default: { http: ["https://robinhood-testnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT"] } },
   blockExplorers: { default: { name: "Explorer", url: "https://explorer.testnet.chain.robinhood.com" } },
   testnet: true,
 };
 
+export function activeChain(): Chain {
+  const chainId = get("DAMKEEPER_CHAIN_ID");
+  if (chainId === "46630") return TESTNET;
+  return MAINNET;
+}
+
 // ── Defaults for standalone usage ──
-// These are hardcoded so a globally installed CLI works out of the box.
-// Users only need to override DAMKEEPER_RPC_URL if they have their own Alchemy key.
+// Defaults point to Robinhood Chain Mainnet (4663).
 export const DEFAULT_DEPLOYMENTS = [
   {
     kind: "lock",
-    managerAddress: "0x335B2fba8845EfC3E74F8A4b4AD664D32Eba0AcF",
+    managerAddress: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
     version: "0.1.0",
-    verifiedSourceUrl: "https://explorer.testnet.chain.robinhood.com/address/0x335b2fba8845efc3e74f8a4b4ad664d32eba0acf",
-    admin: "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5",
-    deployBlock: "125692754",
+    verifiedSourceUrl: "https://robinhoodchain.blockscout.com/address/0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+    admin: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
+    deployBlock: "78024101",
   },
   {
     kind: "vesting",
-    managerAddress: "0xfD91fe9daaC8BDb886cD89A53d3Ba40421cb6efd",
+    managerAddress: "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
     version: "0.1.0",
-    verifiedSourceUrl: "https://explorer.testnet.chain.robinhood.com/address/0xfd91fe9daac8bdb886cd89a53d3ba40421cb6efd",
-    admin: "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5",
-    deployBlock: "125692760",
+    verifiedSourceUrl: "https://robinhoodchain.blockscout.com/address/0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
+    admin: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
+    deployBlock: "78059319",
   },
 ];
 
 const DEFAULTS: Record<string, string> = {
   DAMKEEPER_API: "https://damkeeper.xyz",
   DAMKEEPER_WEB: "https://damkeeper.xyz",
-  DAMKEEPER_RPC_URL: "https://explorer.testnet.chain.robinhood.com/api/eth-rpc",
-  DAMKEEPER_LOCK_MANAGER: "0x335B2fba8845EfC3E74F8A4b4AD664D32Eba0AcF",
-  DAMKEEPER_VESTING_MANAGER: "0xfD91fe9daaC8BDb886cD89A53d3Ba40421cb6efd",
+  DAMKEEPER_RPC_URL: "https://robinhood-mainnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT",
+  DAMKEEPER_LOCK_MANAGER: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+  DAMKEEPER_VESTING_MANAGER: "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
 };
 
 // When run from a checkout, borrow the web app's .env so a developer needs no extra setup.
@@ -89,8 +103,8 @@ export const cfg = {
   api: (get("DAMKEEPER_API") ?? "https://damkeeper.xyz").replace(/\/$/, ""),
   web: (get("DAMKEEPER_WEB", "DAMKEEPER_API") ?? "https://damkeeper.xyz").replace(/\/$/, ""),
   rpc: () => {
-    const url = get("DAMKEEPER_RPC_URL", "NEXT_PUBLIC_TESTNET_RPC_URL");
-    if (!url) throw new CliError("No RPC endpoint configured.", "Set DAMKEEPER_RPC_URL (a free Alchemy key for Robinhood Chain Testnet works).\nYou can also put it in ~/.damkeeper/config:\n  DAMKEEPER_RPC_URL=https://rhn-testnet.g.alchemy.com/v2/YOUR_KEY");
+    const url = get("DAMKEEPER_RPC_URL", "NEXT_PUBLIC_MAINNET_RPC_URL", "NEXT_PUBLIC_TESTNET_RPC_URL");
+    if (!url) throw new CliError("No RPC endpoint configured.", "Set DAMKEEPER_RPC_URL (a free Alchemy key for Robinhood Chain works).\nYou can also put it in ~/.damkeeper/config:\n  DAMKEEPER_RPC_URL=https://robinhood-mainnet.g.alchemy.com/v2/YOUR_KEY");
     return url;
   },
   lock: () => need("NEXT_PUBLIC_LOCK_MANAGER_ADDRESS", "DAMKEEPER_LOCK_MANAGER"),
@@ -99,12 +113,12 @@ export const cfg = {
 
 function need(...keys: string[]) {
   const v = keys.map((k) => get(k)).find(Boolean);
-  if (!v) throw new CliError("Contract address isn't configured.", `Set ${keys[keys.length - 1]}. Addresses are listed in packages/config/manifest.testnet.json.`);
+  if (!v) throw new CliError("Contract address isn't configured.", `Set ${keys[keys.length - 1]}. Addresses are listed in packages/config/manifest.mainnet.json.`);
   return v as `0x${string}`;
 }
 
 export function publicClient() {
-  return createPublicClient({ chain: TESTNET, transport: http(cfg.rpc()) });
+  return createPublicClient({ chain: activeChain(), transport: http(cfg.rpc()) });
 }
 
 import { loadSession } from "./session";
@@ -132,5 +146,5 @@ export function account() {
 }
 
 export function walletClient() {
-  return createWalletClient({ account: account(), chain: TESTNET, transport: http(cfg.rpc()) });
+  return createWalletClient({ account: account(), chain: activeChain(), transport: http(cfg.rpc()) });
 }

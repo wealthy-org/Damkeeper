@@ -13,13 +13,13 @@ export default async function HomePage() {
       <section className="hero-banner">
         <span className="pill">
           <span className="status-dot live" />
-          Testnet · Robinhood Chain
+          Robinhood Chain Mainnet
         </span>
         <h1>Token locks and vesting on Robinhood Chain</h1>
         <p>
           Hold an allocation in a contract with terms fixed before you sign, then share a proof
-          page anyone can check. You need the ERC-20 you want to lock and a little testnet ETH for
-          gas. There is no platform fee.
+          page anyone can check. You need the ERC-20 you want to lock and a little ETH for
+          gas.
         </p>
       </section>
 

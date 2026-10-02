@@ -19,6 +19,7 @@ import {
   type PositionView,
 } from "@/lib/position-view";
 import { ShareButton } from "./share/share-button";
+import { WithdrawSuccessModal, WithdrawSuccessDetails } from "./withdraw-success-modal";
 
 type Tab = "all" | "incoming" | "outgoing";
 
@@ -36,6 +37,7 @@ export function MyPositions({ kind }: { kind?: "lock" | "vesting" }) {
   const [rows, setRows] = useState<PositionView[]>([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<Tab>("all");
+  const [successDetails, setSuccessDetails] = useState<WithdrawSuccessDetails | null>(null);
 
   const reload = useCallback(() => {
     if (!address) return;
@@ -113,15 +115,37 @@ export function MyPositions({ kind }: { kind?: "lock" | "vesting" }) {
       ) : (
         <ul className="pos-list">
           {visible.map((p) => (
-            <PositionItem key={`${p.chainId}-${p.manager}-${p.positionId}`} position={p} me={me!} onChanged={reload} />
+            <PositionItem
+              key={`${p.chainId}-${p.manager}-${p.positionId}`}
+              position={p}
+              me={me!}
+              onChanged={reload}
+              onSuccess={setSuccessDetails}
+            />
           ))}
         </ul>
       )}
+
+      <WithdrawSuccessModal
+        open={!!successDetails}
+        details={successDetails}
+        onClose={() => setSuccessDetails(null)}
+      />
     </div>
   );
 }
 
-function PositionItem({ position: p, me, onChanged }: { position: PositionView; me: string; onChanged: () => void }) {
+function PositionItem({
+  position: p,
+  me,
+  onChanged,
+  onSuccess,
+}: {
+  position: PositionView;
+  me: string;
+  onChanged: () => void;
+  onSuccess: (details: WithdrawSuccessDetails) => void;
+}) {
   const flow = useTxFlow();
   const status = statusOf(p);
   const pct = Math.min(100, Math.max(0, progressOf(p)));
@@ -132,9 +156,21 @@ function PositionItem({ position: p, me, onChanged }: { position: PositionView; 
   const busy = !["idle", "included", "user_rejected", "reverted", "error", "cancelled"].includes(flow.status);
 
   useEffect(() => {
-    if (flow.status === "included") onChanged();
+    if (flow.status === "included" && flow.hash) {
+      onSuccess({
+        kind: p.kind,
+        positionId: p.positionId,
+        amount: p.kind === "lock" ? formatAmount(p) : formatAmount(p, claimable, 4),
+        tokenSymbol: tokenLabel(p),
+        beneficiary: p.beneficiary,
+        txHash: flow.hash,
+        chainId: p.chainId,
+        managerAddress: p.manager,
+      });
+      onChanged();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flow.status]);
+  }, [flow.status, flow.hash]);
 
   async function act() {
     if (p.kind === "lock") {

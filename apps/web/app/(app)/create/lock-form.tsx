@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import { useAccount, useConnect, useReadContract, useSignMessage } from "wagmi";
-import { erc20Abi } from "viem";
+import { erc20Abi, formatEther } from "viem";
 import { lockManagerAbi } from "@/lib/abi";
 import { useWrongNetwork } from "../wrong-network-banner";
 import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 import { DateTimePicker, type DatePreset } from "../date-time-picker";
 import { addDays, addMinutes, addMonths, formatLocal, formatUtc, relativeFromNow, roundUpToStep, toUnixSeconds } from "@/lib/dates";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
-import { robinhoodTestnet } from "@/lib/chains";
+import { robinhoodMainnet, robinhoodTestnet } from "@/lib/chains";
 import { cleanLabel, labelMessage, LABEL_MAX } from "@/lib/label-message";
 import { positionIdFromReceipt } from "@/lib/receipt";
 import { proofPath, type PositionView } from "@/lib/position-view";
 import { ShareButton } from "../share/share-button";
 
-export const LOCK_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_LOCK_MANAGER_ADDRESS as `0x${string}` | undefined;
+export const LOCK_MANAGER_ADDRESS = (process.env.NEXT_PUBLIC_LOCK_MANAGER_ADDRESS ?? "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE") as `0x${string}`;
 
 // The unlock time has to still be in the future when the create transaction is
 // mined, not just when the form is filled in (brief.md 8.3).
@@ -33,7 +33,7 @@ const LOCK_PRESETS: DatePreset[] = [
 const SETTLED = ["idle", "included", "user_rejected", "reverted", "error", "cancelled"];
 
 export function LockForm({ onClose }: { onClose: () => void }) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId: activeChainId } = useAccount();
   const { connect, connectors, isPending: connecting } = useConnect();
   const [token, setToken] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
@@ -58,6 +58,13 @@ export function LockForm({ onClose }: { onClose: () => void }) {
     args: address ? [address] : undefined,
     query: { enabled: tokenReady && Boolean(address) },
   });
+  const { data: contractLockFee } = useReadContract({
+    address: LOCK_MANAGER_ADDRESS,
+    abi: lockManagerAbi,
+    functionName: "lockFee",
+    query: { enabled: Boolean(LOCK_MANAGER_ADDRESS) },
+  });
+  const lockFee = (contractLockFee as bigint | undefined) ?? 700000000000000n;
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: token as `0x${string}`,
     abi: erc20Abi,
@@ -84,7 +91,7 @@ export function LockForm({ onClose }: { onClose: () => void }) {
           <svg className="icon-lg" aria-hidden="true"><use href="#i-wallet" /></svg>
         </span>
         <h2>Connect a wallet</h2>
-        <p>You need a wallet on Robinhood Chain Testnet to create a lock.</p>
+        <p>You need a wallet on Robinhood Chain to create a lock.</p>
         <button className="btn btn-primary" disabled={connecting} onClick={() => connect({ connector: connectors[0] })}>
           {connecting ? "Connecting…" : "Connect wallet"}
         </button>
@@ -135,12 +142,20 @@ export function LockForm({ onClose }: { onClose: () => void }) {
       abi: lockManagerAbi,
       functionName: "createLock",
       args: [token as `0x${string}`, beneficiary as `0x${string}`, parsedAmount, toUnixSeconds(unlockAt)],
+      value: lockFee,
     });
     if (!receipt || typeof receipt === "string") return;
     const id = positionIdFromReceipt(receipt, LOCK_MANAGER_ADDRESS, lockManagerAbi, "LockCreated");
     const label = id ? await saveLabel(id) : null;
+    const targetChainId = activeChainId ?? robinhoodMainnet.id;
+    // On-Demand indexing: ingest immediately into database without waiting for cron
+    fetch("/api/sync", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chainId: targetChainId, txHash: receipt.transactionHash }),
+    }).catch(() => null);
     setCreatedView({
-      chainId: robinhoodTestnet.id,
+      chainId: targetChainId,
       manager: LOCK_MANAGER_ADDRESS.toLowerCase(),
       positionId: id ?? "0",
       kind: "lock",
@@ -167,13 +182,14 @@ export function LockForm({ onClose }: { onClose: () => void }) {
   async function saveLabel(id: string) {
     const clean = cleanLabel(title);
     if (!clean || !LOCK_MANAGER_ADDRESS) return null;
+    const targetChainId = activeChainId ?? robinhoodMainnet.id;
     try {
-      const message = labelMessage(robinhoodTestnet.id, LOCK_MANAGER_ADDRESS, id, clean);
+      const message = labelMessage(targetChainId, LOCK_MANAGER_ADDRESS, id, clean);
       const signature = await signMessageAsync({ message });
       const res = await fetch("/api/labels", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chainId: robinhoodTestnet.id, manager: LOCK_MANAGER_ADDRESS, positionId: id, label: clean, signature }),
+        body: JSON.stringify({ chainId: targetChainId, manager: LOCK_MANAGER_ADDRESS, positionId: id, label: clean, signature }),
       });
       if (!res.ok) {
         setLabelNote((await res.json().catch(() => null))?.error ?? "The title couldn't be saved.");
@@ -288,7 +304,7 @@ export function LockForm({ onClose }: { onClose: () => void }) {
         </div>
         <div>
           <dt>Platform fee</dt>
-          <dd>None · gas only</dd>
+          <dd>{lockFee > 0n ? `${formatEther(lockFee)} ETH (~$2.00)` : "None · gas only"}</dd>
         </div>
       </dl>
 

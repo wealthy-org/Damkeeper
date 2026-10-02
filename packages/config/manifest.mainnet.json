@@ -1,0 +1,49 @@
+{
+  "_comment": "Real Robinhood Chain mainnet deployment, 2026-10-02. Source of truth mirrored into the deployments table by apps/web/scripts/seed-mainnet-deployment.ts.",
+  "deployments": [
+    {
+      "chainId": 4663,
+      "managerAddress": "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+      "kind": "lock",
+      "version": "0.1.0",
+      "deployTxHash": "0x8d886dabf633a00d19f6c50d2686df65ef87718a1c2f66eb9507d8df0bf3d679",
+      "deployBlock": "78024101",
+      "abiHash": "mainnet-lock-manager-v0.1.0",
+      "sourceCommit": "mainnet-launch",
+      "verifiedSourceUrl": "https://robinhoodchain.blockscout.com/address/0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+      "verificationNote": "Deployed & configured on Robinhood Chain Mainnet (Chain ID 4663). Fee 0.0007 ETH.",
+      "admin": "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681"
+    },
+    {
+      "chainId": 4663,
+      "managerAddress": "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
+      "kind": "vesting",
+      "version": "0.1.0",
+      "deployTxHash": "0x4569e1352e34cd85405adc3b699d8464258a577b6fd84e302f112e7037369160",
+      "deployBlock": "78059319",
+      "abiHash": "mainnet-vesting-manager-v0.1.0",
+      "sourceCommit": "mainnet-launch",
+      "verifiedSourceUrl": "https://robinhoodchain.blockscout.com/address/0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
+      "verificationNote": "Deployed & configured on Robinhood Chain Mainnet (Chain ID 4663). Token policy enabled & unpaused.",
+      "admin": "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681"
+    }
+  ],
+  "tokens": [
+    {
+      "chainId": 4663,
+      "address": "0x8Fc5E1dFaeB1a4311CbBF8A387F3db530B78F3e0",
+      "symbol": "DAM",
+      "name": "Damkeeper Token",
+      "decimals": 18,
+      "totalSupply": "10000000000000000000000000",
+      "deployTxHash": "0xd2e8195fe7549ce2d4964654f407c38a8e987e1e0fbe11cbc81d29a9177493a4",
+      "deployBlock": "78023915",
+      "verifiedSourceUrl": "https://robinhoodchain.blockscout.com/address/0x8Fc5E1dFaeB1a4311CbBF8A387F3db530B78F3e0",
+      "note": "Official Damkeeper native utility token on Robinhood Chain Mainnet."
+    }
+  ],
+  "adminWallet": {
+    "address": "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
+    "role": "Deployer and Fee Recipient"
+  }
+}

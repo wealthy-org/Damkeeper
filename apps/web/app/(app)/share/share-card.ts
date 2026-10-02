@@ -83,9 +83,8 @@ export async function renderShareCard(p: PositionView, proofUrl: string): Promis
   if (wordmark) ctx.drawImage(wordmark, PAD, 96, (44 * wordmark.width) / wordmark.height, 44);
   ctx.font = `20px ${MONO}`;
   ctx.fillStyle = C.faint;
-  ctx.textAlign = "right";
-  spaced(ctx, 2);
-  ctx.fillText(`ROBINHOOD CHAIN TESTNET · #${p.positionId}`, W - PAD, 126);
+  const netLabel = p.chainId === 46630 ? "ROBINHOOD CHAIN TESTNET" : "ROBINHOOD CHAIN";
+  ctx.fillText(`${netLabel} · #${p.positionId}`, W - PAD, 126);
   ctx.textAlign = "left";
 
   // Kind + label.
@@ -151,7 +150,7 @@ export async function renderShareCard(p: PositionView, proofUrl: string): Promis
   // Footer.
   ctx.font = `20px ${MONO}`;
   ctx.fillStyle = C.faint;
-  ctx.fillText("Non-custodial · verifiable onchain · testnet", PAD, 792);
+  ctx.fillText("Non-custodial · verifiable onchain", PAD, 792);
   ctx.fillStyle = C.accent;
   const shortUrl = proofUrl.replace(/^https?:\/\//, "").replace(/0x[0-9a-f]{40}/i, (m) => shortAddress(m));
   ctx.fillText(shortUrl, PAD, 824);

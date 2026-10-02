@@ -13,7 +13,8 @@ import { chainById } from "@/lib/chains";
 // deep reorg handling (rolling block hashes, replay) still belongs in apps/indexer
 // if/when a always-on worker becomes available.
 
-const MAX_BLOCK_RANGE = 2000n;
+// Alchemy Free Tier strictly limits eth_getLogs to a 10-block range (fromBlock to fromBlock + 9n).
+const MAX_BLOCK_RANGE = 9n;
 
 const LockCreated = parseAbiItem(
   "event LockCreated(uint256 indexed id, address indexed token, address indexed creator, address beneficiary, uint256 amount, uint64 createdAt, uint64 unlockTime)"
@@ -41,149 +42,160 @@ export async function GET(request: Request) {
     const chain = chainById(manager.chainId);
     if (!chain) continue;
 
-    const client = createPublicClient({ chain, transport: http() });
-    const latestBlock = await client.getBlockNumber();
+    try {
+      const client = createPublicClient({ chain, transport: http() });
+      const latestBlock = await client.getBlockNumber();
 
-    const [checkpoint] = await db
-      .select()
-      .from(chainCheckpoints)
-      .where(
-        and(
-          eq(chainCheckpoints.chainId, manager.chainId),
-          eq(chainCheckpoints.managerAddress, manager.managerAddress)
+      const [checkpoint] = await db
+        .select()
+        .from(chainCheckpoints)
+        .where(
+          and(
+            eq(chainCheckpoints.chainId, manager.chainId),
+            eq(chainCheckpoints.managerAddress, manager.managerAddress)
+          )
         )
-      )
-      .limit(1);
+        .limit(1);
 
-    const fromBlock = checkpoint ? checkpoint.lastBlock + 1n : manager.deployBlock;
-    if (fromBlock > latestBlock) {
-      results.push({ manager: manager.managerAddress, skipped: true });
-      continue;
-    }
-    const toBlock =
-      latestBlock - fromBlock > MAX_BLOCK_RANGE ? fromBlock + MAX_BLOCK_RANGE : latestBlock;
+      const rawFromBlock = checkpoint ? checkpoint.lastBlock + 1n : manager.deployBlock;
+      if (rawFromBlock > latestBlock) {
+        results.push({ manager: manager.managerAddress, skipped: true });
+        continue;
+      }
 
-    const events = manager.kind === "lock" ? [LockCreated, LockWithdrawn] : [VestingCreated, VestingClaimed];
+      // If the checkpoint is more than 30 blocks behind the tip, jump to near tip
+      // so Alchemy free-tier 10-block limit doesn't get permanently stalled in historical blocks.
+      const fromBlock = latestBlock - rawFromBlock > 30n ? latestBlock - MAX_BLOCK_RANGE : rawFromBlock;
+      const toBlock =
+        latestBlock - fromBlock > MAX_BLOCK_RANGE ? fromBlock + MAX_BLOCK_RANGE : latestBlock;
 
-    const logs = (
-      await Promise.all(
-        events.map((event) =>
-          client.getLogs({
-            address: manager.managerAddress as `0x${string}`,
-            event,
-            fromBlock,
-            toBlock,
-          })
+      const events = manager.kind === "lock" ? [LockCreated, LockWithdrawn] : [VestingCreated, VestingClaimed];
+
+      const logs = (
+        await Promise.all(
+          events.map((event) =>
+            client.getLogs({
+              address: manager.managerAddress as `0x${string}`,
+              event,
+              fromBlock,
+              toBlock,
+            })
+          )
         )
-      )
-    ).flat();
+      ).flat();
 
-    logs.sort((a, b) =>
-      a.blockNumber === b.blockNumber
-        ? a.logIndex - b.logIndex
-        : a.blockNumber < b.blockNumber
-          ? -1
-          : 1
-    );
+      logs.sort((a, b) =>
+        a.blockNumber === b.blockNumber
+          ? a.logIndex - b.logIndex
+          : a.blockNumber < b.blockNumber
+            ? -1
+            : 1
+      );
 
-    for (const log of logs) {
-      const args = log.args as Record<string, unknown>;
-      const positionId = args.id as bigint;
+      for (const log of logs) {
+        const args = log.args as Record<string, unknown>;
+        const positionId = args.id as bigint;
 
-      await db
-        .insert(positionEvents)
-        .values({
-          chainId: manager.chainId,
-          managerAddress: manager.managerAddress,
-          positionId,
-          blockNumber: log.blockNumber!,
-          blockHash: log.blockHash!,
-          txHash: log.transactionHash!,
-          logIndex: log.logIndex!,
-          eventName: log.eventName!,
-          payload: JSON.stringify(args, (_key, value) =>
-            typeof value === "bigint" ? value.toString() : value
-          ),
-          canonical: true,
-        })
-        .onConflictDoNothing();
-
-      if (log.eventName === "LockCreated" || log.eventName === "VestingCreated") {
-        // Addresses are stored lowercase so wallet/token lookups match (brief.md 11.3).
-        const tokenAddress = (args.token as string).toLowerCase();
-        await ensureTokenMetadata(client, manager.chainId, tokenAddress);
         await db
-          .insert(positions)
+          .insert(positionEvents)
           .values({
             chainId: manager.chainId,
             managerAddress: manager.managerAddress,
             positionId,
-            kind: manager.kind,
-            token: tokenAddress,
-            creator: (args.creator as string).toLowerCase(),
-            beneficiary: (args.beneficiary as string).toLowerCase(),
-            amount: ((args.amount as bigint) ?? 0n).toString(),
-            createdAt: args.createdAt as bigint,
-            unlockTime: (args.unlockTime as bigint) ?? null,
-            startTime: (args.startTime as bigint) ?? null,
-            cliffTime: (args.cliffTime as bigint) ?? null,
-            endTime: (args.endTime as bigint) ?? null,
-            indexedAtBlock: log.blockNumber!,
+            blockNumber: log.blockNumber!,
+            blockHash: log.blockHash!,
+            txHash: log.transactionHash!,
+            logIndex: log.logIndex!,
+            eventName: log.eventName!,
+            payload: JSON.stringify(args, (_key, value) =>
+              typeof value === "bigint" ? value.toString() : value
+            ),
+            canonical: true,
           })
           .onConflictDoNothing();
+
+        if (log.eventName === "LockCreated" || log.eventName === "VestingCreated") {
+          const tokenAddress = (args.token as string).toLowerCase();
+          await ensureTokenMetadata(client, manager.chainId, tokenAddress);
+          await db
+            .insert(positions)
+            .values({
+              chainId: manager.chainId,
+              managerAddress: manager.managerAddress,
+              positionId,
+              kind: manager.kind,
+              token: tokenAddress,
+              creator: (args.creator as string).toLowerCase(),
+              beneficiary: (args.beneficiary as string).toLowerCase(),
+              amount: ((args.amount as bigint) ?? 0n).toString(),
+              createdAt: args.createdAt as bigint,
+              unlockTime: (args.unlockTime as bigint) ?? null,
+              startTime: (args.startTime as bigint) ?? null,
+              cliffTime: (args.cliffTime as bigint) ?? null,
+              endTime: (args.endTime as bigint) ?? null,
+              indexedAtBlock: log.blockNumber!,
+            })
+            .onConflictDoNothing();
+        }
+
+        if (log.eventName === "LockWithdrawn") {
+          await db
+            .update(positions)
+            .set({ withdrawn: true, indexedAtBlock: log.blockNumber! })
+            .where(
+              and(
+                eq(positions.chainId, manager.chainId),
+                eq(positions.managerAddress, manager.managerAddress),
+                eq(positions.positionId, positionId)
+              )
+            );
+        }
+
+        if (log.eventName === "VestingClaimed") {
+          await db
+            .update(positions)
+            .set({
+              claimedAmount: (args.cumulativeClaimed as bigint).toString(),
+              indexedAtBlock: log.blockNumber!,
+            })
+            .where(
+              and(
+                eq(positions.chainId, manager.chainId),
+                eq(positions.managerAddress, manager.managerAddress),
+                eq(positions.positionId, positionId)
+              )
+            );
+        }
       }
 
-      if (log.eventName === "LockWithdrawn") {
-        await db
-          .update(positions)
-          .set({ withdrawn: true, indexedAtBlock: log.blockNumber! })
-          .where(
-            and(
-              eq(positions.chainId, manager.chainId),
-              eq(positions.managerAddress, manager.managerAddress),
-              eq(positions.positionId, positionId)
-            )
-          );
-      }
+      const finalBlock = await client.getBlock({ blockNumber: toBlock });
 
-      if (log.eventName === "VestingClaimed") {
-        await db
-          .update(positions)
-          .set({
-            claimedAmount: (args.cumulativeClaimed as bigint).toString(),
-            indexedAtBlock: log.blockNumber!,
-          })
-          .where(
-            and(
-              eq(positions.chainId, manager.chainId),
-              eq(positions.managerAddress, manager.managerAddress),
-              eq(positions.positionId, positionId)
-            )
-          );
-      }
-    }
-
-    const finalBlock = await client.getBlock({ blockNumber: toBlock });
-
-    await db
-      .insert(chainCheckpoints)
-      .values({
-        chainId: manager.chainId,
-        managerAddress: manager.managerAddress,
-        lastBlock: toBlock,
-        lastBlockHash: finalBlock.hash,
-        confirmationTier: "sequencer",
-      })
-      .onConflictDoUpdate({
-        target: [chainCheckpoints.chainId, chainCheckpoints.managerAddress],
-        set: {
+      await db
+        .insert(chainCheckpoints)
+        .values({
+          chainId: manager.chainId,
+          managerAddress: manager.managerAddress,
           lastBlock: toBlock,
           lastBlockHash: finalBlock.hash,
-          updatedAt: new Date(),
-        },
-      });
+          confirmationTier: "sequencer",
+        })
+        .onConflictDoUpdate({
+          target: [chainCheckpoints.chainId, chainCheckpoints.managerAddress],
+          set: {
+            lastBlock: toBlock,
+            lastBlockHash: finalBlock.hash,
+            updatedAt: new Date(),
+          },
+        });
 
-    results.push({ manager: manager.managerAddress, fromBlock: fromBlock.toString(), toBlock: toBlock.toString(), events: logs.length });
+      results.push({ manager: manager.managerAddress, fromBlock: fromBlock.toString(), toBlock: toBlock.toString(), events: logs.length });
+    } catch (err) {
+      console.error(`Cron indexer error for ${manager.managerAddress}:`, err);
+      results.push({
+        manager: manager.managerAddress,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
   return Response.json({ ok: true, results });

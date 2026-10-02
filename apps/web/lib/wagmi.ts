@@ -5,11 +5,11 @@ import { injected } from "wagmi/connectors";
 import { robinhoodTestnet, robinhoodMainnet } from "./chains";
 
 export const wagmiConfig = createConfig({
-  chains: [robinhoodTestnet, robinhoodMainnet],
+  chains: [robinhoodMainnet, robinhoodTestnet],
   connectors: [injected()],
   transports: {
-    [robinhoodTestnet.id]: http(),
     [robinhoodMainnet.id]: http(),
+    [robinhoodTestnet.id]: http(),
   },
   // The client auto-reconnects a previously-connected wallet (Phantom, MetaMask, …)
   // from storage before React finishes hydrating, so useAccount() briefly disagrees

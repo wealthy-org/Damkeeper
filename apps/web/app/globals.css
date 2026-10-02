@@ -1586,6 +1586,178 @@ tbody tr:last-child td {
   .wl-brand img { width: 42px; height: 42px; }
 }
 
+/* ---- withdraw success modal ---- */
+
+.modal.withdraw-modal {
+  width: min(500px, calc(100vw - 24px));
+}
+
+.wsm-hero {
+  position: relative;
+  padding: 32px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 25%, #b8f36b1f 0%, #101a11 60%, #0c140d 100%);
+  border-bottom: 1px solid var(--hair);
+}
+
+.wsm-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--hair);
+  background: #141f1588;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wsm-close-btn:hover {
+  background: #243525;
+  color: var(--text);
+  border-color: var(--hair-2);
+}
+
+.wsm-badge-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+}
+
+.wsm-icon-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.wsm-icon-ring.r1 {
+  inset: -6px;
+  border: 1px solid #b8f36b33;
+  animation: wsm-pulse 2.5s ease-out infinite;
+}
+
+.wsm-icon-ring.r2 {
+  inset: -14px;
+  border: 1px dashed #b8f36b18;
+  animation: wsm-pulse 2.5s ease-out infinite 0.7s;
+}
+
+@keyframes wsm-pulse {
+  0% { transform: scale(0.96); opacity: 0.9; }
+  50% { transform: scale(1.04); opacity: 0.35; }
+  100% { transform: scale(0.96); opacity: 0.9; }
+}
+
+.wsm-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #2b4528, #132214);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 28px #b8f36b3f, 0 1px 0 #ffffff1a inset;
+}
+
+.wsm-title {
+  margin: 12px 0 6px;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+
+.wsm-subtitle {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 380px;
+  margin: 0;
+}
+
+.wsm-amount-card {
+  margin: 4px 0 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #182619, #0f1911);
+  border: 1px solid #b8f36b33;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 12px 30px -10px #00000088, inset 0 1px 0 #ffffff0d;
+}
+
+.wsm-amount-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.wsm-amount-val {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.wsm-amount-num {
+  font-size: 30px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.wsm-amount-sym {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.wsm-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--hair-2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.wsm-copy-btn:hover {
+  background: #b8f36b14;
+  color: var(--accent);
+  border-color: #b8f36b44;
+}
+
+.wsm-foot {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--hair);
+  background: #0d150e;
+}
+
 /* ---- date & time picker ---- */
 
 .dtp-anchor {

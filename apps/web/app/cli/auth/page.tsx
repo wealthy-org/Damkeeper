@@ -115,7 +115,7 @@ function CliAuthContent() {
             <span style={{ fontSize: "12px", color: "#4d6154" }}>·</span>
             <span style={{ fontSize: "12px", color: "#8ca094", display: "flex", alignItems: "center", gap: "5px" }}>
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#b8f36b", display: "inline-block" }} />
-              Robinhood Chain (46630)
+              Robinhood Chain (4663)
             </span>
           </div>
 
@@ -318,7 +318,7 @@ function CliAuthContent() {
             Secured via EIP-191 Local Signer
           </span>
           <span style={{ fontSize: "12px", color: "#526357" }}>
-            Damkeeper Testnet
+            Damkeeper Protocol
           </span>
         </div>
       </div>

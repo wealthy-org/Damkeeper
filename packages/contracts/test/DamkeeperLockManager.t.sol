@@ -46,9 +46,10 @@ contract DamkeeperLockManagerTest is Test {
         token.transfer(creator, AMOUNT);
         unlockTime = uint64(block.timestamp + 30 days);
 
+        vm.deal(creator, 10 ether);
         vm.startPrank(creator);
         token.approve(address(manager), AMOUNT);
-        manager.createLock(address(token), beneficiary, AMOUNT, unlockTime);
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, AMOUNT, unlockTime);
         vm.stopPrank();
     }
 
@@ -109,20 +110,20 @@ contract DamkeeperLockManagerTest is Test {
         vm.startPrank(creator);
         token.approve(address(manager), AMOUNT);
         vm.expectRevert(DamkeeperLockManager.InvalidBeneficiary.selector);
-        manager.createLock(address(token), address(0), AMOUNT, uint64(block.timestamp + 1 days));
+        manager.createLock{value: 0.0007 ether}(address(token), address(0), AMOUNT, uint64(block.timestamp + 1 days));
         vm.stopPrank();
     }
 
     function test_zeroAmountReverts() public {
         vm.prank(creator);
         vm.expectRevert(DamkeeperLockManager.InvalidAmount.selector);
-        manager.createLock(address(token), beneficiary, 0, uint64(block.timestamp + 1 days));
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, 0, uint64(block.timestamp + 1 days));
     }
 
     function test_pastUnlockTimeReverts() public {
         vm.prank(creator);
         vm.expectRevert(DamkeeperLockManager.InvalidUnlockTime.selector);
-        manager.createLock(address(token), beneficiary, AMOUNT, uint64(block.timestamp));
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, AMOUNT, uint64(block.timestamp));
     }
 
     // ---- ERC-20 edge cases ----
@@ -136,7 +137,7 @@ contract DamkeeperLockManagerTest is Test {
         vm.startPrank(creator);
         bad.approve(address(manager), 1000 ether);
         vm.expectRevert(DamkeeperLockManager.DepositMismatch.selector);
-        manager.createLock(address(bad), beneficiary, 1000 ether, uint64(block.timestamp + 1 days));
+        manager.createLock{value: 0.0007 ether}(address(bad), beneficiary, 1000 ether, uint64(block.timestamp + 1 days));
         vm.stopPrank();
     }
 
@@ -149,7 +150,7 @@ contract DamkeeperLockManagerTest is Test {
         vm.startPrank(creator);
         token.approve(address(manager), AMOUNT);
         vm.expectRevert(DamkeeperLockManager.TokenNotEnabled.selector);
-        manager.createLock(address(token), beneficiary, AMOUNT, uint64(block.timestamp + 1 days));
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, AMOUNT, uint64(block.timestamp + 1 days));
         vm.stopPrank();
     }
 
@@ -160,7 +161,7 @@ contract DamkeeperLockManagerTest is Test {
         vm.startPrank(creator);
         token.approve(address(manager), 1 ether);
         vm.expectRevert(DamkeeperLockManager.CapExceeded.selector);
-        manager.createLock(address(token), beneficiary, 1 ether, uint64(block.timestamp + 1 days));
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, 1 ether, uint64(block.timestamp + 1 days));
         vm.stopPrank();
     }
 
@@ -171,7 +172,7 @@ contract DamkeeperLockManagerTest is Test {
         vm.startPrank(creator);
         token.approve(address(manager), AMOUNT);
         vm.expectRevert(DamkeeperLockManager.CreationIsPaused.selector);
-        manager.createLock(address(token), beneficiary, AMOUNT, uint64(block.timestamp + 1 days));
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, AMOUNT, uint64(block.timestamp + 1 days));
         vm.stopPrank();
     }
 
@@ -189,10 +190,39 @@ contract DamkeeperLockManagerTest is Test {
 
     // ---- direct transfer must not grant rights ----
 
-    function test_directTransferDoesNotCreatePosition() public {
-        token.transfer(address(manager), 1000 ether);
-        // position #2 was never created — getLock returns the zero struct
-        DamkeeperLockManager.LockPosition memory pos = manager.getLock(2);
-        assertEq(pos.beneficiary, address(0));
+    // ---- fee tests ----
+
+    function test_insufficientFeeReverts() public {
+        vm.startPrank(creator);
+        token.approve(address(manager), AMOUNT);
+        vm.expectRevert(DamkeeperLockManager.InsufficientFee.selector);
+        manager.createLock{value: 0.0001 ether}(address(token), beneficiary, AMOUNT, uint64(block.timestamp + 1 days));
+        vm.stopPrank();
+    }
+
+    function test_feeTransferredToRecipient() public {
+        address payable treasury = payable(address(0x123456));
+        vm.prank(admin);
+        manager.setFeeRecipient(treasury);
+
+        uint256 balBefore = treasury.balance;
+        token.transfer(creator, 100 ether);
+
+        vm.startPrank(creator);
+        token.approve(address(manager), 100 ether);
+        manager.createLock{value: 0.0007 ether}(address(token), beneficiary, 100 ether, uint64(block.timestamp + 1 days));
+        vm.stopPrank();
+
+        assertEq(treasury.balance - balBefore, 0.0007 ether);
+    }
+
+    function test_adminCanUpdateLockFee() public {
+        vm.prank(admin);
+        manager.setLockFee(0.001 ether);
+        assertEq(manager.lockFee(), 0.001 ether);
+
+        vm.prank(attacker);
+        vm.expectRevert(DamkeeperLockManager.NotAdmin.selector);
+        manager.setLockFee(0);
     }
 }

@@ -30,7 +30,7 @@ export const robinhoodMainnet = {
     default: {
       http: [
         process.env.NEXT_PUBLIC_MAINNET_RPC_URL ??
-          "https://robinhoodchain.blockscout.com/api/eth-rpc",
+          "https://robinhood-mainnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT",
       ],
     },
   },

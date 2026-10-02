@@ -4,10 +4,28 @@ import { useState } from "react";
 import { useAccount, useConnect } from "wagmi";
 
 export function FaucetCard() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const { connect, connectors } = useConnect();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
+
+  // When on Robinhood Chain Mainnet (or default), show the $DAM token card instead of testnet faucet
+  if (chainId !== 46630) {
+    return (
+      <a
+        href="https://robinhoodchain.blockscout.com/token/0x8Fc5E1dFaeB1a4311CbBF8A387F3db530B78F3e0"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="try-card"
+      >
+        <svg className="icon" aria-hidden="true"><use href="#i-coins" /></svg>
+        <span>
+          $DAM Token
+          <small>Verified on Robinhood Chain Mainnet</small>
+        </span>
+      </a>
+    );
+  }
 
   const claim = async () => {
     if (!isConnected || !address) {

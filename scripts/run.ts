@@ -2,73 +2,75 @@
  * scripts/run.ts
  * 
  * Cinematic Hacker-Style Terminal Showcase for Damkeeper Promo Video.
+ * Tailored for Robinhood Chain Mainnet (Chain ID 4663) with real founder account,
+ * real Damkeeper Token ($DAM), and real Lock & Withdraw on-chain transactions.
  * 
  * Run with:
  *   npx tsx scripts/run.ts
  * or:
  *   npm run showcase
- * 
- * Replays protocol deployment, token lock creation, linear vesting stream,
- * and live on-chain cryptographic proofs with direct clickable Blockscout links.
  */
 
 import { createPublicClient, http, defineChain, type Hex } from "viem";
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
 
-// ── Chain & RPC Configuration ──
-function getRpcUrl(): string {
-  // Try environment variable or .env file fallback
-  if (process.env.DAMKEEPER_RPC_URL) return process.env.DAMKEEPER_RPC_URL;
-  if (process.env.NEXT_PUBLIC_TESTNET_RPC_URL) return process.env.NEXT_PUBLIC_TESTNET_RPC_URL;
+// ── Chain & RPC Configuration (Robinhood Chain Mainnet) ──
+const RPC = process.env.NEXT_PUBLIC_MAINNET_RPC_URL || "https://robinhood-mainnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT";
 
-  const envPath = join(process.cwd(), "apps", "web", ".env");
-  if (existsSync(envPath)) {
-    const content = readFileSync(envPath, "utf8");
-    const match = content.match(/NEXT_PUBLIC_TESTNET_RPC_URL="?([^"\n]+)"?/);
-    if (match?.[1]) return match[1];
-  }
-  return "https://explorer.testnet.chain.robinhood.com/api/eth-rpc";
-}
-
-const RPC = getRpcUrl();
-const robinhoodTestnet = defineChain({
-  id: 46630,
-  name: "Robinhood Chain Testnet",
+const robinhoodMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: { default: { http: [RPC] } },
   blockExplorers: {
-    default: { name: "Explorer", url: "https://explorer.testnet.chain.robinhood.com" },
+    default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" },
   },
 });
 
-const client = createPublicClient({ chain: robinhoodTestnet, transport: http(RPC) });
+const client = createPublicClient({ chain: robinhoodMainnet, transport: http(RPC) });
 
-// ── Real On-chain Records ──
+// ── Real On-chain Records on Robinhood Chain Mainnet (4663) ──
+const FOUNDER_WALLET = "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681" as Hex;
+
 const CONTRACTS = {
   lockManager: {
     name: "DamkeeperLockManager",
-    address: "0x335B2fba8845EfC3E74F8A4b4AD664D32Eba0AcF" as Hex,
-    deployTx: "0xee85b93a4d6d7d7b460d86366178848da4c79c790e99b24f49c96e1f8d457530" as Hex,
-    block: 125692754,
+    address: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE" as Hex,
+    deployTx: "0x8d886dabf633a00d19f6c50d2686df65ef87718a1c2f66eb9507d8df0bf3d679" as Hex,
+    block: 78024101,
+    fee: "0.0007 ETH (~$2.00)",
+  },
+  damToken: {
+    name: "Damkeeper Token ($DAM)",
+    symbol: "DAM",
+    address: "0x8Fc5E1dFaeB1a4311CbBF8A387F3db530B78F3e0" as Hex,
+    deployTx: "0xd2e8195fe7549ce2d4964654f407c38a8e987e1e0fbe11cbc81d29a9177493a4" as Hex,
+    block: 78023915,
+    supply: "10,000,000 DAM",
   },
   vestingManager: {
     name: "DamkeeperVestingManager",
-    address: "0xfD91fe9daaC8BDb886cD89A53d3Ba40421cb6efd" as Hex,
-    deployTx: "0x6f5daee28f019f724b7bc47a877064b358c0eff01fc355f742eae8c86826d808" as Hex,
-    block: 125692760,
-  },
-  exampleToken: {
-    name: "ExampleToken (EXMPL)",
-    address: "0xb5b0f97B643306D540cAe82F50970cF6F9D75538" as Hex,
+    address: "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5" as Hex,
+    deployTx: "0x4569e1352e34cd85405adc3b699d8464258a577b6fd84e302f112e7037369160" as Hex,
+    block: 78059319,
   },
 };
 
 const TX_PROOFS = {
-  createLock: "0x4348f32c4de6499ae0e0f0c9d8ff2d21747c1326e189d6d011565080ae48afbd" as Hex,
-  withdrawLock: "0xc125315cddec84bec37dd49a7f692a6ae0d7ca46d2ffa01362b0bdc9d322336b" as Hex,
-  createVesting: "0xcc490355f4fd55fc4907eacb96ccb423e2eed2e231830cbfc5f1a139913ba914" as Hex,
-  claimVesting: "0x142c5665b1e33f947d08f86bb29862169a92cfcc5d3a8e368a1acd1aa30c82b3" as Hex,
+  createLock: {
+    id: 1,
+    amount: "5,000 DAM",
+    fee: "0.0007 ETH",
+    txHash: "0xddb78f4bd247fbf4f2c01460f52c4407407a304ef312944c1320767929949f4e" as Hex,
+    block: 78034294,
+    url: "https://damkeeper.xyz/positions/4663/0x2414e58801fabe792debd2c8930fc5ff3cd004fe/1",
+  },
+  withdrawLock: {
+    id: 1,
+    amount: "5,000 DAM",
+    fee: "0 ETH (Gas only · Free withdraw)",
+    txHash: "0x80b975f1612eadec11651a28fec5987f9e2332a0a596fc8c1038f4aa59d3e4c0" as Hex,
+    block: 78037185,
+  },
 };
 
 // ── Visual / ANSI Styling ──
@@ -91,12 +93,12 @@ const fmt = (n: any) => Number(n).toLocaleString("en-US");
 
 // Realistic typing effect with organic jitter
 async function typeCmd(cmd: string) {
-  line(dim("┌─[") + lime("FOUNDER@DAMKEEPER-PROD") + dim("]─[") + cyan("robinhood-testnet:46630") + dim("]"));
+  line(dim("┌─[") + lime("FOUNDER@DAMKEEPER-MAINNET") + dim("]─[") + cyan("robinhood-mainnet:4663") + dim("]"));
   out(dim("└─▸ ") + white("$ "));
   await sleep(450); // Pause before typing
   for (const ch of cmd) {
     out(white(bold(ch)));
-    await sleep(jitter(25, 65));
+    await sleep(jitter(25, 60));
   }
   await sleep(350);
   line();
@@ -105,7 +107,7 @@ async function typeCmd(cmd: string) {
 
 // Action step with loading dots and status badge
 async function step<T>(label: string, work: Promise<T>, status = "SUCCESS", minMs = 700) {
-  out(dim("  [*] ") + label + dim("".padEnd(Math.max(1, 44 - label.length), ".")) + " ");
+  out(dim("  [*] ") + label + dim("".padEnd(Math.max(1, 46 - label.length), ".")) + " ");
   const [res] = await Promise.all([
     work.catch(() => null),
     sleep(minMs),
@@ -118,7 +120,7 @@ async function step<T>(label: string, work: Promise<T>, status = "SUCCESS", minM
 async function tree(rows: [string, string][]) {
   for (let i = 0; i < rows.length; i++) {
     const branch = i === rows.length - 1 ? "└── " : "├── ";
-    line(dim(`    ${branch}`) + cyan(rows[i][0].padEnd(16)) + dim(": ") + rows[i][1]);
+    line(dim(`    ${branch}`) + cyan(rows[i][0].padEnd(18)) + dim(": ") + rows[i][1]);
     await sleep(70);
   }
   line();
@@ -136,16 +138,16 @@ async function main() {
   ██║  ██║██╔══██║██║╚██╔╝██║██╔═██╗ ██╔══╝  ██╔══╝  ██╔═══╝ ██╔══╝  ██╔══██╗
   ██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██╗███████╗███████╗██║     ███████╗██║  ██║
   ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝`)));
-  line(dim("        Hold the supply. Control the release. · Token Locks & Linear Vesting"));
+  line(dim("        Hold the supply. Control the release. · Production Token Locks on Mainnet"));
   line();
 
   // 2. Uplink Initializer
   await sleep(350);
-  line(dim("  [+] ") + lime("SECURE UPLINK ESTABLISHED"));
+  line(dim("  [+] ") + lime("SECURE MAINNET UPLINK ESTABLISHED"));
   await sleep(250);
 
-  let chainId = 46630;
-  let head: any = BigInt("125692800");
+  let chainId = 4663;
+  let head: any = BigInt("78049500");
   try {
     [chainId, head] = await Promise.all([
       client.getChainId(),
@@ -153,106 +155,129 @@ async function main() {
     ]);
   } catch {}
 
-  line(dim("  [+] ") + white(`NODE CONNECTION: Robinhood Chain Testnet  `) + dim(`(eth_chainId → ${chainId})`));
-  line(dim("  [+] ") + white(`CHAIN HEAD SYNC: `) + cyan(`block #${fmt(head)}`) + dim(" (live sequencer realtime)"));
+  line(dim("  [+] ") + white(`NETWORK        : Robinhood Chain Mainnet  `) + dim(`(eth_chainId → ${chainId})`));
+  line(dim("  [+] ") + white(`SEQUENCER HEAD : `) + cyan(`block #${fmt(head)}`) + dim(" (live Alchemy RPC realtime)"));
+  line(dim("  [+] ") + white(`FOUNDER WALLET : `) + yellow(FOUNDER_WALLET) + dim(" (verified deployer)"));
   line();
-  await sleep(600);
+  await sleep(700);
 
-  // ── ACT 1: Live Contract Verification ──
-  await typeCmd("damkeeper contracts --verify-live");
-  line(dim("  --- VERIFYING IMMUTABLE PROTOCOL DEPLOYMENTS ONCHAIN ---"));
+  // ── ACT 1: Live Mainnet Contract & Token Verification ──
+  await typeCmd("damkeeper contracts --verify-live --network mainnet");
+  line(dim("  --- VERIFYING IMMUTABLE PROTOCOL DEPLOYMENTS ON MAINNET ---"));
   line();
 
   // Live on-chain bytecode check for LockManager
   const lockBytecodePromise = client.getCode({ address: CONTRACTS.lockManager.address });
-  const lockBytecode = await step("Verifying LockManager bytecode", lockBytecodePromise, "VERIFIED", 600);
-  const lockBytes = lockBytecode ? (lockBytecode.length - 2) / 2 : 8412;
+  const lockBytecode = await step("Verifying DamkeeperLockManager onchain", lockBytecodePromise, "VERIFIED", 650);
+  const lockBytes = lockBytecode ? (lockBytecode.length - 2) / 2 : 7924;
 
   await tree([
     ["Contract", bold(white("DamkeeperLockManager v0.1.0"))],
     ["Address", white(CONTRACTS.lockManager.address)],
     ["Deployed Block", `#${fmt(CONTRACTS.lockManager.block)}`],
-    ["Bytecode Size", `${fmt(lockBytes)} bytes (Solidity 0.8.28 · Cancun)`],
-    ["Explorer Link", underline(cyan(`https://explorer.testnet.chain.robinhood.com/address/${CONTRACTS.lockManager.address}`))],
+    ["Bytecode Size", `${fmt(lockBytes)} bytes (Solidity 0.8.24 · Cancun)`],
+    ["Protocol Fee", lime(CONTRACTS.lockManager.fee) + dim(" (routed to treasury)")],
+    ["Blockscout", underline(cyan(`https://robinhoodchain.blockscout.com/address/${CONTRACTS.lockManager.address}`))],
   ]);
 
   // Live on-chain bytecode check for VestingManager
   const vestingBytecodePromise = client.getCode({ address: CONTRACTS.vestingManager.address });
-  const vestingBytecode = await step("Verifying VestingManager bytecode", vestingBytecodePromise, "VERIFIED", 600);
-  const vestingBytes = vestingBytecode ? (vestingBytecode.length - 2) / 2 : 11240;
+  const vestingBytecode = await step("Verifying DamkeeperVestingManager onchain", vestingBytecodePromise, "VERIFIED", 650);
+  const vestingBytes = vestingBytecode ? (vestingBytecode.length - 2) / 2 : 4810;
 
   await tree([
     ["Contract", bold(white("DamkeeperVestingManager v0.1.0"))],
     ["Address", white(CONTRACTS.vestingManager.address)],
     ["Deployed Block", `#${fmt(CONTRACTS.vestingManager.block)}`],
     ["Bytecode Size", `${fmt(vestingBytes)} bytes (Continuous stream math)`],
-    ["Explorer Link", underline(cyan(`https://explorer.testnet.chain.robinhood.com/address/${CONTRACTS.vestingManager.address}`))],
+    ["Supported Token", lime("DAM (whitelisted onchain)")],
+    ["Blockscout", underline(cyan(`https://robinhoodchain.blockscout.com/address/${CONTRACTS.vestingManager.address}`))],
+  ]);
+
+  // Live on-chain bytecode check for Damkeeper Token ($DAM)
+  const damBytecodePromise = client.getCode({ address: CONTRACTS.damToken.address });
+  const damBytecode = await step("Verifying Damkeeper Token ($DAM) ERC-20", damBytecodePromise, "VERIFIED", 650);
+  const damBytes = damBytecode ? (damBytecode.length - 2) / 2 : 4618;
+
+  await tree([
+    ["Asset", bold(white("Damkeeper Token ($DAM)"))],
+    ["Address", white(CONTRACTS.damToken.address)],
+    ["Deployed Block", `#${fmt(CONTRACTS.damToken.block)}`],
+    ["Total Supply", bold(lime(CONTRACTS.damToken.supply)) + dim(" (minted to treasury)")],
+    ["Decimals", white("18 (Standard ERC-20)")],
+    ["Blockscout", underline(cyan(`https://robinhoodchain.blockscout.com/address/${CONTRACTS.damToken.address}`))],
   ]);
 
   await sleep(900);
 
-  // ── ACT 2: Zero-Trust Token Lock Creation ──
-  await typeCmd("damkeeper lock create --token EXMPL --amount 100000 --until \"in 365 days\" --label \"Core Team Reserve 2027\"");
+  // ── ACT 2: Zero-Trust Token Lock Execution (Lock #1) ──
+  await typeCmd("damkeeper lock create --token DAM --amount 5000 --until \"in 10 minutes\" --label \"Mainnet Genesis Reserve #1\"");
 
   await step("Querying treasury wallet allowance", Promise.resolve(), "OK", 400);
-  await step("Submitting exact ERC-20 permit/approval", Promise.resolve(), "SUCCESS", 550);
-  await step("Executing LockManager.createLock()", Promise.resolve(), "MINED", 750);
-  await step("Anchor label metadata to hash registry", Promise.resolve(), "ANCHORED", 450);
+  await step("Submitting exact ERC-20 permit/approval", Promise.resolve(), "APPROVED", 500);
+  await step("Forwarding 0.0007 ETH protocol fee", Promise.resolve(), "FORWARDED", 550);
+  await step("Executing DamkeeperLockManager.createLock()", Promise.resolve(), "MINED", 750);
+  await step("Anchoring public cryptographic proof to chain", Promise.resolve(), "ANCHORED", 500);
   line();
 
-  line(lime(bold("  ✓ LOCK #1 CREATED ON ROBINHOOD TESTNET")));
+  line(lime(bold("  ✓ LOCK #1 CREATED ON ROBINHOOD CHAIN MAINNET")));
   line();
 
   await tree([
     ["Position ID", bold(white("Lock #1"))],
-    ["Label", lime("Core Team Reserve 2027")],
-    ["Asset Locked", bold(white("100,000 EXMPL")) + dim(" · Example Token ($100,000.00)")],
-    ["Unlock Timestamp", white("01 Oct 2027, 00:00 UTC") + yellow(" (in 365 days)")],
-    ["Timelock Rule", lime("Strict EVM Enforced (No early unlocks permitted)")],
-    ["Tx Hash", white(TX_PROOFS.createLock)],
-    ["Tx Explorer", underline(cyan(`https://explorer.testnet.chain.robinhood.com/tx/${TX_PROOFS.createLock}`))],
-    ["Live Proof URL", underline(lime(`https://damkeeper.xyz/positions/46630/${CONTRACTS.lockManager.address}/1`))],
+    ["Label", lime("Mainnet Genesis Reserve #1")],
+    ["Asset Locked", bold(white(TX_PROOFS.createLock.amount)) + dim(" (Damkeeper Token)")],
+    ["Beneficiary", yellow(FOUNDER_WALLET) + dim(" (withdrawal wallet)")],
+    ["Platform Fee", lime("0.0007 ETH (~$2.00)") + dim(" (forwarded to deployer)")],
+    ["Block Number", `#${fmt(TX_PROOFS.createLock.block)}`],
+    ["Tx Hash", white(TX_PROOFS.createLock.txHash)],
+    ["Blockscout Tx", underline(cyan(`https://robinhoodchain.blockscout.com/tx/${TX_PROOFS.createLock.txHash}`))],
+    ["Public Proof", underline(lime(TX_PROOFS.createLock.url))],
+  ]);
+
+  await sleep(950);
+
+  // ── ACT 3: Timelock Verification & Settlement (Withdraw) ──
+  await typeCmd("damkeeper lock withdraw --id 1 --network mainnet");
+
+  await step("Querying onchain timelock threshold", Promise.resolve(), "UNLOCKED", 400);
+  await step("Verifying beneficiary cryptographic caller", Promise.resolve(), "MATCHED", 450);
+  await step("Executing DamkeeperLockManager.withdraw(1)", Promise.resolve(), "CONFIRMED", 800);
+  await step("Emitting LockWithdrawn onchain event", Promise.resolve(), "RECORDED", 500);
+  line();
+
+  line(lime(bold("  ✓ WITHDRAWAL COMPLETE · 100% ASSETS RETURNED TO BENEFICIARY")));
+  line();
+
+  await tree([
+    ["Position ID", bold(white("Lock #1 · SETTLED"))],
+    ["Status", bold(lime("Withdrawn (Fully Claimed)"))],
+    ["Asset Released", bold(white(TX_PROOFS.withdrawLock.amount)) + dim(" (transferred via safeTransfer)")],
+    ["Recipient", yellow(FOUNDER_WALLET)],
+    ["Platform Fee", lime("0 ETH") + dim(" (Gas only · No protocol fee on withdraw)")],
+    ["Block Number", `#${fmt(TX_PROOFS.withdrawLock.block)}`],
+    ["Tx Hash", white(TX_PROOFS.withdrawLock.txHash)],
+    ["Blockscout Tx", underline(cyan(`https://robinhoodchain.blockscout.com/tx/${TX_PROOFS.withdrawLock.txHash}`))],
   ]);
 
   await sleep(900);
 
-  // ── ACT 3: Continuous Linear Vesting Stream Creation ──
-  await typeCmd("damkeeper vesting create --token EXMPL --amount 50000 --cliff \"90 days\" --duration \"365 days\"");
-
-  await step("Validating vesting slope & cliff constraints", Promise.resolve(), "OK", 400);
-  await step("Funding vesting escrow pool (50,000 EXMPL)", Promise.resolve(), "SUCCESS", 550);
-  await step("Broadcasting VestingManager.createSchedule()", Promise.resolve(), "MINED", 750);
-  line();
-
-  line(lime(bold("  ✓ LINEAR VESTING STREAM #1 ACTIVATED")));
-  line();
-
-  await tree([
-    ["Position ID", bold(white("Vesting #1"))],
-    ["Total Escrow", bold(white("50,000 EXMPL"))],
-    ["Cliff Period", yellow("90 Days") + dim(" (0% released before cliff threshold)")],
-    ["Total Duration", white("365 Days (12 Months)")],
-    ["Stream Velocity", cyan("0.00158548 EXMPL / second") + dim(" (continuous release)")],
-    ["Tx Hash", white(TX_PROOFS.createVesting)],
-    ["Tx Explorer", underline(cyan(`https://explorer.testnet.chain.robinhood.com/tx/${TX_PROOFS.createVesting}`))],
-    ["Live Proof URL", underline(lime(`https://damkeeper.xyz/positions/46630/${CONTRACTS.vestingManager.address}/1`))],
-  ]);
-
-  await sleep(800);
-
-  // ── ACT 4: Grand Finale & Production Seals ──
+  // ── ACT 4: Production Summary & Verified Seals ──
   const bar = "═".repeat(78);
   line(dim("  " + bar));
-  line(bold(lime("  [✓ ONCHAIN PROOF GENERATED & BROADCASTED TO ROBINHOOD CHAIN]")));
+  line(bold(lime("  [✓ ONCHAIN PROOFS VERIFIED & RECORDED ON ROBINHOOD CHAIN MAINNET]")));
   line(dim("  " + bar));
   line();
   line(dim("    • Production Web App : ") + underline(white("https://damkeeper.xyz")));
-  line(dim("    • Verified Explorer  : ") + underline(cyan("https://explorer.testnet.chain.robinhood.com")));
-  line(dim("    • Standalone CLI     : ") + lime("npm install -g @damkeeper/cli"));
+  line(dim("    • Verified Explorer  : ") + underline(cyan("https://robinhoodchain.blockscout.com")));
+  line(dim("    • Lock Vault         : ") + white(CONTRACTS.lockManager.address));
+  line(dim("    • Vesting Vault      : ") + white(CONTRACTS.vestingManager.address));
+  line(dim("    • Token ($DAM)       : ") + white(CONTRACTS.damToken.address));
+  line(dim("    • Founder Treasury   : ") + yellow(FOUNDER_WALLET));
   line();
 
-  line(dim("┌─[") + lime("FOUNDER@DAMKEEPER-PROD") + dim("]─[") + cyan("robinhood-testnet:46630") + dim("]"));
-  line(dim("└─▸ ") + white("damkeeper --version  ") + dim("→  v0.1.0 (production bundle verified)"));
+  line(dim("┌─[") + lime("FOUNDER@DAMKEEPER-MAINNET") + dim("]─[") + cyan("robinhood-mainnet:4663") + dim("]"));
+  line(dim("└─▸ ") + white("damkeeper status  ") + dim("→  ") + lime("LIVE & OPERATIONAL ON ROBINHOOD MAINNET"));
   line();
 }
 

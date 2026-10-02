@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Withdraw Success Modal Preview · Damkeeper</title>
+  <style>
+    :root {
+      --bg: #0b110e;
+      --bg-deep: #080d0a;
+      --surface: #111a14;
+      --surface-2: #17221b;
+      --text: #f2f5ee;
+      --text-2: #d1dacf;
+      --body: #aab8aa;
+      --muted: #95a595;
+      --faint: #819181;
+      --accent: #b8f36b;
+      --accent-pale: #e0f8bf;
+      --on-accent: #11210b;
+      --hair: rgba(226, 240, 220, 0.09);
+      --hair-2: rgba(226, 240, 220, 0.16);
+      --danger: #f3866b;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.6 var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(184, 243, 107, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(184, 243, 107, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.18s var(--ease);
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-pale);
+      box-shadow: 0 0 20px #b8f36b44;
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      border-color: var(--hair-2);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ---- Modal Card ---- */
+    .modal-card {
+      width: 100%;
+      border: 1px solid #c5e7a533;
+      border-radius: 18px;
+      background: #101910;
+      box-shadow: 0 35px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+      animation: modal-in 0.3s var(--ease);
+    }
+
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .wsm-hero {
+      position: relative;
+      padding: 34px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 25%, #b8f36b1f 0%, #101a11 60%, #0c140d 100%);
+      border-bottom: 1px solid var(--hair);
+    }
+
+    .wsm-badge-wrap {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+    }
+
+    .wsm-icon-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .wsm-icon-ring.r1 {
+      inset: -6px;
+      border: 1px solid #b8f36b33;
+      animation: wsm-pulse 2.5s ease-out infinite;
+    }
+
+    .wsm-icon-ring.r2 {
+      inset: -14px;
+      border: 1px dashed #b8f36b18;
+      animation: wsm-pulse 2.5s ease-out infinite 0.7s;
+    }
+
+    @keyframes wsm-pulse {
+      0% { transform: scale(0.96); opacity: 0.9; }
+      50% { transform: scale(1.04); opacity: 0.35; }
+      100% { transform: scale(0.96); opacity: 0.9; }
+    }
+
+    .wsm-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 30%, #2b4528, #132214);
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 28px #b8f36b3f, 0 1px 0 #ffffff1a inset;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(184, 243, 107, 0.08);
+      border: 1px solid rgba(184, 243, 107, 0.2);
+      color: var(--accent);
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .wsm-title {
+      margin: 12px 0 6px;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--text);
+    }
+
+    .wsm-subtitle {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 380px;
+    }
+
+    .modal-body {
+      padding: 16px 24px 20px;
+    }
+
+    .wsm-amount-card {
+      margin: 4px 0 18px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #182619, #0f1911);
+      border: 1px solid #b8f36b33;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .wsm-amount-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .wsm-amount-val {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .wsm-amount-num {
+      font-size: 32px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .wsm-amount-sym {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .kv {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--hair);
+      font-size: 13px;
+    }
+
+    .kv-row:last-child {
+      border-bottom: 0;
+    }
+
+    .kv-row dt {
+      color: var(--muted);
+    }
+
+    .kv-row dd {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: var(--mono);
+      background: #b8f36b18;
+      border: 1px solid #b8f36b33;
+      color: var(--accent);
+    }
+
+    .mono {
+      font-family: var(--mono);
+    }
+
+    .wsm-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--hair-2);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-left: 6px;
+    }
+
+    .wsm-copy-btn:hover {
+      background: #b8f36b14;
+      color: var(--accent);
+      border-color: #b8f36b44;
+    }
+
+    .wsm-foot {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 14px 24px;
+      border-top: 1px solid var(--hair);
+      background: #0d150e;
+    }
+
+    .icon {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .icon-lg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="container">
+    <div class="controls">
+      <button class="btn btn-primary" id="btnLock" onclick="setDemo('lock')">Demo: Lock Withdraw (5,000 $DAM)</button>
+      <button class="btn btn-ghost" id="btnVesting" onclick="setDemo('vesting')">Demo: Vesting Claim</button>
+    </div>
+
+    <!-- The Popup Modal -->
+    <div class="modal-card">
+      <div class="wsm-hero">
+        <div class="wsm-badge-wrap">
+          <span class="wsm-icon-ring r1"></span>
+          <span class="wsm-icon-ring r2"></span>
+          <div class="wsm-icon">
+            <svg class="icon-lg" viewBox="0 0 24 24">
+              <path d="m5 12 4.5 4.5L19 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="pill" style="margin-top: 14px">
+          <span class="status-dot"></span>
+          Robinhood Chain · Confirmed
+        </div>
+
+        <h2 id="modalTitle" class="wsm-title">Withdrawal Successful!</h2>
+        <p id="modalSubtitle" class="wsm-subtitle">
+          Your locked allocation has been unlocked and sent directly to your beneficiary wallet.
+        </p>
+      </div>
+
+      <div class="modal-body">
+        <div class="wsm-amount-card">
+          <small id="amountLabel" class="wsm-amount-label">AMOUNT WITHDRAWN</small>
+          <div class="wsm-amount-val">
+            <span id="amountVal" class="wsm-amount-num">5,000</span>
+            <span id="tokenSym" class="wsm-amount-sym">DAM</span>
+          </div>
+        </div>
+
+        <dl class="kv">
+          <div class="kv-row">
+            <dt>Position</dt>
+            <dd><span id="posBadge" class="badge">Lock #1</span></dd>
+          </div>
+
+          <div class="kv-row">
+            <dt>Recipient</dt>
+            <dd class="mono" style="display:inline-flex; align-items:center;">
+              <span id="recipientAddr">0x9178…7681</span>
+              <button type="button" class="wsm-copy-btn" title="Copy recipient" onclick="copyText('0x9178B573219C55586BbAf51Ecb24ACfb27BB7681', this)">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+            </dd>
+          </div>
+
+          <div class="kv-row">
+            <dt>Transaction</dt>
+            <dd class="mono" style="display:inline-flex; align-items:center;">
+              <span id="txHash">0xddb7…9f4e</span>
+              <button type="button" class="wsm-copy-btn" title="Copy tx hash" onclick="copyText('0xddb78f4bd247fbf4f2c01460f52c4407407a304ef312944c1320767929949f4e', this)">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+            </dd>
+          </div>
+
+          <div class="kv-row">
+            <dt>Contract Vault</dt>
+            <dd class="mono"><span id="vaultAddr">0x2414…04FE</span></dd>
+          </div>
+
+          <div class="kv-row">
+            <dt>Network</dt>
+            <dd>Robinhood Chain (4663)</dd>
+          </div>
+
+          <div class="kv-row">
+            <dt>Onchain Status</dt>
+            <dd style="color:var(--accent); font-weight:500;">✓ Confirmed in block</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="wsm-foot">
+        <a id="explorerBtn" href="https://robinhoodchain.blockscout.com/tx/0xddb78f4bd247fbf4f2c01460f52c4407407a304ef312944c1320767929949f4e" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+          View on Blockscout
+          <svg class="icon" viewBox="0 0 24 24"><path d="m6 18 12-12M6 6h12v12"/></svg>
+        </a>
+        <button type="button" class="btn btn-ghost" onclick="alert('Modal dismissed!')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setDemo(type) {
+      const isVesting = type === 'vesting';
+      document.getElementById('modalTitle').textContent = isVesting ? 'Tokens Claimed!' : 'Withdrawal Successful!';
+      document.getElementById('modalSubtitle').textContent = isVesting 
+        ? 'Your vested allocation has been claimed and transferred to your wallet onchain.' 
+        : 'Your locked allocation has been unlocked and sent directly to your beneficiary wallet.';
+      document.getElementById('amountLabel').textContent = isVesting ? 'AMOUNT CLAIMED' : 'AMOUNT WITHDRAWN';
+      document.getElementById('amountVal').textContent = isVesting ? '250,000' : '5,000';
+      document.getElementById('tokenSym').textContent = 'DAM';
+      document.getElementById('posBadge').textContent = isVesting ? 'Vesting #42' : 'Lock #1';
+      
+      const btnLock = document.getElementById('btnLock');
+      const btnVesting = document.getElementById('btnVesting');
+      if (isVesting) {
+        btnVesting.className = 'btn btn-primary';
+        btnLock.className = 'btn btn-ghost';
+      } else {
+        btnLock.className = 'btn btn-primary';
+        btnVesting.className = 'btn btn-ghost';
+      }
+    }
+
+    function copyText(val, btn) {
+      navigator.clipboard.writeText(val);
+      const original = btn.innerHTML;
+      btn.innerHTML = '<span style="font-size:10px; color:var(--accent);">✓</span>';
+      setTimeout(() => btn.innerHTML = original, 1500);
+    }
+  </script>
+</body>
+</html>

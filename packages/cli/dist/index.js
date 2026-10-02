@@ -232,38 +232,51 @@ async function loginWithBrowser() {
 }
 
 // src/config.ts
+var MAINNET = {
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://robinhood-mainnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT"] } },
+  blockExplorers: { default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" } },
+  testnet: false
+};
 var TESTNET2 = {
   id: 46630,
   name: "Robinhood Chain Testnet",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: [] } },
+  rpcUrls: { default: { http: ["https://robinhood-testnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT"] } },
   blockExplorers: { default: { name: "Explorer", url: "https://explorer.testnet.chain.robinhood.com" } },
   testnet: true
 };
+function activeChain() {
+  const chainId = get("DAMKEEPER_CHAIN_ID");
+  if (chainId === "46630") return TESTNET2;
+  return MAINNET;
+}
 var DEFAULT_DEPLOYMENTS = [
   {
     kind: "lock",
-    managerAddress: "0x335B2fba8845EfC3E74F8A4b4AD664D32Eba0AcF",
+    managerAddress: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
     version: "0.1.0",
-    verifiedSourceUrl: "https://explorer.testnet.chain.robinhood.com/address/0x335b2fba8845efc3e74f8a4b4ad664d32eba0acf",
-    admin: "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5",
-    deployBlock: "125692754"
+    verifiedSourceUrl: "https://robinhoodchain.blockscout.com/address/0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+    admin: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
+    deployBlock: "78024101"
   },
   {
     kind: "vesting",
-    managerAddress: "0xfD91fe9daaC8BDb886cD89A53d3Ba40421cb6efd",
+    managerAddress: "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
     version: "0.1.0",
-    verifiedSourceUrl: "https://explorer.testnet.chain.robinhood.com/address/0xfd91fe9daac8bdb886cd89a53d3ba40421cb6efd",
-    admin: "0xe0945d83EA2d1A0FfeF588748c67FCa88acc99A5",
-    deployBlock: "125692760"
+    verifiedSourceUrl: "https://robinhoodchain.blockscout.com/address/0xC07D54bd8e87442dB58f6A0cCca71489307c70f5",
+    admin: "0x9178B573219C55586BbAf51Ecb24ACfb27BB7681",
+    deployBlock: "78059319"
   }
 ];
 var DEFAULTS = {
   DAMKEEPER_API: "https://damkeeper.xyz",
   DAMKEEPER_WEB: "https://damkeeper.xyz",
-  DAMKEEPER_RPC_URL: "https://explorer.testnet.chain.robinhood.com/api/eth-rpc",
-  DAMKEEPER_LOCK_MANAGER: "0x335B2fba8845EfC3E74F8A4b4AD664D32Eba0AcF",
-  DAMKEEPER_VESTING_MANAGER: "0xfD91fe9daaC8BDb886cD89A53d3Ba40421cb6efd"
+  DAMKEEPER_RPC_URL: "https://robinhood-mainnet.g.alchemy.com/v2/alch_pplqufRNSY8bryHOV60bT",
+  DAMKEEPER_LOCK_MANAGER: "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE",
+  DAMKEEPER_VESTING_MANAGER: "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5"
 };
 function repoEnv() {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -302,8 +315,8 @@ var cfg = {
   api: (get("DAMKEEPER_API") ?? "https://damkeeper.xyz").replace(/\/$/, ""),
   web: (get("DAMKEEPER_WEB", "DAMKEEPER_API") ?? "https://damkeeper.xyz").replace(/\/$/, ""),
   rpc: () => {
-    const url = get("DAMKEEPER_RPC_URL", "NEXT_PUBLIC_TESTNET_RPC_URL");
-    if (!url) throw new CliError("No RPC endpoint configured.", "Set DAMKEEPER_RPC_URL (a free Alchemy key for Robinhood Chain Testnet works).\nYou can also put it in ~/.damkeeper/config:\n  DAMKEEPER_RPC_URL=https://rhn-testnet.g.alchemy.com/v2/YOUR_KEY");
+    const url = get("DAMKEEPER_RPC_URL", "NEXT_PUBLIC_MAINNET_RPC_URL", "NEXT_PUBLIC_TESTNET_RPC_URL");
+    if (!url) throw new CliError("No RPC endpoint configured.", "Set DAMKEEPER_RPC_URL (a free Alchemy key for Robinhood Chain works).\nYou can also put it in ~/.damkeeper/config:\n  DAMKEEPER_RPC_URL=https://robinhood-mainnet.g.alchemy.com/v2/YOUR_KEY");
     return url;
   },
   lock: () => need("NEXT_PUBLIC_LOCK_MANAGER_ADDRESS", "DAMKEEPER_LOCK_MANAGER"),
@@ -311,11 +324,11 @@ var cfg = {
 };
 function need(...keys) {
   const v = keys.map((k) => get(k)).find(Boolean);
-  if (!v) throw new CliError("Contract address isn't configured.", `Set ${keys[keys.length - 1]}. Addresses are listed in packages/config/manifest.testnet.json.`);
+  if (!v) throw new CliError("Contract address isn't configured.", `Set ${keys[keys.length - 1]}. Addresses are listed in packages/config/manifest.mainnet.json.`);
   return v;
 }
 function publicClient2() {
-  return createPublicClient({ chain: TESTNET2, transport: http(cfg.rpc()) });
+  return createPublicClient({ chain: activeChain(), transport: http(cfg.rpc()) });
 }
 function account() {
   const raw = process.env.DAMKEEPER_PRIVATE_KEY;
@@ -337,11 +350,11 @@ function account() {
   );
 }
 function walletClient() {
-  return createWalletClient({ account: account(), chain: TESTNET2, transport: http(cfg.rpc()) });
+  return createWalletClient({ account: account(), chain: activeChain(), transport: http(cfg.rpc()) });
 }
 
 // src/write.ts
-import { decodeEventLog, erc20Abi, isAddress } from "viem";
+import { decodeEventLog, erc20Abi, formatEther, isAddress } from "viem";
 
 // src/api.ts
 async function api(path, init) {
@@ -516,7 +529,7 @@ var lockManagerAbi = [
   {
     type: "function",
     name: "createLock",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [
       { name: "token", type: "address" },
       { name: "beneficiary", type: "address" },
@@ -524,6 +537,13 @@ var lockManagerAbi = [
       { name: "unlockTime", type: "uint64" }
     ],
     outputs: [{ name: "positionId", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "lockFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
   },
   {
     type: "function",
@@ -738,7 +758,9 @@ function pending(listed) {
 var MIN_LEAD_MINUTES = 2;
 async function assertNetwork() {
   const id = await publicClient2().getChainId();
-  if (id !== TESTNET2.id) throw new CliError(`The RPC endpoint is chain ${id}, not Robinhood Chain Testnet (${TESTNET2.id}).`, "Check DAMKEEPER_RPC_URL.");
+  if (id !== MAINNET.id && id !== TESTNET2.id) {
+    throw new CliError(`The RPC endpoint is chain ${id}, not Robinhood Chain (${MAINNET.id} or ${TESTNET2.id}).`, "Check DAMKEEPER_RPC_URL.");
+  }
 }
 async function tokenInfo(token, owner) {
   const pc = publicClient2();
@@ -767,6 +789,10 @@ async function send(label, request) {
   const receipt = await publicClient2().waitForTransactionReceipt({ hash });
   if (receipt.status === "reverted") throw new CliError(`Reverted onchain (${short(hash)}) \u2014 nothing moved.`);
   step(label, `${ok("SUCCESS")} ${c.dim(`block ${receipt.blockNumber}`)}`);
+  api("/api/sync", {
+    method: "POST",
+    body: JSON.stringify({ txHash: receipt.transactionHash })
+  }).catch(() => null);
   return receipt;
 }
 async function ensureAllowance(token, spender, amount, owner) {
@@ -829,19 +855,24 @@ async function lockCreate(o) {
   if (unlockAt.getTime() < addMinutes(/* @__PURE__ */ new Date(), MIN_LEAD_MINUTES).getTime())
     throw new CliError(`Unlock has to be at least ${MIN_LEAD_MINUTES} minutes from now.`, "It must still be in the future when the transaction lands.");
   const title = o.title ?? (interactive() && !o.yes ? await ask("Title (optional, offchain)", "") : "");
+  let fee = 700000000000000n;
+  try {
+    fee = await publicClient2().readContract({ address: manager, abi: lockManagerAbi, functionName: "lockFee" });
+  } catch {
+  }
   console.log("");
   kv([
     ["You approve", `${formatTokenAmount(amount, info.decimals)} ${info.symbol}`],
     ["Withdrawable by", beneficiary],
     ["Withdrawable from", `${formatLocal(unlockAt)}  ${c.dim(`${formatUtc(unlockAt)} \xB7 ${relativeFromNow(unlockAt)}`)}`],
-    ["Platform fee", "none \xB7 gas only"]
+    ["Platform fee", fee > 0n ? `${formatEther(fee)} ETH (~$2.00)` : "none \xB7 gas only"]
   ]);
   console.log("");
   await confirm("Create this lock?", Boolean(o.yes));
   await ensureAllowance(token, manager, amount, acct.address);
   const receipt = await send(
     "Creating lock",
-    () => walletClient().writeContract({ address: manager, abi: lockManagerAbi, functionName: "createLock", args: [token, beneficiary, amount, toUnixSeconds(unlockAt)] })
+    () => walletClient().writeContract({ address: manager, abi: lockManagerAbi, functionName: "createLock", args: [token, beneficiary, amount, toUnixSeconds(unlockAt)], value: fee })
   );
   const id = positionIdFrom(receipt, manager, lockManagerAbi, "LockCreated");
   if (id) await saveLabel(manager, id, title);
@@ -948,7 +979,7 @@ async function claimCmd(id, o) {
 }
 
 // src/read.ts
-var CHAIN = 46630;
+var CHAIN = activeChain().id;
 var asKind = (s) => {
   if (s === "lock" || s === "vesting") return s;
   throw new CliError(`Unknown kind "${s}".`, "Use lock or vesting.");
@@ -1068,14 +1099,14 @@ async function contractsCmd() {
   ).catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   out(data.deployments, () => {
     console.log(`
-  ${c.bold("Contracts")} ${c.dim("Robinhood Chain Testnet \xB7 46630")}
+  ${c.bold("Contracts")} ${c.dim(`${activeChain().name} \xB7 ${activeChain().id}`)}
 `);
     for (const d of data.deployments) {
       console.log(`  ${c.lime(d.kind === "lock" ? "LockManager" : "VestingManager")} ${c.dim(`v${d.version}`)}`);
       kv([
         ["Address", d.managerAddress],
         ["Source", d.verifiedSourceUrl ? c.green("verified") + c.dim(`  ${d.verifiedSourceUrl}`) : c.yellow("not verified yet")],
-        ["Admin", `${d.admin}  ${c.dim("(single wallet \u2014 testnet only)")}`],
+        ["Admin", d.admin],
         ["Deployed", `block ${d.deployBlock}`]
       ], 4);
       console.log("");
@@ -1110,7 +1141,7 @@ async function statusCmd() {
 }
 
 // src/misc.ts
-import { formatEther, erc20Abi as erc20Abi2 } from "viem";
+import { formatEther as formatEther2, erc20Abi as erc20Abi2 } from "viem";
 
 // src/caption.ts
 var cardDate = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -1126,7 +1157,7 @@ async function loginCmd() {
   const pc = publicClient2();
   const activeSession = loadSession();
   const [chainId, eth] = await Promise.all([pc.getChainId(), pc.getBalance({ address: acct.address })]);
-  out({ address: acct.address, authorizedBy: activeSession?.authorizedBy ?? null, chainId, eth: formatEther(eth) }, () => {
+  out({ address: acct.address, authorizedBy: activeSession?.authorizedBy ?? null, chainId, eth: formatEther2(eth) }, () => {
     console.log("");
     const rows = [
       ["CLI Signer", c.lime(acct.address)]
@@ -1135,11 +1166,11 @@ async function loginCmd() {
       rows.push(["Authorized By", `${c.bold(activeSession.authorizedBy)} ${c.dim("(Phantom / Web3 Wallet)")}`]);
     }
     rows.push(
-      ["Network", chainId === TESTNET2.id ? `Robinhood Chain Testnet ${c.dim("(46630)")}` : c.red(`chain ${chainId} \u2014 not Robinhood Chain Testnet`)],
-      ["ETH (gas)", `${Number(formatEther(eth)).toFixed(4)}${eth === 0n ? c.yellow("  \u2014 empty. Get testnet ETH from the faucet in the README.") : ""}`]
+      ["Network", chainId === MAINNET.id ? `Robinhood Chain Mainnet ${c.dim("(4663)")}` : chainId === TESTNET2.id ? `Robinhood Chain Testnet ${c.dim("(46630)")}` : c.red(`chain ${chainId} \u2014 unsupported`)],
+      ["ETH (gas)", `${Number(formatEther2(eth)).toFixed(4)}${eth === 0n ? c.yellow("  \u2014 empty. Fund wallet with ETH for gas.") : ""}`]
     );
     kv(rows);
-    console.log(c.dim("\n  Ready! Next:  damkeeper faucet   \xB7   damkeeper lock create\n"));
+    console.log(c.dim("\n  Ready! Next:  damkeeper positions   \xB7   damkeeper lock create\n"));
   });
 }
 async function logoutCmd() {
@@ -1164,7 +1195,8 @@ async function balanceCmd(o) {
   const target = o.wallet ?? session?.authorizedBy ?? account().address;
   const signer = account().address;
   const pc = publicClient2();
-  const tokensRes = await api(`/api/tokens?chainId=${TESTNET2.id}`).catch(() => ({ tokens: [] }));
+  const chain = activeChain();
+  const tokensRes = await api(`/api/tokens?chainId=${chain.id}`).catch(() => ({ tokens: [] }));
   const [eth, ...tokenBalances] = await Promise.all([
     pc.getBalance({ address: target }),
     ...tokensRes.tokens.map(async (t) => {
@@ -1182,16 +1214,16 @@ async function balanceCmd(o) {
     })
   ]);
   const rows = [
-    ["ETH", "Native (gas)", `${Number(formatEther(eth)).toFixed(4)} ETH`],
+    ["ETH", "Native (gas)", `${Number(formatEther2(eth)).toFixed(4)} ETH`],
     ...tokenBalances.map((t) => [
       t.symbol ?? "CUSTOM",
       short(t.address),
       `${(Number(t.balance) / 10 ** (t.decimals ?? 18)).toLocaleString()} ${t.symbol ?? ""}`
     ])
   ];
-  out({ address: target, eth: formatEther(eth), tokens: tokenBalances }, () => {
+  out({ address: target, eth: formatEther2(eth), tokens: tokenBalances }, () => {
     console.log(`
-  ${c.bold("Balances")} ${c.dim(`for ${c.lime(target)} \xB7 Robinhood Chain Testnet`)}`);
+  ${c.bold("Balances")} ${c.dim(`for ${c.lime(target)} \xB7 ${chain.name}`)}`);
     if (session?.authorizedBy && target.toLowerCase() === session.authorizedBy.toLowerCase()) {
       console.log(`  ${c.dim(`Authorized via Phantom \xB7 CLI Signer Key: ${short(signer)}`)}
 `);
@@ -1211,13 +1243,14 @@ async function homeCmd() {
 }
 async function shareCmd(kind, id) {
   if (kind !== "lock" && kind !== "vesting") throw new CliError(`Unknown kind "${kind}".`, "Use lock or vesting.");
-  const deployments = await api(`/api/deployments?chainId=${TESTNET2.id}`).catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
+  const chain = activeChain();
+  const deployments = await api(`/api/deployments?chainId=${chain.id}`).catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   const dep = deployments.deployments.find((d) => d.kind === kind);
   if (!dep) throw new CliError(`No ${kind} contract is recorded for this network.`);
-  const p = (await api(`/api/positions/${TESTNET2.id}/${dep.managerAddress}/${id}`).catch(() => {
+  const p = (await api(`/api/positions/${chain.id}/${dep.managerAddress}/${id}`).catch(() => {
     throw new CliError(`No ${kind} #${id} exists.`);
   })).position;
-  const url = `${cfg.web}/positions/${TESTNET2.id}/${p.manager}/${p.positionId}`;
+  const url = `${cfg.web}/positions/${chain.id}/${p.manager}/${p.positionId}`;
   const amount = `${formatAmount(p, p.amount, 2)} ${tokenLabel(p)}`;
   const end = releaseAt(p);
   const caption = p.kind === "lock" ? `${amount} is locked on Damkeeper until ${end ? cardDate(end) : "its unlock date"}. The terms are fixed onchain \u2014 check them yourself:` : `${amount} vests on Damkeeper until ${end ? cardDate(end) : "its end date"}. Check the schedule onchain:`;

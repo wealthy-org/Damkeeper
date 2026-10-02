@@ -26,6 +26,7 @@ interface RunOptions {
   abi: Abi;
   functionName: string;
   args: readonly unknown[];
+  value?: bigint;
 }
 
 export function useTxFlow() {
@@ -50,6 +51,7 @@ export function useTxFlow() {
           abi: opts.abi,
           functionName: opts.functionName,
           args: opts.args as never,
+          value: opts.value,
         });
       } catch (err: unknown) {
         if (cancelledRef.current) {

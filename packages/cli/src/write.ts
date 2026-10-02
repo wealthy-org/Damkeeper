@@ -1,6 +1,6 @@
-import { decodeEventLog, erc20Abi, isAddress, type TransactionReceipt } from "viem";
+import { decodeEventLog, erc20Abi, formatEther, isAddress, type TransactionReceipt } from "viem";
 import { api } from "./api";
-import { account, cfg, publicClient, TESTNET, walletClient } from "./config";
+import { account, cfg, publicClient, MAINNET, TESTNET, walletClient } from "./config";
 import { ask, confirm, interactive } from "./prompt";
 import { parseWhen } from "./time";
 import { c, CliError, kv, out, short, step, ok, table } from "./ui";
@@ -17,7 +17,9 @@ type Addr = `0x${string}`;
 
 async function assertNetwork() {
   const id = await publicClient().getChainId();
-  if (id !== TESTNET.id) throw new CliError(`The RPC endpoint is chain ${id}, not Robinhood Chain Testnet (${TESTNET.id}).`, "Check DAMKEEPER_RPC_URL.");
+  if (id !== MAINNET.id && id !== TESTNET.id) {
+    throw new CliError(`The RPC endpoint is chain ${id}, not Robinhood Chain (${MAINNET.id} or ${TESTNET.id}).`, "Check DAMKEEPER_RPC_URL.");
+  }
 }
 
 async function tokenInfo(token: Addr, owner: Addr) {
@@ -49,6 +51,11 @@ async function send(label: string, request: () => Promise<`0x${string}`>): Promi
   const receipt = await publicClient().waitForTransactionReceipt({ hash });
   if (receipt.status === "reverted") throw new CliError(`Reverted onchain (${short(hash)}) — nothing moved.`);
   step(label, `${ok("SUCCESS")} ${c.dim(`block ${receipt.blockNumber}`)}`);
+  // On-Demand indexing: ingest immediately into database
+  api("/api/sync", {
+    method: "POST",
+    body: JSON.stringify({ txHash: receipt.transactionHash }),
+  }).catch(() => null);
   return receipt;
 }
 
@@ -123,19 +130,24 @@ export async function lockCreate(o: { token?: string; to?: string; amount?: stri
     throw new CliError(`Unlock has to be at least ${MIN_LEAD_MINUTES} minutes from now.`, "It must still be in the future when the transaction lands.");
   const title = o.title ?? (interactive() && !o.yes ? await ask("Title (optional, offchain)", "") : "");
 
+  let fee = 700000000000000n; // 0.0007 ETH (~$2) default
+  try {
+    fee = await publicClient().readContract({ address: manager, abi: lockManagerAbi, functionName: "lockFee" });
+  } catch {}
+
   console.log("");
   kv([
     ["You approve", `${formatTokenAmount(amount, info.decimals)} ${info.symbol}`],
     ["Withdrawable by", beneficiary],
     ["Withdrawable from", `${formatLocal(unlockAt)}  ${c.dim(`${formatUtc(unlockAt)} · ${relativeFromNow(unlockAt)}`)}`],
-    ["Platform fee", "none · gas only"],
+    ["Platform fee", fee > 0n ? `${formatEther(fee)} ETH (~$2.00)` : "none · gas only"],
   ]);
   console.log("");
   await confirm("Create this lock?", Boolean(o.yes));
 
   await ensureAllowance(token, manager, amount, acct.address);
   const receipt = await send("Creating lock", () =>
-    walletClient().writeContract({ address: manager, abi: lockManagerAbi, functionName: "createLock", args: [token, beneficiary, amount, toUnixSeconds(unlockAt)] })
+    walletClient().writeContract({ address: manager, abi: lockManagerAbi, functionName: "createLock", args: [token, beneficiary, amount, toUnixSeconds(unlockAt)], value: fee })
   );
   const id = positionIdFrom(receipt, manager, lockManagerAbi, "LockCreated");
   if (id) await saveLabel(manager, id, title);

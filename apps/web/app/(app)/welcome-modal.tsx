@@ -88,7 +88,7 @@ export function WelcomeModal() {
       <div className="wl-body">
         <span className="pill">
           <span className="status-dot live" />
-          Robinhood Chain Testnet
+          Robinhood Chain Mainnet
         </span>
         <h2 id="welcome-title">Welcome to Damkeeper</h2>
         <p>

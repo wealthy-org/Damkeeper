@@ -1,14 +1,14 @@
 "use client";
 
 import { useAccount, useSwitchChain } from "wagmi";
-import { robinhoodTestnet } from "@/lib/chains";
+import { robinhoodMainnet, robinhoodTestnet } from "@/lib/chains";
 
 // brief.md section 10: "Network label selalu terlihat; tombol submit diblokir pada
 // network yang salah." Shared by the nav (always-visible banner) and the create-flow
 // pages (which also read `wrongNetwork` to disable their submit buttons).
 export function useWrongNetwork() {
   const { chainId, isConnected } = useAccount();
-  return isConnected && chainId !== undefined && chainId !== robinhoodTestnet.id;
+  return isConnected && chainId !== undefined && chainId !== robinhoodMainnet.id && chainId !== robinhoodTestnet.id;
 }
 
 export function WrongNetworkBanner() {
@@ -32,14 +32,14 @@ export function WrongNetworkBanner() {
       }}
     >
       <svg className="icon" aria-hidden="true"><use href="#i-shield" /></svg>
-      Your wallet is on the wrong network. Damkeeper only works on Robinhood Chain Testnet.
+      Your wallet is on the wrong network. Damkeeper works on Robinhood Chain.
       <button
         className="btn btn-ghost"
         style={{ minHeight: 30, fontSize: 11, borderColor: "#f3866b55", color: "#f3866b" }}
         disabled={isPending}
-        onClick={() => switchChain({ chainId: robinhoodTestnet.id })}
+        onClick={() => switchChain({ chainId: robinhoodMainnet.id })}
       >
-        {isPending ? "Switching…" : "Switch network"}
+        {isPending ? "Switching…" : "Switch to Robinhood Chain"}
       </button>
     </div>
   );

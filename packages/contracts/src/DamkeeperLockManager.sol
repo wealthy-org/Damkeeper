@@ -31,6 +31,9 @@ contract DamkeeperLockManager is ReentrancyGuard {
     mapping(address => uint256) public liabilityCap;
     mapping(address => uint256) public totalLiability;
 
+    uint256 public lockFee = 0.0007 ether;
+    address payable public feeRecipient;
+
     event LockCreated(
         uint256 indexed id,
         address indexed token,
@@ -43,6 +46,8 @@ contract DamkeeperLockManager is ReentrancyGuard {
     event LockWithdrawn(uint256 indexed id, address beneficiary, uint256 amount);
     event CreationPauseChanged(bool paused, address actor);
     event TokenPolicyChanged(address indexed token, bool enabled, uint256 liabilityCap, address actor);
+    event LockFeeChanged(uint256 newFee, address actor);
+    event FeeRecipientChanged(address indexed newRecipient, address actor);
     event AdminTransferInitiated(address indexed previousAdmin, address indexed pendingAdmin);
     event AdminTransferAccepted(address indexed previousAdmin, address indexed newAdmin);
 
@@ -58,6 +63,8 @@ contract DamkeeperLockManager is ReentrancyGuard {
     error NotBeneficiary();
     error NotYetUnlocked();
     error AlreadyWithdrawn();
+    error InsufficientFee();
+    error FeeTransferFailed();
 
     modifier onlyAdmin() {
         if (msg.sender != admin) revert NotAdmin();
@@ -66,9 +73,10 @@ contract DamkeeperLockManager is ReentrancyGuard {
 
     constructor(address initialAdmin) {
         admin = initialAdmin;
+        feeRecipient = payable(initialAdmin);
     }
 
-    // ---- Admin: creation policy only. No sweep, no privileged claim, no schedule edits. ----
+    // ---- Admin: creation policy & fee management. No sweep, no privileged claim, no schedule edits. ----
 
     function setCreationPaused(bool paused) external onlyAdmin {
         creationPaused = paused;
@@ -79,6 +87,17 @@ contract DamkeeperLockManager is ReentrancyGuard {
         tokenEnabled[token] = enabled;
         liabilityCap[token] = cap;
         emit TokenPolicyChanged(token, enabled, cap, msg.sender);
+    }
+
+    function setLockFee(uint256 newFee) external onlyAdmin {
+        lockFee = newFee;
+        emit LockFeeChanged(newFee, msg.sender);
+    }
+
+    function setFeeRecipient(address payable newRecipient) external onlyAdmin {
+        if (newRecipient == address(0)) revert InvalidBeneficiary();
+        feeRecipient = newRecipient;
+        emit FeeRecipientChanged(newRecipient, msg.sender);
     }
 
     function transferAdmin(address newAdmin) external onlyAdmin {
@@ -100,18 +119,14 @@ contract DamkeeperLockManager is ReentrancyGuard {
         address beneficiary,
         uint256 amount,
         uint64 unlockTime
-    ) external nonReentrant returns (uint256 positionId) {
+    ) external payable nonReentrant returns (uint256 positionId) {
         if (creationPaused) revert CreationIsPaused();
         if (!tokenEnabled[token]) revert TokenNotEnabled();
+        if (msg.value < lockFee) revert InsufficientFee();
         if (beneficiary == address(0) || beneficiary == address(this)) revert InvalidBeneficiary();
         if (amount == 0) revert InvalidAmount();
         if (unlockTime <= block.timestamp) revert InvalidUnlockTime();
         if (totalLiability[token] + amount > liabilityCap[token]) revert CapExceeded();
-
-        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        uint256 received = IERC20(token).balanceOf(address(this)) - balanceBefore;
-        if (received != amount) revert DepositMismatch();
 
         positionId = _nextId++;
         _locks[positionId] = LockPosition({
@@ -126,6 +141,17 @@ contract DamkeeperLockManager is ReentrancyGuard {
         totalLiability[token] += amount;
 
         emit LockCreated(positionId, token, msg.sender, beneficiary, amount, uint64(block.timestamp), unlockTime);
+
+        if (msg.value > 0) {
+            address payable recipient = feeRecipient != address(0) ? feeRecipient : payable(admin);
+            (bool sent, ) = recipient.call{value: msg.value}("");
+            if (!sent) revert FeeTransferFailed();
+        }
+
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        uint256 received = IERC20(token).balanceOf(address(this)) - balanceBefore;
+        if (received != amount) revert DepositMismatch();
     }
 
     // ---- Withdraw: pull model, full amount, once. Never blocked by creationPaused. ----

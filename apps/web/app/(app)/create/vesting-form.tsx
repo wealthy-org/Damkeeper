@@ -10,13 +10,13 @@ import { useTxFlow, txStatusLabel } from "@/lib/use-tx-flow";
 import { DateTimePicker, type DatePreset } from "../date-time-picker";
 import { addDays, addMinutes, addMonths, formatLocal, formatShort, roundUpToStep, toUnixSeconds } from "@/lib/dates";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
-import { robinhoodTestnet } from "@/lib/chains";
+import { robinhoodMainnet, robinhoodTestnet } from "@/lib/chains";
 import { cleanLabel, labelMessage, LABEL_MAX } from "@/lib/label-message";
 import { positionIdFromReceipt } from "@/lib/receipt";
 import { proofPath, type PositionView } from "@/lib/position-view";
 import { ShareButton } from "../share/share-button";
 
-export const VESTING_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS as `0x${string}` | undefined;
+export const VESTING_MANAGER_ADDRESS = (process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS || "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5") as `0x${string}` | undefined;
 
 // An explicit start must still be in the future when the create transaction is
 // mined (brief.md 8.4), so leave room for approval and inclusion.
@@ -24,7 +24,7 @@ const MIN_LEAD_MINUTES = 2;
 const SETTLED = ["idle", "included", "user_rejected", "reverted", "error", "cancelled"];
 
 export function VestingForm({ onClose }: { onClose: () => void }) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId: activeChainId } = useAccount();
   const { connect, connectors, isPending: connecting } = useConnect();
   const [token, setToken] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
@@ -77,7 +77,7 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
           <svg className="icon-lg" aria-hidden="true"><use href="#i-wallet" /></svg>
         </span>
         <h2>Connect a wallet</h2>
-        <p>You need a wallet on Robinhood Chain Testnet to create a vesting schedule.</p>
+        <p>You need a wallet on Robinhood Chain to create a vesting schedule.</p>
         <button className="btn btn-primary" disabled={connecting} onClick={() => connect({ connector: connectors[0] })}>
           {connecting ? "Connecting…" : "Connect wallet"}
         </button>
@@ -172,8 +172,15 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
     const id = positionIdFromReceipt(receipt, VESTING_MANAGER_ADDRESS, vestingManagerAbi, "VestingCreated");
     const label = id ? await saveLabel(id) : null;
     const nowSec = String(Math.floor(Date.now() / 1000));
+    const targetChainId = activeChainId ?? robinhoodMainnet.id;
+    // On-Demand indexing: ingest immediately into database without waiting for cron
+    fetch("/api/sync", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chainId: targetChainId, txHash: receipt.transactionHash }),
+    }).catch(() => null);
     setCreatedView({
-      chainId: robinhoodTestnet.id,
+      chainId: targetChainId,
       manager: VESTING_MANAGER_ADDRESS.toLowerCase(),
       positionId: id ?? "0",
       kind: "vesting",
@@ -200,13 +207,14 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
   async function saveLabel(id: string) {
     const clean = cleanLabel(title);
     if (!clean || !VESTING_MANAGER_ADDRESS) return null;
+    const targetChainId = activeChainId ?? robinhoodMainnet.id;
     try {
-      const message = labelMessage(robinhoodTestnet.id, VESTING_MANAGER_ADDRESS, id, clean);
+      const message = labelMessage(targetChainId, VESTING_MANAGER_ADDRESS, id, clean);
       const signature = await signMessageAsync({ message });
       const res = await fetch("/api/labels", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chainId: robinhoodTestnet.id, manager: VESTING_MANAGER_ADDRESS, positionId: id, label: clean, signature }),
+        body: JSON.stringify({ chainId: targetChainId, manager: VESTING_MANAGER_ADDRESS, positionId: id, label: clean, signature }),
       });
       if (!res.ok) {
         setLabelNote((await res.json().catch(() => null))?.error ?? "The title couldn't be saved.");

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { robinhoodTestnet } from "@/lib/chains";
+import { robinhoodMainnet } from "@/lib/chains";
 import { WrongNetworkBanner } from "./wrong-network-banner";
 import { CreateModal } from "./create/create-modal";
 import { WelcomeModal } from "./welcome-modal";
@@ -73,7 +73,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.35 }}>
               <span style={{ fontSize: 12, color: "var(--text-2)" }}>Robinhood Chain</span>
               <span className="mono" style={{ fontSize: 10, color: "var(--faint)" }}>
-                Testnet · {robinhoodTestnet.id}
+                Mainnet · {robinhoodMainnet.id}
               </span>
             </span>
           </div>

@@ -97,7 +97,7 @@ export default async function TokensPage({ searchParams }: { searchParams: { q?:
           <div className="empty-hero">
             <span className="ic"><svg className="icon-lg" aria-hidden="true"><use href="#i-coins" /></svg></span>
             <h2>{q ? "No tokens match" : "No tokens yet"}</h2>
-            <p>{q ? "Try a symbol like EXMPL or a full token address." : "Tokens appear here after their first lock or vesting schedule is indexed."}</p>
+            <p>{q ? "Try a symbol like DAM or a full token address." : "Tokens appear here after their first lock or vesting schedule is indexed."}</p>
           </div>
         </div>
       ) : (

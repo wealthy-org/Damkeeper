@@ -92,8 +92,10 @@ async function managerKind(chainId: number, manager: string): Promise<"lock" | "
     .where(and(eq(deployments.chainId, chainId), eq(deployments.managerAddress, manager)))
     .limit(1);
   if (row) return row.kind as "lock" | "vesting";
-  if (manager === process.env.NEXT_PUBLIC_LOCK_MANAGER_ADDRESS?.toLowerCase()) return "lock";
-  if (manager === process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS?.toLowerCase()) return "vesting";
+  const lockMgr = (process.env.NEXT_PUBLIC_LOCK_MANAGER_ADDRESS ?? "0x2414E58801FABE792DEbd2C8930FC5ff3Cd004FE").toLowerCase();
+  if (manager === lockMgr) return "lock";
+  const vestingMgr = (process.env.NEXT_PUBLIC_VESTING_MANAGER_ADDRESS ?? "0xC07D54bd8e87442dB58f6A0cCca71489307c70f5").toLowerCase();
+  if (manager === vestingMgr) return "vesting";
   return null;
 }
 

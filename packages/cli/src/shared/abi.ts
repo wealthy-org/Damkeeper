@@ -48,7 +48,7 @@ export const lockManagerAbi = [
   {
     type: "function",
     name: "createLock",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [
       { name: "token", type: "address" },
       { name: "beneficiary", type: "address" },
@@ -56,6 +56,13 @@ export const lockManagerAbi = [
       { name: "unlockTime", type: "uint64" },
     ],
     outputs: [{ name: "positionId", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "lockFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
