@@ -83,6 +83,7 @@ export async function renderShareCard(p: PositionView, proofUrl: string): Promis
   if (wordmark) ctx.drawImage(wordmark, PAD, 96, (44 * wordmark.width) / wordmark.height, 44);
   ctx.font = `20px ${MONO}`;
   ctx.fillStyle = C.faint;
+  ctx.textAlign = "right";
   const netLabel = p.chainId === 46630 ? "ROBINHOOD CHAIN TESTNET" : "ROBINHOOD CHAIN";
   ctx.fillText(`${netLabel} · #${p.positionId}`, W - PAD, 126);
   ctx.textAlign = "left";
