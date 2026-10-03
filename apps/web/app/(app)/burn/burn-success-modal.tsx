@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { chainById } from "@/lib/chains";
 import { shortAddress } from "@/lib/position-view";
+import { BurnShareButton } from "../share/share-button";
 
 export interface BurnSuccessDetails {
   txHash: string;
@@ -55,18 +56,6 @@ export function BurnSuccessModal({
   const contractionFormatted = details.pctReduction.startsWith("<")
     ? "< -0.000001%"
     : `-${details.pctReduction}%`;
-
-  const tweetParams = new URLSearchParams({
-    text:
-      `🔥 Burned ${details.amount} $${details.symbol} on Robinhood Chain!\n\n` +
-      `Permanently destroyed via @damkeeper_fi\n` +
-      `• Contraction: ${contractionFormatted}\n` +
-      `• Mechanism: ${isNativeBurn ? "Native burn()" : "Dead Sink (0x...dEaD)"}\n` +
-      `• New Supply: ${details.newSupply} $${details.symbol}\n\n` +
-      `#RobinhoodChain #Damkeeper`,
-    url: txUrl,
-  });
-  const tweetHref = `https://twitter.com/intent/tweet?${tweetParams.toString()}`;
 
   async function copy(val: string, field: "addr" | "tx") {
     try {
@@ -251,17 +240,11 @@ export function BurnSuccessModal({
       </div>
 
       <div className="bsm-foot">
-        <a
-          href={tweetHref}
-          target="_blank"
-          rel="noopener noreferrer"
+        <BurnShareButton
+          burn={{ ...details, chainId }}
+          txUrl={txUrl}
           className="btn btn-primary bsm-share-btn"
-        >
-          <svg className="icon" aria-hidden="true" style={{ width: 15, height: 15 }}>
-            <use href="#i-x" />
-          </svg>
-          Share Proof on X
-        </a>
+        />
         <div className="bsm-sub-actions">
           <a
             href={txUrl}

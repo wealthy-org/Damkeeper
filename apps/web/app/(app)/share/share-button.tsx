@@ -2,22 +2,69 @@
 
 import { useEffect, useRef, useState } from "react";
 import { proofPath, type PositionView } from "@/lib/position-view";
-import { renderShareCard, shareCaption } from "./share-card";
+import { burnCaption, renderBurnCard, renderShareCard, shareCaption, type BurnShareDetails } from "./share-card";
+
+interface ShareSpec {
+  eyebrow: string;
+  title: string;
+  url: string;
+  proofHref: string;
+  proofLabel: string;
+  caption: string;
+  fileName: string;
+  render: () => Promise<Blob>;
+}
 
 export function ShareButton({ position, className = "btn btn-ghost btn-sm" }: { position: PositionView; className?: string }) {
   const [open, setOpen] = useState(false);
+  const path = proofPath(position);
+  const url = typeof window === "undefined" ? path : `${window.location.origin}${path}`;
+  const spec: ShareSpec = {
+    eyebrow: position.kind === "lock" ? "Share this lock" : "Share this schedule",
+    title: `Share position #${position.positionId}`,
+    url,
+    proofHref: path,
+    proofLabel: "View proof",
+    caption: shareCaption(position),
+    fileName: `damkeeper-${position.kind}-${position.positionId}.png`,
+    render: () => renderShareCard(position, url),
+  };
   return (
     <>
       <button type="button" className={className} onClick={() => setOpen(true)}>
         <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
         Share
       </button>
-      {open && <ShareDialog position={position} onClose={() => setOpen(false)} />}
+      {open && <ShareDialog spec={spec} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function ShareDialog({ position, onClose }: { position: PositionView; onClose: () => void }) {
+// Burns have no proof page, so the explorer transaction is the link people check.
+export function BurnShareButton({ burn, txUrl, className = "btn btn-ghost btn-sm" }: { burn: BurnShareDetails; txUrl: string; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const spec: ShareSpec = {
+    eyebrow: burn.burnMode === "burn" ? "Share this burn" : "Share this dead-address transfer",
+    title: `Share burn ${burn.txHash}`,
+    url: txUrl,
+    proofHref: txUrl,
+    proofLabel: "Blockscout",
+    caption: burnCaption(burn),
+    fileName: `damkeeper-burn-${burn.txHash.slice(2, 10)}.png`,
+    render: () => renderBurnCard(burn, txUrl),
+  };
+  return (
+    <>
+      <button type="button" className={className} onClick={() => setOpen(true)}>
+        <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
+        Share proof
+      </button>
+      {open && <ShareDialog spec={spec} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function ShareDialog({ spec, onClose }: { spec: ShareSpec; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -25,9 +72,7 @@ function ShareDialog({ position, onClose }: { position: PositionView; onClose: (
   const [copied, setCopied] = useState(false);
   const [canShareFiles, setCanShareFiles] = useState(false);
 
-  const url = typeof window === "undefined" ? proofPath(position) : `${window.location.origin}${proofPath(position)}`;
-  const caption = shareCaption(position);
-  const fileName = `damkeeper-${position.kind}-${position.positionId}.png`;
+  const { url, caption, fileName } = spec;
 
   useEffect(() => {
     ref.current?.showModal();
@@ -35,7 +80,7 @@ function ShareDialog({ position, onClose }: { position: PositionView; onClose: (
 
   useEffect(() => {
     let objectUrl: string | null = null;
-    renderShareCard(position, url)
+    spec.render()
       .then((b) => {
         setBlob(b);
         objectUrl = URL.createObjectURL(b);
@@ -97,9 +142,9 @@ function ShareDialog({ position, onClose }: { position: PositionView; onClose: (
         <div>
           <div className="page-eyebrow">
             <span className="dot" />
-            {position.kind === "lock" ? "Share this lock" : "Share this schedule"}
+            {spec.eyebrow}
           </div>
-          <h2 id="share-title" className="sr-only">Share position #{position.positionId}</h2>
+          <h2 id="share-title" className="sr-only">{spec.title}</h2>
         </div>
         <button className="icon-btn" aria-label="Close" onClick={() => ref.current?.close()}>
           <svg className="icon" aria-hidden="true"><use href="#i-close" /></svg>
@@ -123,8 +168,8 @@ function ShareDialog({ position, onClose }: { position: PositionView; onClose: (
           </button>
           <button type="button" className="btn btn-ghost" onClick={download} disabled={!preview}>Download image</button>
           <button type="button" className="btn btn-ghost" onClick={copyCaption}>{copied ? "Copied" : "Copy caption"}</button>
-          <a className="btn btn-ghost" href={proofPath(position)}>
-            View proof
+          <a className="btn btn-ghost" href={spec.proofHref} target={spec.proofHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
+            {spec.proofLabel}
             <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
           </a>
         </div>

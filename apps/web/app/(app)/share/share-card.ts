@@ -42,8 +42,8 @@ function spaced(ctx: CanvasRenderingContext2D, px: number) {
   if ("letterSpacing" in ctx) (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${px}px`;
 }
 
-/** Draws the share card for a position. Everything is local — no network except same-origin logos. */
-export async function renderShareCard(p: PositionView, proofUrl: string): Promise<Blob> {
+/** Background, glow, frame and header shared by every card. Returns the context to draw the body on. */
+async function drawFrame(headerRight: string) {
   await Promise.all([
     document.fonts.load(`600 110px Geist`),
     document.fonts.load(`500 30px Geist`),
@@ -84,24 +84,15 @@ export async function renderShareCard(p: PositionView, proofUrl: string): Promis
   ctx.font = `20px ${MONO}`;
   ctx.fillStyle = C.faint;
   ctx.textAlign = "right";
-  const netLabel = p.chainId === 46630 ? "ROBINHOOD CHAIN TESTNET" : "ROBINHOOD CHAIN";
-  ctx.fillText(`${netLabel} · #${p.positionId}`, W - PAD, 126);
+  ctx.fillText(headerRight, W - PAD, 126);
   ctx.textAlign = "left";
+  return { canvas, ctx };
+}
 
-  // Kind + label.
-  ctx.font = `500 26px ${MONO}`;
-  ctx.fillStyle = C.accent;
-  spaced(ctx, 12);
-  ctx.fillText(p.kind === "lock" ? "TOKEN LOCK" : "LINEAR VESTING", PAD, 318);
-  spaced(ctx, 0);
-  ctx.font = `500 28px ${SANS}`;
-  ctx.fillStyle = C.text2;
-  const title = p.label ?? `${tokenLabel(p)} ${p.kind === "lock" ? "lockup" : "vesting"}`;
-  ctx.fillText(title.length > 48 ? `${title.slice(0, 47)}…` : title, PAD, 364);
+const netLabel = (chainId: number) => (chainId === 46630 ? "ROBINHOOD CHAIN TESTNET" : "ROBINHOOD CHAIN");
 
-  // Amount + symbol, shrunk to fit the frame.
-  const amount = formatAmount(p, p.amount, 2);
-  const sym = tokenLabel(p);
+/** Big amount followed by the token symbol, shrunk to fit the frame. */
+function drawAmount(ctx: CanvasRenderingContext2D, amount: string, sym: string) {
   let size = 116;
   const fit = () => {
     ctx.font = `600 ${size}px ${SANS}`;
@@ -119,22 +110,12 @@ export async function renderShareCard(p: PositionView, proofUrl: string): Promis
   ctx.fillStyle = C.accent;
   ctx.fillText(sym, PAD + amountWidth + 24, 500);
   spaced(ctx, 0);
+}
 
-  ctx.font = `24px ${SANS}`;
-  ctx.fillStyle = C.muted;
-  ctx.fillText(`${p.tokenName ?? "ERC-20"}  ·  ${shortAddress(p.token)}`, PAD, 552);
-
-  // Divider + three facts.
+/** Divider plus three label/value columns. */
+function drawFacts(ctx: CanvasRenderingContext2D, facts: [string, string, string][]) {
   ctx.fillStyle = C.hair;
   ctx.fillRect(PAD, 628, W - PAD * 2, 2);
-
-  const release = releaseAt(p);
-  const status = statusOf(p);
-  const facts: [string, string, string][] = [
-    [p.kind === "lock" ? "UNLOCKS" : "FULLY VESTED", release ? cardDate(release) : "—", C.text],
-    ["DURATION", durationLabel(p), C.text],
-    ["STATUS", STATUS_LABEL[status].toUpperCase(), status === "withdrawn" || status === "fully_claimed" ? C.muted : C.accent],
-  ];
   const colW = (W - PAD * 2) / 3;
   facts.forEach(([k, v, color], i) => {
     const x = PAD + colW * i;
@@ -143,20 +124,57 @@ export async function renderShareCard(p: PositionView, proofUrl: string): Promis
     spaced(ctx, 2);
     ctx.fillText(k, x, 682);
     spaced(ctx, 0);
-    ctx.font = `600 32px ${SANS}`;
+    let size = 32;
+    ctx.font = `600 ${size}px ${SANS}`;
+    while (ctx.measureText(v).width > colW - 24 && size > 18) ctx.font = `600 ${(size -= 2)}px ${SANS}`;
     ctx.fillStyle = color;
     ctx.fillText(v, x, 728);
   });
+}
 
-  // Footer.
+function drawFooter(ctx: CanvasRenderingContext2D, left: string, proofUrl: string) {
   ctx.font = `20px ${MONO}`;
   ctx.fillStyle = C.faint;
-  ctx.fillText("Non-custodial · verifiable onchain", PAD, 792);
+  ctx.fillText(left, PAD, 792);
   ctx.fillStyle = C.accent;
-  const shortUrl = proofUrl.replace(/^https?:\/\//, "").replace(/0x[0-9a-f]{40}/i, (m) => shortAddress(m));
+  const shortUrl = proofUrl.replace(/^https?:\/\//, "").replace(/0x[0-9a-f]{40,64}/i, (m) => shortAddress(m));
   ctx.fillText(shortUrl, PAD, 824);
+}
 
-  return new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"));
+const toPng = (canvas: HTMLCanvasElement) =>
+  new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"));
+
+/** Draws the share card for a position. Everything is local — no network except same-origin logos. */
+export async function renderShareCard(p: PositionView, proofUrl: string): Promise<Blob> {
+  const { canvas, ctx } = await drawFrame(`${netLabel(p.chainId)} · #${p.positionId}`);
+
+  // Kind + label.
+  ctx.font = `500 26px ${MONO}`;
+  ctx.fillStyle = C.accent;
+  spaced(ctx, 12);
+  ctx.fillText(p.kind === "lock" ? "TOKEN LOCK" : "LINEAR VESTING", PAD, 318);
+  spaced(ctx, 0);
+  ctx.font = `500 28px ${SANS}`;
+  ctx.fillStyle = C.text2;
+  const title = p.label ?? `${tokenLabel(p)} ${p.kind === "lock" ? "lockup" : "vesting"}`;
+  ctx.fillText(title.length > 48 ? `${title.slice(0, 47)}…` : title, PAD, 364);
+
+  drawAmount(ctx, formatAmount(p, p.amount, 2), tokenLabel(p));
+
+  ctx.font = `24px ${SANS}`;
+  ctx.fillStyle = C.muted;
+  ctx.fillText(`${p.tokenName ?? "ERC-20"}  ·  ${shortAddress(p.token)}`, PAD, 552);
+
+  const release = releaseAt(p);
+  const status = statusOf(p);
+  drawFacts(ctx, [
+    [p.kind === "lock" ? "UNLOCKS" : "FULLY VESTED", release ? cardDate(release) : "—", C.text],
+    ["DURATION", durationLabel(p), C.text],
+    ["STATUS", STATUS_LABEL[status].toUpperCase(), status === "withdrawn" || status === "fully_claimed" ? C.muted : C.accent],
+  ]);
+
+  drawFooter(ctx, "Non-custodial · verifiable onchain", proofUrl);
+  return toPng(canvas);
 }
 
 export function shareCaption(p: PositionView) {
@@ -169,4 +187,52 @@ export function shareCaption(p: PositionView) {
   const end = releaseAt(p);
   const cliff = p.cliffTime && p.cliffTime !== "0" ? ` with a cliff on ${cardDate(new Date(Number(p.cliffTime) * 1000))}` : "";
   return `${amount} vests on Damkeeper from ${start} to ${end ? cardDate(end) : "its end date"}${cliff}. Check the schedule onchain:`;
+}
+
+export interface BurnShareDetails {
+  txHash: string;
+  amount: string;
+  symbol: string;
+  tokenAddress: string;
+  burnMode: "burn" | "dead";
+  newSupply: string;
+  pctReduction: string;
+  chainId: number;
+}
+
+/** Share card for a burn. A dead-address transfer leaves totalSupply unchanged, so it says so. */
+export async function renderBurnCard(b: BurnShareDetails, txUrl: string): Promise<Blob> {
+  const { canvas, ctx } = await drawFrame(`${netLabel(b.chainId)} · ${shortAddress(b.txHash)}`);
+  const native = b.burnMode === "burn";
+
+  ctx.font = `500 26px ${MONO}`;
+  ctx.fillStyle = C.accent;
+  spaced(ctx, 12);
+  ctx.fillText(native ? "TOKEN BURN" : "SENT TO DEAD ADDRESS", PAD, 318);
+  spaced(ctx, 0);
+  ctx.font = `500 28px ${SANS}`;
+  ctx.fillStyle = C.text2;
+  ctx.fillText(native ? "Permanently destroyed onchain" : "Removed from circulation", PAD, 364);
+
+  drawAmount(ctx, b.amount, b.symbol);
+
+  ctx.font = `24px ${SANS}`;
+  ctx.fillStyle = C.muted;
+  ctx.fillText(`${b.symbol}  ·  ${shortAddress(b.tokenAddress)}`, PAD, 552);
+
+  drawFacts(ctx, [
+    ["MECHANISM", native ? "burn()" : "0x…dEaD", C.text],
+    [native ? "SUPPLY CUT" : "CIRCULATING CUT", `-${b.pctReduction}%`, C.accent],
+    [native ? "NEW SUPPLY" : "TOTAL SUPPLY", b.newSupply, C.text],
+  ]);
+
+  drawFooter(ctx, "Verifiable onchain", txUrl);
+  return toPng(canvas);
+}
+
+export function burnCaption(b: BurnShareDetails) {
+  const amount = `${b.amount} $${b.symbol}`;
+  return b.burnMode === "burn"
+    ? `${amount} burned on Damkeeper — totalSupply down ${b.pctReduction}% to ${b.newSupply}. Check the transaction yourself:`
+    : `${amount} sent to the dead address on Damkeeper — ${b.pctReduction}% of supply out of circulation. Check the transaction yourself:`;
 }
