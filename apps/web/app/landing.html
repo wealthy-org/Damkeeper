@@ -100,14 +100,15 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
 <symbol id="i-code" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 20"/></g></symbol>
 <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 5-10 5L2 8l10-5Zm-10 9 10 5 10-5M2 16l10 5 10-5"/></g></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A3.5 3.5 0 0 0 12 18a3.5 3.5 0 0 0 3.5-3.5c0-2-1.5-3.5-2.5-5C12 7.5 12 6 12 4c-3 3-6 7-6 10.5a6 6 0 0 0 12 0c0-2.5-1-4.5-2.5-6.5"/></g></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/></symbol>
 </defs></svg>
 <header class="nav" id="nav"><div class="wrap nav-inner">
   <a class="logo" href="#top" aria-label="Damkeeper home"><img src="/logo-wordmark.png" alt="Damkeeper" style="height:31px;width:auto;display:block" width="1171" height="257"></a>
-  <nav class="nav-links" aria-label="Primary"><a href="#product">Products</a><a href="#how">How it works</a><a href="#proof">Transparency</a><a href="#faq">FAQ</a></nav>
+  <nav class="nav-links" aria-label="Primary"><a href="#product">Products</a><a href="#how">How it works</a><a href="/burn">Burn</a><a href="#proof">Transparency</a><a href="#faq">FAQ</a></nav>
   <div class="nav-end"><span class="nav-network">ROBINHOOD CHAIN</span><a href="https://x.com/damkeeper_fi" target="_blank" rel="noopener noreferrer" class="icon-btn" aria-label="Follow Damkeeper on X" title="Follow on X (@damkeeper_fi)"><svg class="icon" aria-hidden="true" style="width:13px;height:13px"><use href="#i-x"/></svg></a><a href="/app" class="btn btn-ghost">Launch app</a><button type="button" class="btn btn-primary" data-open-demo="lock">Try demo <svg class="icon" aria-hidden="true"><use href="#i-up"/></svg></button>
   <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Open menu"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg></button></div>
-</div><nav class="sheet" id="sheet" aria-label="Mobile" hidden><a href="#product">Products</a><a href="#how">How it works</a><a href="#proof">Transparency</a><a href="/positions">Explore positions</a><a href="#faq">FAQ</a><a href="/app">Launch app</a><a href="https://x.com/damkeeper_fi" target="_blank" rel="noopener noreferrer">Twitter / X (@damkeeper_fi)</a><button type="button" class="btn btn-primary" data-open-demo="lock">Try the demo <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></nav></header>
+</div><nav class="sheet" id="sheet" aria-label="Mobile" hidden><a href="#product">Products</a><a href="#how">How it works</a><a href="/burn">Token Burn</a><a href="#proof">Transparency</a><a href="/positions">Explore positions</a><a href="#faq">FAQ</a><a href="/app">Launch app</a><a href="https://x.com/damkeeper_fi" target="_blank" rel="noopener noreferrer">Twitter / X (@damkeeper_fi)</a><button type="button" class="btn btn-primary" data-open-demo="lock">Try the demo <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></nav></header>
 <main id="main"><section class="hero" id="top" aria-labelledby="hero-h"><div class="wrap">
 <div class="hero-copy">
  <div class="hero-eyebrow"><span class="dot"></span>Built on Robinhood Chain<span class="sep"></span><small>TOKEN LOCKS &amp; VESTING</small></div>
@@ -282,12 +283,55 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
   </div>
 </section>
 
+<!-- ===================== 4B. PRODUCT · TOKEN BURN ===================== -->
+<section class="sec" id="token-burn" aria-labelledby="burn-h" style="padding-top:0">
+  <div class="wrap split" id="burn-feature">
+    <div class="visual" style="--i:1">
+      <div class="stage">
+        <div class="depth">
+          <div class="card edge ui float spot" aria-label="Token burn preview with verifiable supply impact" style="border-color:rgba(255,122,69,0.35)">
+            <div class="ui-top"><span class="ui-title" style="display:flex;align-items:center;gap:6px"><span style="color:#ff7a45">🔥</span> Token burn</span><span class="pill" style="border-color:rgba(255,122,69,0.4);color:#ff7a45;background:rgba(255,122,69,0.1)">Supply proof</span></div>
+            <div class="field"><span class="lab">Token</span>
+              <div class="input"><span class="tok"><span class="tok-ic" style="background:rgba(255,122,69,0.18);color:#ff7a45">DAM</span><b>$DAM</b><span class="mono" style="color:var(--muted);font-size:12.5px">0x70ec…e4b4</span></span><span class="ok" style="color:#ff7a45"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ERC20Burnable</span></div>
+            </div>
+            <div class="two">
+              <div class="field"><span class="lab">Burn amount</span><div class="input num" style="color:#ff7a45">10,000,000<span style="color:var(--muted);font-size:13px">DAM</span></div></div>
+              <div class="field"><span class="lab">Execution</span><div class="input num focus" style="border-color:rgba(255,122,69,0.4)">Native burn()<span style="color:var(--muted);font-size:12.5px">Onchain</span></div></div>
+            </div>
+            <dl class="review" style="background:rgba(255,122,69,0.04);border:1px solid rgba(255,122,69,0.2);border-radius:10px;padding:12px 14px">
+              <div><dt>Current total supply</dt><dd class="mono">1,000,000,000 DAM</dd></div>
+              <div><dt>Projected supply contraction</dt><dd class="num" style="color:#b8f36b">-1.00% of supply</dd></div>
+              <div><dt>New total supply</dt><dd class="num" style="color:#ff7a45">990,000,000 DAM</dd></div>
+              <div><dt>Proof verification</dt><dd class="mono" style="color:var(--text)">Robinhood Blockscout</dd></div>
+            </dl>
+            <a href="/burn" class="btn btn-primary" style="background:linear-gradient(135deg, #ff7a45 0%, #ff4d4f 100%);border-color:#ff7a45;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none">Launch Burn Console <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            <div class="steps-mini"><span style="color:#ff7a45">1 · Enter amount</span><span class="bar" style="background:rgba(255,122,69,0.3)"></span><span>2 · Verify impact</span><span class="bar" style="background:rgba(255,122,69,0.3)"></span><span>3 · Destroy onchain</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="split-copy">
+      <div class="head">
+        <div class="idx"><b>03</b><i></i>Token burn</div>
+        <h2 class="h2" id="burn-h">Reduce supply.<br><span class="kw" style="background:linear-gradient(135deg, #ff7a45 0%, #ffc069 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Prove the impact.</span></h2>
+      </div>
+      <p class="lead" style="--i:1">Permanently destroy circulating token supply with cryptographic accounting. Whether reducing on-chain totalSupply via native burn() or sending to a canonical dead address, get instant verifiable receipts on Robinhood Chain.</p>
+      <ul class="check">
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff7a45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>True on-chain contraction for ERC20Burnable contracts</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff7a45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Dead address sink (0x0...dEaD) support for all standard tokens</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff7a45" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Instant 1-click shareable proof cards for X and Blockscout</li>
+      </ul>
+      <div style="--i:2"><a href="/burn" class="tlink"><span style="color:#ff7a45">Open Token Burn Console</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff7a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== 5. HOW IT WORKS + CONTRACT PANEL ===================== -->
 <section class="sec" id="how" aria-labelledby="how-h" style="padding-top:0">
   <hr class="hair" style="margin-bottom:var(--sec)">
   <div class="wrap">
     <div class="center">
-      <div class="idx"><b>03</b><i></i>How it works</div>
+      <div class="idx"><b>04</b><i></i>How it works</div>
       <h2 class="h2" id="how-h">From allocation<br>to <span class="kw">onchain clarity.</span></h2>
       <p class="lead">Choose the terms. Review the details. Share a schedule your community can follow.</p>
     </div>

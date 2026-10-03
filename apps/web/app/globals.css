@@ -1019,7 +1019,7 @@ tbody tr:last-child td {
 
 .start-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
 }
 
@@ -2315,5 +2315,262 @@ tbody tr:last-child td {
   color: #fff;
   box-shadow: 0 0 12px rgba(184, 243, 107, 0.35);
 }
+
+/* ==========================================================================
+   Token Burn Section & Console
+   ========================================================================== */
+
+.burn-layout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .burn-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.burn-container-card {
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--hair-2);
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.burn-container-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff7a45, #ff4d4f, transparent);
+  opacity: 0.8;
+}
+
+.burn-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255, 122, 69, 0.12);
+  border: 1px solid rgba(255, 122, 69, 0.3);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.burn-console {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.burn-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.burn-preset-btn {
+  flex: 1;
+  background: var(--bg-deep);
+  border: 1px solid var(--hair-2);
+  color: var(--muted);
+  padding: 5px 0;
+  border-radius: 6px;
+  font: 11px/1.4 var(--mono);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.burn-preset-btn:hover {
+  background: rgba(255, 122, 69, 0.12);
+  border-color: rgba(255, 122, 69, 0.4);
+  color: #fff;
+}
+
+.burn-preset-btn.highlight {
+  color: #ff7a45;
+  border-color: rgba(255, 122, 69, 0.35);
+  font-weight: 600;
+}
+
+.burn-impact-card {
+  background: linear-gradient(180deg, rgba(255, 122, 69, 0.05) 0%, rgba(15, 23, 18, 0.4) 100%);
+  border: 1px solid rgba(255, 122, 69, 0.28);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.burn-impact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.burn-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .burn-impact-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.burn-impact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.burn-impact-lbl {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.burn-impact-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--heading);
+  word-break: break-all;
+}
+
+.burn-warning-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(255, 77, 79, 0.08);
+  border: 1px solid rgba(255, 77, 79, 0.25);
+}
+
+.burn-submit-btn {
+  background: linear-gradient(135deg, #ff7a45 0%, #ff4d4f 100%) !important;
+  border-color: #ff7a45 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(255, 77, 79, 0.35);
+  width: 100%;
+  min-height: 46px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.burn-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(255, 77, 79, 0.55);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.burn-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.burn-success-card {
+  padding: 32px 20px;
+  text-align: center;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 122, 69, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(255, 77, 79, 0.15);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.burn-flame-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 122, 69, 0.15);
+  border: 1px solid #ff7a45;
+  color: #ff7a45;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 12px;
+  box-shadow: 0 0 24px rgba(255, 122, 69, 0.35);
+  animation: flame-pulse 2s infinite ease-in-out;
+}
+
+@keyframes flame-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(255, 122, 69, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 28px rgba(255, 122, 69, 0.55);
+  }
+}
+
+.burn-receipt-box {
+  background: var(--bg-deep);
+  border: 1px solid var(--hair-2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 16px auto;
+  max-width: 440px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.burn-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.burn-info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--hair-2);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.burn-feature-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--body);
+  line-height: 1.5;
+}
+
+.burn-token-spec {
+  background: var(--bg-deep);
+  border: 1px solid var(--hair-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 
 

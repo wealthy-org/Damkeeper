@@ -20,6 +20,7 @@ const productNav: NavItem[] = [
   { href: "/app", label: "Home", icon: "i-home", match: (p) => p === "/app" },
   { href: "/locks", label: "Locks", icon: "i-lock", match: (p) => p === "/locks" },
   { href: "/vesting", label: "Vesting", icon: "i-chart", match: (p) => p === "/vesting" },
+  { href: "/burn", label: "Burn", icon: "i-flame", match: (p) => p === "/burn" },
   { href: "/tokens", label: "Tokens", icon: "i-coins", match: (p) => p === "/tokens" },
   { href: "/positions", label: "Explore", icon: "i-layers", match: (p) => p.startsWith("/positions") },
 ];

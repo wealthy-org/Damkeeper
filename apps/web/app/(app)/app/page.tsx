@@ -71,6 +71,22 @@ export default async function HomePage() {
           </p>
           <Link href="/app?create=vesting" scroll={false} className="btn btn-primary">Create vesting</Link>
         </article>
+        <article className="start-card" style={{ borderColor: "rgba(255, 122, 69, 0.3)" }}>
+          <span className="tile" style={{ background: "rgba(255, 122, 69, 0.15)", color: "#ff7a45" }}>
+            <svg className="icon" aria-hidden="true"><use href="#i-flame" /></svg>
+          </span>
+          <h3>Token burn</h3>
+          <p>
+            Permanently destroy circulating token supply. Call native burn() or transfer to dead address with verifiable proof of supply impact.
+          </p>
+          <Link
+            href="/burn"
+            className="btn btn-primary"
+            style={{ background: "linear-gradient(135deg, #ff7a45 0%, #ff4d4f 100%)", borderColor: "#ff7a45" }}
+          >
+            Burn tokens
+          </Link>
+        </article>
       </div>
 
       <div className="section-title">
