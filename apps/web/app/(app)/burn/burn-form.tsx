@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccount, useConnect, useReadContract, usePublicClient } from "wagmi";
 import { formatUnits, parseAbi } from "viem";
 import { robinhoodMainnet } from "@/lib/chains";
@@ -31,12 +31,32 @@ export function BurnForm() {
   const [tokenAddress, setTokenAddress] = useState<string>(DEFAULT_TOKEN);
   const [amount, setAmount] = useState<string>("");
   const [burnMode, setBurnMode] = useState<"burn" | "dead">("burn");
+  const [supportsNativeBurn, setSupportsNativeBurn] = useState<boolean | null>(null);
   const [successDetails, setSuccessDetails] = useState<BurnSuccessDetails | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
   const txFlow = useTxFlow();
 
   const tokenReady = tokenAddress.length === 42 && tokenAddress.startsWith("0x");
+
+  // Auto-detect whether bytecode contains burn(uint256) selector 0x42966c68
+  useEffect(() => {
+    if (!publicClient || !tokenReady) return;
+    publicClient
+      .getBytecode({ address: tokenAddress as `0x${string}` })
+      .then((code) => {
+        if (code && code.toLowerCase().includes("42966c68")) {
+          setSupportsNativeBurn(true);
+          setBurnMode("burn");
+        } else {
+          setSupportsNativeBurn(false);
+          setBurnMode("dead");
+        }
+      })
+      .catch(() => {
+        setSupportsNativeBurn(null);
+      });
+  }, [tokenAddress, tokenReady, publicClient]);
 
   const { data: tokenSymbol } = useReadContract({
     address: tokenAddress as `0x${string}`,
@@ -101,13 +121,21 @@ export function BurnForm() {
 
   const canBurn = Boolean(tokenReady && parsedAmount && parsedAmount > 0n && !amountError && !wrongNetwork && isConnected);
 
-  // Calculate projected impact
+  const currentDead = (deadBalance as bigint | undefined) ?? 0n;
+
+  // Calculate projected impact based on selected mode
   let projectedSupply = currentSupply;
+  let projectedDead = currentDead;
   let pctReduction = "0.00";
   if (parsedAmount && currentSupply > 0n) {
-    projectedSupply = currentSupply > parsedAmount ? currentSupply - parsedAmount : 0n;
     const ratio = (Number(parsedAmount) / Number(currentSupply)) * 100;
     pctReduction = ratio < 0.0001 && ratio > 0 ? "<0.0001" : ratio.toFixed(4);
+
+    if (burnMode === "burn") {
+      projectedSupply = currentSupply > parsedAmount ? currentSupply - parsedAmount : 0n;
+    } else {
+      projectedDead = currentDead + parsedAmount;
+    }
   }
 
   const setPercent = (pct: number) => {
@@ -216,13 +244,22 @@ export function BurnForm() {
 
       {/* Mode Selector */}
       <div className="field">
-        <label className="field-label">Burn Execution Mechanism</label>
+        <div className="field-row">
+          <label className="field-label">Burn Execution Mechanism</label>
+          {supportsNativeBurn !== null && (
+            <span style={{ fontSize: 11, color: supportsNativeBurn ? "var(--accent)" : "var(--muted)" }}>
+              {supportsNativeBurn ? "✓ ERC20Burnable detected in contract" : "Standard ERC-20 (Dead sink)"}
+            </span>
+          )}
+        </div>
         <div className="segmented" style={{ width: "100%", marginTop: 4 }}>
           <button
             type="button"
             className="mode-btn"
             style={{ flex: 1 }}
             aria-pressed={burnMode === "burn"}
+            disabled={supportsNativeBurn === false}
+            title={supportsNativeBurn === false ? "This token contract does not implement native burn()" : ""}
             onClick={() => setBurnMode("burn")}
           >
             🔥 Native burn() (Reduces Total Supply)
@@ -239,8 +276,8 @@ export function BurnForm() {
         </div>
         <p className="field-note" style={{ marginTop: 6, fontSize: 11 }}>
           {burnMode === "burn"
-            ? "Directly calls ERC20Burnable burn() to remove tokens from contract total supply onchain."
-            : "Transfers tokens to unspendable dead address 0x000...dEaD, locking them out of circulation permanently."}
+            ? "Directly calls ERC20Burnable burn() to destroy tokens and reduce onchain contract totalSupply."
+            : "Transfers tokens to unspendable dead address 0x000...dEaD. Note: Total supply stays unchanged in contract, but tokens are locked permanently out of circulation."}
         </p>
       </div>
 
@@ -285,21 +322,38 @@ export function BurnForm() {
         </div>
         <div className="burn-impact-grid">
           <div className="burn-impact-item">
-            <span className="burn-impact-lbl">Current Total Supply</span>
+            <span className="burn-impact-lbl">Contract Total Supply</span>
             <strong className="burn-impact-val">{formatTokenAmount(currentSupply, decimals)} {symbol}</strong>
           </div>
+          {burnMode === "burn" ? (
+            <div className="burn-impact-item">
+              <span className="burn-impact-lbl">Supply After Burn</span>
+              <strong className="burn-impact-val" style={{ color: "#ff7a45" }}>
+                {formatTokenAmount(projectedSupply, decimals)} {symbol}
+              </strong>
+            </div>
+          ) : (
+            <div className="burn-impact-item">
+              <span className="burn-impact-lbl">Dead Sink (0x...dEaD)</span>
+              <strong className="burn-impact-val" style={{ color: "#ff7a45" }}>
+                {formatTokenAmount(projectedDead, decimals)} {symbol}
+              </strong>
+            </div>
+          )}
           <div className="burn-impact-item">
-            <span className="burn-impact-lbl">Supply After Burn</span>
-            <strong className="burn-impact-val" style={{ color: "#ff7a45" }}>
-              {formatTokenAmount(projectedSupply, decimals)} {symbol}
-            </strong>
-          </div>
-          <div className="burn-impact-item">
-            <span className="burn-impact-lbl">Reduction Impact</span>
+            <span className="burn-impact-lbl">Supply Contraction</span>
             <strong className="burn-impact-val" style={{ color: "var(--accent)" }}>
               -{pctReduction}%
             </strong>
           </div>
+        </div>
+        <div style={{ marginTop: 6, padding: "8px 10px", background: "rgba(0,0,0,0.25)", borderRadius: "6px", fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
+          <span>{burnMode === "burn" ? "🔥" : "☠️"}</span>
+          <span>
+            {burnMode === "burn"
+              ? `Contract totalSupply will decrease on-chain by ${amount ? `${amount} ${symbol}` : "the burned amount"}.`
+              : `Tokens sent to 0x...dEaD. Total supply remains constant, but circulating supply is permanently reduced.`}
+          </span>
         </div>
       </div>
 
