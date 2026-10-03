@@ -978,6 +978,208 @@ async function claimCmd(id, o) {
 `));
 }
 
+// src/burn.ts
+import { isAddress as isAddress2, parseAbi } from "viem";
+var DEFAULT_TOKEN = "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4";
+var DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+var tokenAbi = parseAbi([
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address) view returns (uint256)",
+  "function burn(uint256 amount) external",
+  "function transfer(address to, uint256 amount) external returns (bool)"
+]);
+async function send2(label, request) {
+  step(label, c.dim("confirm\u2026"));
+  let hash;
+  try {
+    hash = await request();
+  } catch (e) {
+    const m = e instanceof Error ? e.message : "";
+    if (/reject|denied/i.test(m)) throw new CliError("Rejected \u2014 nothing was sent.");
+    throw new CliError(
+      m.split("\n")[0] || "The transaction couldn't be sent.",
+      /insufficient funds/i.test(m) ? "The wallet needs Robinhood Chain ETH for gas." : void 0
+    );
+  }
+  console.log(`      ${c.dim("submitted")} ${short(hash)}`);
+  const receipt = await publicClient2().waitForTransactionReceipt({ hash });
+  if (receipt.status === "reverted") throw new CliError(`Reverted onchain (${short(hash)}) \u2014 nothing moved.`);
+  step(label, `${ok("SUCCESS")} ${c.dim(`block ${receipt.blockNumber}`)}`);
+  api("/api/sync", {
+    method: "POST",
+    body: JSON.stringify({ txHash: receipt.transactionHash })
+  }).catch(() => null);
+  return receipt;
+}
+async function burnCmd(o) {
+  const acct = account();
+  const pc = publicClient2();
+  const chain = activeChain();
+  let tokenRaw = o.token;
+  if (!tokenRaw) {
+    tokenRaw = interactive() ? await ask("Token address (Enter = $DAM)", DEFAULT_TOKEN) : DEFAULT_TOKEN;
+  }
+  tokenRaw = tokenRaw.trim();
+  if (!isAddress2(tokenRaw)) {
+    throw new CliError(`"${tokenRaw}" is not a valid address.`);
+  }
+  const token = tokenRaw;
+  const code = await pc.getBytecode({ address: token });
+  if (!code || code === "0x") {
+    throw new CliError(`Address ${token} is not a contract on ${chain.name} (${chain.id}).`);
+  }
+  let symbol = "Tokens";
+  let name = "Unknown Token";
+  let decimals = 18;
+  let totalSupply = 0n;
+  let balance = 0n;
+  try {
+    const [sym, nm, dec, sup, bal] = await Promise.all([
+      pc.readContract({ address: token, abi: tokenAbi, functionName: "symbol" }).catch(() => "Tokens"),
+      pc.readContract({ address: token, abi: tokenAbi, functionName: "name" }).catch(() => "Unknown"),
+      pc.readContract({ address: token, abi: tokenAbi, functionName: "decimals" }).catch(() => 18),
+      pc.readContract({ address: token, abi: tokenAbi, functionName: "totalSupply" }),
+      pc.readContract({ address: token, abi: tokenAbi, functionName: "balanceOf", args: [acct.address] })
+    ]);
+    symbol = String(sym);
+    name = String(nm);
+    decimals = Number(dec);
+    totalSupply = sup;
+    balance = bal;
+  } catch {
+    throw new CliError(
+      `${token} does not implement standard ERC-20 functions on ${chain.name}.`,
+      "Ensure the address is a deployed ERC-20 contract."
+    );
+  }
+  const supportsNativeBurn = code.toLowerCase().includes("42966c68");
+  let mode = "burn";
+  if (o.mode) {
+    const m = o.mode.toLowerCase();
+    if (m !== "burn" && m !== "dead") {
+      throw new CliError(`Invalid mode "${o.mode}". Use --mode burn or --mode dead.`);
+    }
+    mode = m;
+  } else {
+    mode = supportsNativeBurn ? "burn" : "dead";
+  }
+  if (mode === "burn" && !supportsNativeBurn) {
+    if (o.mode) {
+      throw new CliError(
+        `Contract ${symbol} does not implement ERC20Burnable burn().`,
+        "Use --mode dead to transfer tokens to 0x000...dEaD instead."
+      );
+    }
+    mode = "dead";
+  }
+  let amountRaw = o.amount;
+  if (!amountRaw) {
+    if (!interactive()) {
+      throw new CliError("Amount required. Use --amount <n> or --amount max.");
+    }
+    amountRaw = await ask(
+      `Amount to burn (balance: ${formatTokenAmount(balance, decimals)} ${symbol}, or "max")`
+    );
+  }
+  amountRaw = amountRaw.trim();
+  let amount = null;
+  if (amountRaw.toLowerCase() === "max") {
+    amount = balance;
+  } else {
+    amount = safeParseUnits(amountRaw, decimals);
+  }
+  if (amount === null || amount === 0n) {
+    throw new CliError(`"${amountRaw}" is not a usable amount.`, 'Use a positive number like 1000 or 12.5, or "max".');
+  }
+  if (amount > balance) {
+    throw new CliError(
+      `Amount exceeds your wallet balance (${formatTokenAmount(balance, decimals)} ${symbol}).`,
+      `You entered ${formatTokenAmount(amount, decimals)} ${symbol}.`
+    );
+  }
+  const projectedSupply = mode === "burn" ? totalSupply > amount ? totalSupply - amount : 0n : totalSupply;
+  const scale = 1000000n;
+  const numerator = amount * 100n * scale;
+  const scaledVal = totalSupply > 0n ? numerator / totalSupply : 0n;
+  let pctReduction = "0.00";
+  let isTinyReduction = false;
+  if (scaledVal === 0n && amount > 0n) {
+    isTinyReduction = true;
+    pctReduction = "<0.000001";
+  } else {
+    const whole = scaledVal / scale;
+    const frac = (scaledVal % scale).toString().padStart(6, "0");
+    const trimmedFrac = frac.replace(/0+$/, "");
+    if (!trimmedFrac) pctReduction = `${whole}.00`;
+    else if (trimmedFrac.length === 1) pctReduction = `${whole}.${trimmedFrac}0`;
+    else pctReduction = `${whole}.${trimmedFrac}`;
+  }
+  const contractionStr = isTinyReduction ? "< -0.000001%" : `-${pctReduction}%`;
+  console.log("");
+  kv([
+    ["Token", `${name} (${c.lime(symbol)}) \xB7 ${decimals} decimals`],
+    ["Contract", token],
+    ["Mechanism", mode === "burn" ? `${c.lime("Native burn()")} \xB7 ERC20Burnable supported` : `${c.yellow("Dead Sink")} \xB7 Transfer to 0x...dEaD`],
+    ["Amount to burn", `${c.bold(formatTokenAmount(amount, decimals))} ${symbol}`],
+    ["Wallet balance after", `${formatTokenAmount(balance - amount, decimals)} ${symbol}`],
+    ["Contract total supply", `${formatTokenAmount(totalSupply, decimals)} \u2192 ${formatTokenAmount(projectedSupply, decimals)} ${symbol}`],
+    ["Total supply contraction", `${c.lime(contractionStr)} (-${formatTokenAmount(amount, decimals)} ${symbol})`],
+    ["Network", `${chain.name} (${chain.id})`]
+  ]);
+  console.log(`
+  ${c.red("\u26A0")} ${c.bold("Permanent & Irreversible:")} Burned tokens cannot be recovered or refunded.`);
+  console.log("");
+  await confirm(`Burn ${formatTokenAmount(amount, decimals)} ${symbol} permanently?`, Boolean(o.yes));
+  const wc = walletClient();
+  const receipt = await send2(
+    mode === "burn" ? "Executing native burn()" : "Transferring to dead sink (0x...dEaD)",
+    () => mode === "burn" ? wc.writeContract({ address: token, abi: tokenAbi, functionName: "burn", args: [amount] }) : wc.writeContract({ address: token, abi: tokenAbi, functionName: "transfer", args: [DEAD_ADDRESS, amount] })
+  );
+  const explorerUrl = chain.blockExplorers?.default?.url ?? "https://robinhoodchain.blockscout.com";
+  const txUrl = `${explorerUrl}/tx/${receipt.transactionHash}`;
+  const tweetParams = new URLSearchParams({
+    text: `\u{1F525} Burned ${formatTokenAmount(amount, decimals)} $${symbol} on Robinhood Chain!
+
+Permanently destroyed via @damkeeper_fi
+\u2022 Contraction: ${contractionStr}
+\u2022 Mechanism: ${mode === "burn" ? "Native burn()" : "Dead Sink (0x...dEaD)"}
+\u2022 New Supply: ${formatTokenAmount(projectedSupply, decimals)} $${symbol}
+
+#RobinhoodChain #Damkeeper`,
+    url: txUrl
+  });
+  const tweetHref = `https://twitter.com/intent/tweet?${tweetParams.toString()}`;
+  out(
+    {
+      action: "burn",
+      token,
+      symbol,
+      amount: formatTokenAmount(amount, decimals),
+      mode,
+      initialSupply: formatTokenAmount(totalSupply, decimals),
+      newSupply: formatTokenAmount(projectedSupply, decimals),
+      pctReduction,
+      txHash: receipt.transactionHash,
+      blockNumber: receipt.blockNumber.toString(),
+      explorerUrl: txUrl,
+      tweetUrl: tweetHref
+    },
+    () => {
+      console.log(`
+  ${c.lime("\u2713")} Successfully burned ${c.bold(`${formatTokenAmount(amount, decimals)} ${symbol}`)}`);
+      console.log(`    ${c.dim("Proof (Blockscout)")}  ${txUrl}`);
+      console.log(`    ${c.dim("Circulating Impact")} ${c.lime(contractionStr)} of total supply`);
+      console.log(`    ${c.dim("New Total Supply")}   ${formatTokenAmount(projectedSupply, decimals)} ${symbol}`);
+      console.log(`    ${c.dim("Share on X")}         ${tweetHref}`);
+      console.log(`    ${c.dim("Verified Onchain")}   Block ${receipt.blockNumber}
+`);
+    }
+  );
+}
+
 // src/read.ts
 var CHAIN = activeChain().id;
 var asKind = (s) => {
@@ -1358,6 +1560,9 @@ var PANEL = `
     lock create              Hold tokens until one fixed unlock date
     vesting create           Release tokens per second, optional cliff
 
+  ${c.lime("BURN & SUPPLY")}
+    burn                     Permanently destroy tokens via burn() or dead sink
+
   ${c.lime("MANAGE")}
     positions                Your locks and vesting  [--incoming --outgoing --type]
     withdraw <lock-id>       Take tokens out of an unlocked lock
@@ -1408,6 +1613,7 @@ var lock = program.command("lock").description("Token locks");
 lock.command("create").description("Hold tokens until one fixed unlock date").option("--token <address>").option("--amount <n>").option("--to <address|self>", "withdrawal wallet", void 0).option("--unlock <when>", "+10m, +3mo, +1y or 2027-03-30 17:00").option("--title <text>", "optional offchain label, signed by you").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", '\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper lock create\n  damkeeper lock create --token 0xb5b0\u2026 --amount 1000 --to self --unlock +1y --title "Team tokens" --yes').action(run(lockCreate));
 var vesting = program.command("vesting").description("Linear vesting");
 vesting.command("create").description("Release tokens per second, optional cliff").option("--token <address>").option("--amount <n>").option("--to <address|self>", "beneficiary").option("--start <when>", "now, +1d or a date").option("--cliff <when>", "optional; measured from the start").option("--end <when>", "+1y, +2y or a date").option("--title <text>").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", "\nExamples:\n  damkeeper vesting create\n  damkeeper vesting create --token 0xb5b0\u2026 --amount 1200 --to 0xAlice\u2026 --start now --cliff +3mo --end +1y").action(run(vestingCreate));
+program.command("burn").description("Permanently burn tokens via native burn() or dead address sink").option("--token <address>", "token contract address (default: $DAM)").option("--amount <n>", "amount to burn (e.g. 1000 or max)").option("--mode <burn|dead>", "execution mechanism: 'burn' or 'dead'").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", "\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper burn\n  damkeeper burn --amount 1000\n  damkeeper burn --amount max --yes\n  damkeeper burn --token 0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4 --amount 500 --mode dead").action(run(burnCmd));
 program.command("positions").description("Your locks and vesting").option("--wallet <address>", "look up another wallet").option("--type <lock|vesting>").option("--incoming", "you are the beneficiary").option("--outgoing", "you created it").action(run(async (o) => {
   const session = loadSession();
   const target = o.wallet ?? session?.authorizedBy ?? account().address;

@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { banner, c, fail, isJson } from "./ui";
 import { account, TESTNET } from "./config";
 import { claimCmd, lockCreate, vestingCreate, withdrawCmd } from "./write";
+import { burnCmd } from "./burn";
 import { contractsCmd, exploreCmd, positionsCmd, showCmd, statusCmd, tokensCmd } from "./read";
 import { balanceCmd, faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
 import { showcaseCmd } from "./showcase";
@@ -22,6 +23,9 @@ const PANEL = `
   ${c.lime("CREATE")}
     lock create              Hold tokens until one fixed unlock date
     vesting create           Release tokens per second, optional cliff
+
+  ${c.lime("BURN & SUPPLY")}
+    burn                     Permanently destroy tokens via burn() or dead sink
 
   ${c.lime("MANAGE")}
     positions                Your locks and vesting  [--incoming --outgoing --type]
@@ -97,6 +101,14 @@ vesting.command("create").description("Release tokens per second, optional cliff
   .option("--title <text>").option("-y, --yes", "skip the confirmation prompt")
   .addHelpText("after", "\nExamples:\n  damkeeper vesting create\n  damkeeper vesting create --token 0xb5b0… --amount 1200 --to 0xAlice… --start now --cliff +3mo --end +1y")
   .action(run(vestingCreate));
+
+program.command("burn").description("Permanently burn tokens via native burn() or dead address sink")
+  .option("--token <address>", "token contract address (default: $DAM)")
+  .option("--amount <n>", "amount to burn (e.g. 1000 or max)")
+  .option("--mode <burn|dead>", "execution mechanism: 'burn' or 'dead'")
+  .option("-y, --yes", "skip the confirmation prompt")
+  .addHelpText("after", "\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper burn\n  damkeeper burn --amount 1000\n  damkeeper burn --amount max --yes\n  damkeeper burn --token 0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4 --amount 500 --mode dead")
+  .action(run(burnCmd));
 
 program.command("positions").description("Your locks and vesting")
   .option("--wallet <address>", "look up another wallet").option("--type <lock|vesting>").option("--incoming", "you are the beneficiary").option("--outgoing", "you created it")
