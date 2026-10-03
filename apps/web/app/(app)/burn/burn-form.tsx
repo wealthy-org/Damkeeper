@@ -145,6 +145,8 @@ export function BurnForm() {
     setAmount(formatUnits(target, decimals));
   };
 
+  const isDam = tokenAddress.toLowerCase() === DEFAULT_TOKEN.toLowerCase() || symbol?.toUpperCase() === "DAM";
+
   const handleBurn = async () => {
     if (!tokenReady || !parsedAmount || parsedAmount === 0n || !address) return;
 
@@ -250,7 +252,18 @@ export function BurnForm() {
         )}
         {tokenReady && (
           <div className="tok-row" style={{ marginTop: 2 }}>
-            <span className="tok-ic">{symbol ? symbol.slice(0, 2).toUpperCase() : "DA"}</span>
+            <span className="tok-ic">
+              {isDam ? (
+                <img
+                  src="/logo-symbol.png"
+                  alt="DAM"
+                  width={30}
+                  height={30}
+                />
+              ) : (
+                symbol ? symbol.slice(0, 2).toUpperCase() : "DA"
+              )}
+            </span>
             <b style={{ fontSize: 13 }}>{name} ({symbol})</b>
             <span className="ok-tag">
               <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
@@ -335,6 +348,15 @@ export function BurnForm() {
             style={{ paddingRight: 80, fontSize: 15, fontFamily: "var(--mono)" }}
           />
           <div style={{ position: "absolute", right: 12, display: "flex", alignItems: "center", gap: 6, pointerEvents: "none" }}>
+            {isDam && (
+              <img
+                src="/logo-symbol.png"
+                alt=""
+                width={16}
+                height={16}
+                style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+              />
+            )}
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", fontFamily: "var(--mono)" }}>{symbol}</span>
           </div>
         </div>

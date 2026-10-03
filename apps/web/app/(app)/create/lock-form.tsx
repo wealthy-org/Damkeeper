@@ -267,7 +267,18 @@ export function LockForm({ onClose }: { onClose: () => void }) {
         <input id="lock-token" className="input" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="0x…" />
         {symbol ? (
           <div className="tok-row" style={{ marginTop: 2 }}>
-            <span className="tok-ic">{symbol.slice(0, 2).toUpperCase()}</span>
+            <span className="tok-ic">
+              {token.toLowerCase() === "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4" || symbol.toUpperCase() === "DAM" ? (
+                <img
+                  src="/logo-symbol.png"
+                  alt="DAM"
+                  width={30}
+                  height={30}
+                />
+              ) : (
+                symbol.slice(0, 2).toUpperCase()
+              )}
+            </span>
             <b style={{ fontSize: 13 }}>{symbol}</b>
             <span className="ok-tag">
               <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>

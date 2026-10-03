@@ -49,6 +49,9 @@ export function BurnSuccessModal({
   const txUrl = `${explorerUrl}/tx/${details.txHash}`;
 
   const isNativeBurn = details.burnMode === "burn";
+  const isDam =
+    details.tokenAddress.toLowerCase() === "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4".toLowerCase() ||
+    details.symbol.toUpperCase() === "DAM";
 
   const tweetParams = new URLSearchParams({
     text:
@@ -130,7 +133,18 @@ export function BurnSuccessModal({
           </small>
           <div className="bsm-amount-val">
             <span className="bsm-amount-num">{details.amount}</span>
-            <span className="bsm-amount-sym">{details.symbol}</span>
+            <span className="bsm-amount-sym" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              {isDam && (
+                <img
+                  src="/logo-symbol.png"
+                  alt=""
+                  width={20}
+                  height={20}
+                  style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                />
+              )}
+              {details.symbol}
+            </span>
           </div>
         </div>
 
@@ -176,6 +190,15 @@ export function BurnSuccessModal({
           <div className="kv-row">
             <dt>Token Address</dt>
             <dd className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
+              {isDam && (
+                <img
+                  src="/logo-symbol.png"
+                  alt=""
+                  width={14}
+                  height={14}
+                  style={{ borderRadius: "50%", objectFit: "cover" }}
+                />
+              )}
               <span>{shortAddress(details.tokenAddress)}</span>
               <button
                 type="button"

@@ -791,6 +791,15 @@ tbody tr:last-child td {
   color: var(--accent);
   font: 10px var(--mono);
   flex: none;
+  overflow: hidden;
+}
+
+.tok-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .ok-tag {

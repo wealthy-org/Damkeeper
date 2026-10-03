@@ -87,9 +87,13 @@ export default function BurnPage() {
           <section className="card">
             <div className="card-head" style={{ marginBottom: 14 }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
-                <svg className="icon" style={{ color: "var(--accent)" }} aria-hidden="true">
-                  <use href="#i-coins" />
-                </svg>
+                <img
+                  src="/logo-symbol.png"
+                  alt="DAM"
+                  width={18}
+                  height={18}
+                  style={{ borderRadius: "50%", objectFit: "cover" }}
+                />
                 Official $DAM Token
               </h3>
             </div>

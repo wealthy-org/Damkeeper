@@ -21,7 +21,13 @@ export function DamCaBadge() {
   return (
     <div className="hero-ca-pill" title="$DAM Contract Address on Robinhood Chain">
       <span className="hero-ca-pill-label">
-        <span className="status-dot live" />
+        <img
+          src="/logo-symbol.png"
+          alt=""
+          width={13}
+          height={13}
+          style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+        />
         $DAM CA
       </span>
       <code className="hero-ca-pill-addr" title={DAM_CA}>
