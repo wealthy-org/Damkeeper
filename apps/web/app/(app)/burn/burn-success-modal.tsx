@@ -108,8 +108,8 @@ export function BurnSuccessModal({
           </div>
         </div>
 
-        <div className="pill" style={{ marginTop: 14, borderColor: "rgba(255, 122, 69, 0.4)", background: "rgba(255, 122, 69, 0.12)", color: "#ff7a45" }}>
-          <span className="status-dot" style={{ background: "#ff7a45", boxShadow: "0 0 8px #ff7a45" }} />
+        <div className="pill" style={{ marginTop: 14 }}>
+          <span className="status-dot live" />
           Robinhood Chain · Confirmed
         </div>
 
@@ -142,12 +142,9 @@ export function BurnSuccessModal({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  background: isNativeBurn ? "rgba(255, 122, 69, 0.15)" : "rgba(255, 255, 255, 0.08)",
-                  color: isNativeBurn ? "#ff7a45" : "var(--muted)",
-                  borderColor: isNativeBurn ? "rgba(255, 122, 69, 0.3)" : "var(--hair)",
                 }}
               >
-                <svg className="icon" aria-hidden="true" style={{ width: 12, height: 12 }}>
+                <svg className="icon" aria-hidden="true" style={{ width: 12, height: 12, color: "var(--accent)" }}>
                   <use href={isNativeBurn ? "#i-flame" : "#i-dead"} />
                 </svg>
                 {isNativeBurn ? "Native burn()" : "0x...dEaD Sink"}
@@ -169,7 +166,7 @@ export function BurnSuccessModal({
 
           <div className="kv-row">
             <dt>New Total Supply</dt>
-            <dd className="mono" style={{ color: "#ff7a45", fontWeight: 600 }}>
+            <dd className="mono" style={{ fontWeight: 600 }}>
               {details.newSupply} {details.symbol}
             </dd>
           </div>
@@ -185,7 +182,7 @@ export function BurnSuccessModal({
                 onClick={() => copy(details.tokenAddress, "addr")}
               >
                 {copiedField === "addr" ? (
-                  <span style={{ fontSize: 10, color: "#ff7a45" }}>Copied!</span>
+                  <span style={{ fontSize: 10, color: "var(--accent)" }}>Copied!</span>
                 ) : (
                   <svg className="icon" style={{ width: 12, height: 12 }} aria-hidden="true">
                     <use href="#i-copy" />
@@ -206,7 +203,7 @@ export function BurnSuccessModal({
                 onClick={() => copy(details.txHash, "tx")}
               >
                 {copiedField === "tx" ? (
-                  <span style={{ fontSize: 10, color: "#ff7a45" }}>Copied!</span>
+                  <span style={{ fontSize: 10, color: "var(--accent)" }}>Copied!</span>
                 ) : (
                   <svg className="icon" style={{ width: 12, height: 12 }} aria-hidden="true">
                     <use href="#i-copy" />
@@ -218,52 +215,44 @@ export function BurnSuccessModal({
 
           <div className="kv-row">
             <dt>Onchain Status</dt>
-            <dd style={{ color: "#ff7a45", fontWeight: 500 }}>
+            <dd style={{ color: "var(--accent)", fontWeight: 500 }}>
               ✓ Mined in block
             </dd>
           </div>
         </dl>
       </div>
 
-      <div className="modal-foot bsm-foot">
+      <div className="bsm-foot">
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn btn-primary"
-          style={{
-            background: "linear-gradient(135deg, #ff7a45 0%, #ff4d4f 100%)",
-            borderColor: "#ff7a45",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-          }}
+          className="btn btn-primary bsm-share-btn"
         >
-          <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13 }}>
+          <svg className="icon" aria-hidden="true" style={{ width: 15, height: 15 }}>
             <use href="#i-x" />
           </svg>
           Share Proof on X
         </a>
-        <a
-          href={txUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-ghost"
-          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-        >
-          Blockscout
-          <svg className="icon" aria-hidden="true">
-            <use href="#i-up" />
-          </svg>
-        </a>
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={handleClose}
-        >
-          Close
-        </button>
+        <div className="bsm-sub-actions">
+          <a
+            href={txUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-ghost"
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            Blockscout <svg className="icon" aria-hidden="true" style={{ width: 12, height: 12 }}><use href="#i-up" /></svg>
+          </a>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ flex: 1, justifyContent: "center" }}
+            onClick={handleClose}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </dialog>
   );

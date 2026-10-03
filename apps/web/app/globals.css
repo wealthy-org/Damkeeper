@@ -2415,13 +2415,13 @@ tbody tr:last-child td {
 
 .bsm-icon-ring.r1 {
   inset: -6px;
-  border: 1px solid rgba(255, 122, 69, 0.35);
+  border: 1px solid rgba(184, 243, 107, 0.35);
   animation: bsm-pulse 2.5s ease-out infinite;
 }
 
 .bsm-icon-ring.r2 {
   inset: -14px;
-  border: 1px dashed rgba(255, 122, 69, 0.2);
+  border: 1px dashed rgba(184, 243, 107, 0.2);
   animation: bsm-pulse 2.5s ease-out infinite 0.7s;
 }
 
@@ -2435,20 +2435,20 @@ tbody tr:last-child td {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 30%, #4a2113, #220f09);
-  border: 1.5px solid #ff7a45;
-  color: #ff7a45;
+  background: radial-gradient(circle at 40% 30%, #17261a, #0b130d);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
   display: grid;
   place-items: center;
-  box-shadow: 0 0 28px rgba(255, 122, 69, 0.4), 0 1px 0 #ffffff1a inset;
+  box-shadow: 0 0 28px rgba(184, 243, 107, 0.35), 0 1px 0 #ffffff1a inset;
 }
 
 .bsm-amount-card {
   margin: 4px 0 16px;
   padding: 16px 20px;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 122, 69, 0.08), rgba(20, 12, 8, 0.9));
-  border: 1px solid rgba(255, 122, 69, 0.3);
+  background: var(--bg-deep);
+  border: 1px solid var(--hair-2);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -2476,7 +2476,7 @@ tbody tr:last-child td {
   font-size: 30px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #ff7a45;
+  color: var(--accent);
   letter-spacing: -0.02em;
 }
 
@@ -2487,18 +2487,29 @@ tbody tr:last-child td {
 }
 
 .bsm-foot {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 8px;
-  padding: 14px 22px;
-  border-top: 1px solid rgba(255, 122, 69, 0.2);
-  background: #110b07;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--hair);
+  background: var(--surface);
 }
 
-@media (max-width: 480px) {
-  .bsm-foot {
-    grid-template-columns: 1fr;
-  }
+.bsm-share-btn {
+  width: 100%;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bsm-sub-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
 }
 
 
