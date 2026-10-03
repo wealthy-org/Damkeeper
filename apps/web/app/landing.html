@@ -101,6 +101,7 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
 <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 5-10 5L2 8l10-5Zm-10 9 10 5 10-5M2 16l10 5 10-5"/></g></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g></symbol>
 <symbol id="i-flame" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A3.5 3.5 0 0 0 12 18a3.5 3.5 0 0 0 3.5-3.5c0-2-1.5-3.5-2.5-5C12 7.5 12 6 12 4c-3 3-6 7-6 10.5a6 6 0 0 0 12 0c0-2.5-1-4.5-2.5-6.5"/></g></symbol>
+<symbol id="i-dead" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01M15 10h.01M10 14h4"/><path d="M4 12a8 8 0 0 1 16 0c0 3-1.5 5.5-3.5 7v2a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-2C5.5 17.5 4 15 4 12Z"/><path d="M10 20v2M14 20v2"/></g></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/></symbol>
 </defs></svg>
 <header class="nav" id="nav"><div class="wrap nav-inner">
@@ -290,7 +291,7 @@ dialog{width:min(520px,calc(100% - 32px));max-height:calc(100% - 40px);padding:0
       <div class="stage">
         <div class="depth">
           <div class="card edge ui float spot" aria-label="Token burn preview with verifiable supply impact" style="border-color:rgba(255,122,69,0.35)">
-            <div class="ui-top"><span class="ui-title" style="display:flex;align-items:center;gap:6px"><span style="color:#ff7a45">🔥</span> Token burn</span><span class="pill" style="border-color:rgba(255,122,69,0.4);color:#ff7a45;background:rgba(255,122,69,0.1)">Supply proof</span></div>
+            <div class="ui-top"><span class="ui-title" style="display:flex;align-items:center;gap:6px"><svg class="icon" aria-hidden="true" style="width:14px;height:14px;color:#ff7a45"><use href="#i-flame"/></svg> Token burn</span><span class="pill" style="border-color:rgba(255,122,69,0.4);color:#ff7a45;background:rgba(255,122,69,0.1)">Supply proof</span></div>
             <div class="field"><span class="lab">Token</span>
               <div class="input"><span class="tok"><span class="tok-ic" style="background:rgba(255,122,69,0.18);color:#ff7a45">DAM</span><b>$DAM</b><span class="mono" style="color:var(--muted);font-size:12.5px">0x70ec…e4b4</span></span><span class="ok" style="color:#ff7a45"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ERC20Burnable</span></div>
             </div>

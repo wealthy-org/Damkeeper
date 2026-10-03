@@ -139,12 +139,18 @@ export function BurnSuccessModal({
               <span
                 className="badge"
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                   background: isNativeBurn ? "rgba(255, 122, 69, 0.15)" : "rgba(255, 255, 255, 0.08)",
                   color: isNativeBurn ? "#ff7a45" : "var(--muted)",
                   borderColor: isNativeBurn ? "rgba(255, 122, 69, 0.3)" : "var(--hair)",
                 }}
               >
-                {isNativeBurn ? "🔥 Native burn()" : "☠️ 0x...dEaD Sink"}
+                <svg className="icon" aria-hidden="true" style={{ width: 12, height: 12 }}>
+                  <use href={isNativeBurn ? "#i-flame" : "#i-dead"} />
+                </svg>
+                {isNativeBurn ? "Native burn()" : "0x...dEaD Sink"}
               </span>
             </dd>
           </div>

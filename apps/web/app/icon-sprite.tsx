@@ -99,6 +99,13 @@ export function IconSprite() {
             <path d="M8.5 14.5A3.5 3.5 0 0 0 12 18a3.5 3.5 0 0 0 3.5-3.5c0-2-1.5-3.5-2.5-5C12 7.5 12 6 12 4c-3 3-6 7-6 10.5a6 6 0 0 0 12 0c0-2.5-1-4.5-2.5-6.5" />
           </g>
         </symbol>
+        <symbol id="i-dead" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 10h.01M15 10h.01M10 14h4" />
+            <path d="M4 12a8 8 0 0 1 16 0c0 3-1.5 5.5-3.5 7v2a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-2C5.5 17.5 4 15 4 12Z" />
+            <path d="M10 20v2M14 20v2" />
+          </g>
+        </symbol>
         <symbol id="i-x" viewBox="0 0 24 24">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor" />
         </symbol>

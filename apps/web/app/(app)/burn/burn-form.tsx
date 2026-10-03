@@ -194,7 +194,9 @@ export function BurnForm() {
       {successDetails && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255, 122, 69, 0.08)", border: "1px solid rgba(255, 122, 69, 0.28)", borderRadius: "8px", flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#ff7a45" }}>🔥</span>
+            <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14, color: "#ff7a45", flex: "none" }}>
+              <use href="#i-flame" />
+            </svg>
             <span style={{ fontSize: 12 }}>
               Last Burn: <strong style={{ color: "#ff7a45" }}>{successDetails.amount} {successDetails.symbol}</strong> (-{successDetails.pctReduction}%)
             </span>
@@ -256,22 +258,28 @@ export function BurnForm() {
           <button
             type="button"
             className="mode-btn"
-            style={{ flex: 1 }}
+            style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
             aria-pressed={burnMode === "burn"}
             disabled={supportsNativeBurn === false}
             title={supportsNativeBurn === false ? "This token contract does not implement native burn()" : ""}
             onClick={() => setBurnMode("burn")}
           >
-            🔥 Native burn() (Reduces Total Supply)
+            <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13, color: "currentColor" }}>
+              <use href="#i-flame" />
+            </svg>
+            Native burn() (Reduces Total Supply)
           </button>
           <button
             type="button"
             className="mode-btn"
-            style={{ flex: 1 }}
+            style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
             aria-pressed={burnMode === "dead"}
             onClick={() => setBurnMode("dead")}
           >
-            ☠️ Send to Dead Address (0x...dEaD)
+            <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13, color: "currentColor" }}>
+              <use href="#i-dead" />
+            </svg>
+            Send to Dead Address (0x...dEaD)
           </button>
         </div>
         <p className="field-note" style={{ marginTop: 6, fontSize: 11 }}>
@@ -348,7 +356,9 @@ export function BurnForm() {
           </div>
         </div>
         <div style={{ marginTop: 6, padding: "8px 10px", background: "rgba(0,0,0,0.25)", borderRadius: "6px", fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
-          <span>{burnMode === "burn" ? "🔥" : "☠️"}</span>
+          <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13, color: burnMode === "burn" ? "#ff7a45" : "var(--muted)", flex: "none" }}>
+            <use href={burnMode === "burn" ? "#i-flame" : "#i-dead"} />
+          </svg>
           <span>
             {burnMode === "burn"
               ? `Contract totalSupply will decrease on-chain by ${amount ? `${amount} ${symbol}` : "the burned amount"}.`
