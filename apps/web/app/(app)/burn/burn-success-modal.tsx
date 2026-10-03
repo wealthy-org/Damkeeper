@@ -50,15 +50,17 @@ export function BurnSuccessModal({
 
   const isNativeBurn = details.burnMode === "burn";
 
-  const tweetText = encodeURIComponent(
-    `🔥 Proof of Burn on Robinhood Chain!\n\n` +
-    `Just permanently destroyed ${details.amount} $${details.symbol} via @damkeeper_fi!\n` +
-    `• Supply reduction: -${details.pctReduction}%\n` +
-    `• Mechanism: ${isNativeBurn ? "Native burn() (totalSupply reduced)" : "Transferred to 0x...dEaD"}\n` +
-    `• New Total Supply: ${details.newSupply} $${details.symbol}\n\n` +
-    `On-Chain Proof: ${txUrl}\n\n` +
-    `#RobinhoodChain #Damkeeper #ProofOfBurn`
-  );
+  const tweetParams = new URLSearchParams({
+    text:
+      `🔥 Burned ${details.amount} $${details.symbol} on Robinhood Chain!\n\n` +
+      `Permanently destroyed via @damkeeper_fi\n` +
+      `• Contraction: -${details.pctReduction}%\n` +
+      `• Mechanism: ${isNativeBurn ? "Native burn()" : "Dead Sink (0x...dEaD)"}\n` +
+      `• New Supply: ${details.newSupply} $${details.symbol}\n\n` +
+      `#RobinhoodChain #Damkeeper`,
+    url: txUrl,
+  });
+  const tweetHref = `https://twitter.com/intent/tweet?${tweetParams.toString()}`;
 
   async function copy(val: string, field: "addr" | "tx") {
     try {
@@ -224,7 +226,7 @@ export function BurnSuccessModal({
 
       <div className="bsm-foot">
         <a
-          href={`https://twitter.com/intent/tweet?text=${tweetText}`}
+          href={tweetHref}
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-primary bsm-share-btn"
