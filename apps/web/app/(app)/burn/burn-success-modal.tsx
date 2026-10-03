@@ -50,14 +50,17 @@ export function BurnSuccessModal({
 
   const isNativeBurn = details.burnMode === "burn";
   const isDam =
-    details.tokenAddress.toLowerCase() === "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4".toLowerCase() ||
-    details.symbol.toUpperCase() === "DAM";
+    details.tokenAddress.toLowerCase() === "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4".toLowerCase();
+
+  const contractionFormatted = details.pctReduction.startsWith("<")
+    ? "< -0.000001%"
+    : `-${details.pctReduction}%`;
 
   const tweetParams = new URLSearchParams({
     text:
       `🔥 Burned ${details.amount} $${details.symbol} on Robinhood Chain!\n\n` +
       `Permanently destroyed via @damkeeper_fi\n` +
-      `• Contraction: -${details.pctReduction}%\n` +
+      `• Contraction: ${contractionFormatted}\n` +
       `• Mechanism: ${isNativeBurn ? "Native burn()" : "Dead Sink (0x...dEaD)"}\n` +
       `• New Supply: ${details.newSupply} $${details.symbol}\n\n` +
       `#RobinhoodChain #Damkeeper`,
@@ -171,7 +174,7 @@ export function BurnSuccessModal({
           <div className="kv-row">
             <dt>Circulating Impact</dt>
             <dd style={{ color: "var(--accent)", fontWeight: 600 }}>
-              -{details.pctReduction}% of supply
+              {contractionFormatted} of supply
             </dd>
           </div>
 

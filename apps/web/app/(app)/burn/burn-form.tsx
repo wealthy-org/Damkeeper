@@ -38,15 +38,24 @@ export function BurnForm() {
 
   const txFlow = useTxFlow();
 
-  const tokenReady = tokenAddress.length === 42 && tokenAddress.startsWith("0x");
+  const isAddressFormat = /^0x[a-fA-F0-9]{40}$/.test(tokenAddress.trim());
+  const tokenReady = isAddressFormat;
+  const isDam = tokenAddress.toLowerCase() === DEFAULT_TOKEN.toLowerCase();
 
   // Auto-detect whether bytecode contains burn(uint256) selector 0x42966c68
   useEffect(() => {
-    if (!publicClient || !tokenReady) return;
+    if (!publicClient || !tokenReady) {
+      setSupportsNativeBurn(null);
+      return;
+    }
     publicClient
-      .getBytecode({ address: tokenAddress as `0x${string}` })
+      .getBytecode({ address: tokenAddress.trim() as `0x${string}` })
       .then((code) => {
-        if (code && code.toLowerCase().includes("42966c68")) {
+        if (!code || code === "0x") {
+          setSupportsNativeBurn(null);
+          return;
+        }
+        if (code.toLowerCase().includes("42966c68")) {
           setSupportsNativeBurn(true);
           setBurnMode("burn");
         } else {
@@ -59,36 +68,36 @@ export function BurnForm() {
       });
   }, [tokenAddress, tokenReady, publicClient]);
 
-  const { data: tokenSymbol } = useReadContract({
-    address: tokenAddress as `0x${string}`,
+  const { data: tokenSymbol, isLoading: loadingSymbol, isError: errorSymbol } = useReadContract({
+    address: tokenAddress.trim() as `0x${string}`,
     abi: tokenAbi,
     functionName: "symbol",
     query: { enabled: tokenReady },
   });
 
-  const { data: tokenName } = useReadContract({
-    address: tokenAddress as `0x${string}`,
+  const { data: tokenName, isLoading: loadingName } = useReadContract({
+    address: tokenAddress.trim() as `0x${string}`,
     abi: tokenAbi,
     functionName: "name",
     query: { enabled: tokenReady },
   });
 
-  const { data: tokenDecimals } = useReadContract({
-    address: tokenAddress as `0x${string}`,
+  const { data: tokenDecimals, isLoading: loadingDecimals } = useReadContract({
+    address: tokenAddress.trim() as `0x${string}`,
     abi: tokenAbi,
     functionName: "decimals",
     query: { enabled: tokenReady },
   });
 
-  const { data: tokenSupply, refetch: refetchSupply } = useReadContract({
-    address: tokenAddress as `0x${string}`,
+  const { data: tokenSupply, isLoading: loadingSupply, refetch: refetchSupply, isError: errorSupply } = useReadContract({
+    address: tokenAddress.trim() as `0x${string}`,
     abi: tokenAbi,
     functionName: "totalSupply",
     query: { enabled: tokenReady },
   });
 
   const { data: userBalance, refetch: refetchBalance } = useReadContract({
-    address: tokenAddress as `0x${string}`,
+    address: tokenAddress.trim() as `0x${string}`,
     abi: tokenAbi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
@@ -96,16 +105,19 @@ export function BurnForm() {
   });
 
   const { data: deadBalance } = useReadContract({
-    address: tokenAddress as `0x${string}`,
+    address: tokenAddress.trim() as `0x${string}`,
     abi: tokenAbi,
     functionName: "balanceOf",
     args: [DEAD_ADDRESS],
     query: { enabled: tokenReady },
   });
 
+  const isLoadingToken = tokenReady && !isDam && (loadingSymbol || loadingName || loadingDecimals || loadingSupply);
+  const isTokenError = tokenReady && !isDam && !isLoadingToken && (errorSymbol || errorSupply || !tokenSymbol || tokenSupply === undefined);
+
   const decimals = Number(tokenDecimals ?? 18);
-  const symbol = tokenSymbol ? String(tokenSymbol) : "DAM";
-  const name = tokenName ? String(tokenName) : "Damkeeper";
+  const symbol = isDam ? (tokenSymbol ? String(tokenSymbol) : "DAM") : (tokenSymbol ? String(tokenSymbol) : "");
+  const name = isDam ? (tokenName ? String(tokenName) : "Damkeeper") : (tokenName ? String(tokenName) : symbol);
   const currentSupply = (tokenSupply as bigint | undefined) ?? 0n;
   const balance = (userBalance as bigint | undefined) ?? 0n;
 
@@ -120,17 +132,46 @@ export function BurnForm() {
           ? "Amount must be greater than zero."
           : null;
 
-  const canBurn = Boolean(tokenReady && parsedAmount && parsedAmount > 0n && !amountError && !wrongNetwork && isConnected);
+  const canBurn = Boolean(
+    tokenReady &&
+    !isTokenError &&
+    !isLoadingToken &&
+    (isDam || Boolean(tokenSymbol)) &&
+    parsedAmount &&
+    parsedAmount > 0n &&
+    !amountError &&
+    !wrongNetwork &&
+    isConnected
+  );
 
   const currentDead = (deadBalance as bigint | undefined) ?? 0n;
 
-  // Calculate projected impact based on selected mode
+  // High-precision BigInt supply contraction calculation (scaled to 6 decimal places: 100 * 1,000,000)
   let projectedSupply = currentSupply;
   let projectedDead = currentDead;
   let pctReduction = "0.00";
+  let isTinyReduction = false;
+
   if (parsedAmount && currentSupply > 0n) {
-    const ratio = (Number(parsedAmount) / Number(currentSupply)) * 100;
-    pctReduction = ratio < 0.0001 && ratio > 0 ? "<0.0001" : ratio.toFixed(4);
+    const scale = 1_000_000n;
+    const numerator = parsedAmount * 100n * scale;
+    const scaledVal = numerator / currentSupply;
+
+    if (scaledVal === 0n && parsedAmount > 0n) {
+      isTinyReduction = true;
+      pctReduction = "<0.000001";
+    } else {
+      const whole = scaledVal / scale;
+      const frac = (scaledVal % scale).toString().padStart(6, "0");
+      const trimmedFrac = frac.replace(/0+$/, "");
+      if (!trimmedFrac) {
+        pctReduction = `${whole}.00`;
+      } else if (trimmedFrac.length === 1) {
+        pctReduction = `${whole}.${trimmedFrac}0`;
+      } else {
+        pctReduction = `${whole}.${trimmedFrac}`;
+      }
+    }
 
     if (burnMode === "burn") {
       projectedSupply = currentSupply > parsedAmount ? currentSupply - parsedAmount : 0n;
@@ -144,8 +185,6 @@ export function BurnForm() {
     const target = (balance * BigInt(pct)) / 100n;
     setAmount(formatUnits(target, decimals));
   };
-
-  const isDam = tokenAddress.toLowerCase() === DEFAULT_TOKEN.toLowerCase() || symbol?.toUpperCase() === "DAM";
 
   const handleBurn = async () => {
     if (!tokenReady || !parsedAmount || parsedAmount === 0n || !address) return;
@@ -177,7 +216,7 @@ export function BurnForm() {
     const details: BurnSuccessDetails = {
       txHash: receipt.transactionHash,
       amount: formatTokenAmount(parsedAmount, decimals),
-      symbol,
+      symbol: symbol || "Tokens",
       tokenAddress,
       burnMode,
       initialSupply: initialFormatted,
@@ -201,7 +240,7 @@ export function BurnForm() {
               <use href="#i-flame" />
             </svg>
             <span style={{ fontSize: 12 }}>
-              Last Burn: <strong style={{ color: "var(--accent)" }}>{successDetails.amount} {successDetails.symbol}</strong> (-{successDetails.pctReduction}%)
+              Last Burn: <strong style={{ color: "var(--accent)" }}>{successDetails.amount} {successDetails.symbol}</strong> ({successDetails.pctReduction.startsWith("<") ? "< -0.000001%" : `-${successDetails.pctReduction}%`})
             </span>
           </div>
           <button
@@ -219,7 +258,7 @@ export function BurnForm() {
       <div className="field">
         <div className="field-row">
           <label className="field-label" htmlFor="burn-token">Token address</label>
-          {tokenAddress !== DEFAULT_TOKEN ? (
+          {!isDam ? (
             <button
               type="button"
               className="link-btn"
@@ -246,12 +285,41 @@ export function BurnForm() {
             className="input"
             value={tokenAddress}
             onChange={(e) => setTokenAddress(e.target.value.trim())}
-            placeholder="Paste token address (0x…)"
+            placeholder="Paste ERC-20 contract address (0x…)"
             autoFocus
           />
         )}
-        {tokenReady && (
-          <div className="tok-row" style={{ marginTop: 2 }}>
+
+        {customTokenOpen && tokenAddress.length > 0 && !isAddressFormat && (
+          <p className="field-note" style={{ color: "var(--danger)", marginTop: 4 }}>
+            Please enter a valid 42-character hex address starting with 0x.
+          </p>
+        )}
+
+        {tokenReady && isLoadingToken && (
+          <div className="tok-row" style={{ marginTop: 6, opacity: 0.8 }}>
+            <span className="tok-ic" style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--muted)", fontSize: 12 }}>
+              …
+            </span>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>
+              Reading token metadata on Robinhood Chain…
+            </span>
+          </div>
+        )}
+
+        {tokenReady && isTokenError && (
+          <div style={{ marginTop: 8, padding: "8px 12px", background: "rgba(255, 92, 92, 0.08)", border: "1px solid rgba(255, 92, 92, 0.25)", borderRadius: 6, display: "flex", alignItems: "center", gap: 8 }}>
+            <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14, color: "var(--danger)", flex: "none" }}>
+              <use href="#i-alert" />
+            </svg>
+            <span style={{ fontSize: 12, color: "var(--danger)" }}>
+              No ERC-20 contract detected at this address on Robinhood Chain. Verify the contract address.
+            </span>
+          </div>
+        )}
+
+        {tokenReady && !isTokenError && !isLoadingToken && (
+          <div className="tok-row" style={{ marginTop: 4 }}>
             <span className="tok-ic">
               {isDam ? (
                 <img
@@ -261,13 +329,15 @@ export function BurnForm() {
                   height={30}
                 />
               ) : (
-                symbol ? symbol.slice(0, 2).toUpperCase() : "DA"
+                <span style={{ fontWeight: 700, fontSize: 11, color: "var(--accent)" }}>
+                  {symbol ? symbol.slice(0, 3).toUpperCase() : "??"}
+                </span>
               )}
             </span>
-            <b style={{ fontSize: 13 }}>{name} ({symbol})</b>
+            <b style={{ fontSize: 13 }}>{name} {symbol ? `(${symbol})` : ""}</b>
             <span className="ok-tag">
               <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
-              ERC-20 · {decimals} decimals · Verified
+              ERC-20 · {decimals} decimals{isDam ? " · Verified" : ""}
             </span>
           </div>
         )}
@@ -333,7 +403,7 @@ export function BurnForm() {
               className="link-btn"
               onClick={() => setPercent(100)}
             >
-              Balance {formatTokenAmount(balance, decimals)} {symbol}
+              Balance {formatTokenAmount(balance, decimals)} {symbol || "Tokens"}
             </button>
           )}
         </div>
@@ -357,7 +427,7 @@ export function BurnForm() {
                 style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
               />
             )}
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", fontFamily: "var(--mono)" }}>{symbol}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", fontFamily: "var(--mono)" }}>{symbol || "Tokens"}</span>
           </div>
         </div>
         <div className="burn-presets-row">
@@ -373,19 +443,26 @@ export function BurnForm() {
       <dl className="review">
         <div>
           <dt>Contract Total Supply</dt>
-          <dd className="mono">{formatTokenAmount(currentSupply, decimals)} {symbol}</dd>
+          <dd className="mono">{formatTokenAmount(currentSupply, decimals)} {symbol || "Tokens"}</dd>
         </div>
         <div>
           <dt>{burnMode === "burn" ? "Supply After Burn" : "Tokens in Dead Sink"}</dt>
           <dd className="mono" style={{ color: "var(--text)" }}>
             {burnMode === "burn"
-              ? `${formatTokenAmount(projectedSupply, decimals)} ${symbol}`
-              : `${formatTokenAmount(projectedDead, decimals)} ${symbol}`}
+              ? `${formatTokenAmount(projectedSupply, decimals)} ${symbol || "Tokens"}`
+              : `${formatTokenAmount(projectedDead, decimals)} ${symbol || "Tokens"}`}
           </dd>
         </div>
         <div>
-          <dt>Supply Contraction</dt>
-          <dd className="mono" style={{ color: "var(--accent)", fontWeight: 600 }}>-{pctReduction}%</dd>
+          <dt>Total Supply Contraction <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 400 }}>(of total supply)</span></dt>
+          <dd className="mono" style={{ color: "var(--accent)", fontWeight: 600 }}>
+            {isTinyReduction ? "< -0.000001%" : `-${pctReduction}%`}
+            {parsedAmount && parsedAmount > 0n && (
+              <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.85, marginLeft: 6, color: "var(--muted)" }}>
+                (-{formatTokenAmount(parsedAmount, decimals)} {symbol || "Tokens"})
+              </span>
+            )}
+          </dd>
         </div>
         <div>
           <dt>Network</dt>
@@ -427,7 +504,7 @@ export function BurnForm() {
             ? "Confirm in Wallet…"
             : txFlow.status === "submitted"
               ? "Mining Burn on Chain…"
-              : `Burn ${amount ? `${amount} ${symbol}` : "Tokens"}`}
+              : `Burn ${parsedAmount && parsedAmount > 0n ? `${formatTokenAmount(parsedAmount, decimals)} ${symbol || "Tokens"}` : symbol || "Tokens"}`}
         </button>
       )}
 
