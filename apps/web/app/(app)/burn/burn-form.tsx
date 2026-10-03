@@ -213,6 +213,13 @@ export function BurnForm() {
 
     await Promise.all([refetchSupply(), refetchBalance()]);
 
+    // On-demand indexing so the burn shows up in Explore right away.
+    fetch("/api/burns/sync", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chainId: robinhoodMainnet.id, txHash: receipt.transactionHash }),
+    }).catch(() => null);
+
     const details: BurnSuccessDetails = {
       txHash: receipt.transactionHash,
       amount: formatTokenAmount(parsedAmount, decimals),

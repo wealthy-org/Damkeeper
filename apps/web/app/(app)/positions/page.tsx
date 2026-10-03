@@ -2,7 +2,9 @@ import Link from "next/link";
 import { listPositions } from "@/lib/positions-query";
 import { formatShort } from "@/lib/dates";
 import { formatAmount, proofPath, releaseAt, shortAddress, statusOf, STATUS_LABEL, tokenLabel } from "@/lib/position-view";
-import { ShareButton } from "../share/share-button";
+import { BurnShareButton, ShareButton } from "../share/share-button";
+import { burnPct, burnProofPath, burnSymbol, formatBurnAmount, listBurns, type BurnView } from "@/lib/burns";
+import { chainById } from "@/lib/chains";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,7 @@ const COPY = {
   all: { eyebrow: "Explore", title: "Every position, in clear view" },
   lock: { eyebrow: "Locks", title: "Token locks" },
   vesting: { eyebrow: "Vesting", title: "Vesting schedules" },
+  burn: { eyebrow: "Burns", title: "Token burns" },
 } as const;
 
 export default async function PositionsPage({
@@ -17,12 +20,14 @@ export default async function PositionsPage({
 }: {
   searchParams: { type?: string; q?: string };
 }) {
-  const type = searchParams.type === "lock" || searchParams.type === "vesting" ? searchParams.type : "all";
+  const type =
+    searchParams.type === "lock" || searchParams.type === "vesting" || searchParams.type === "burn" ? searchParams.type : "all";
   const q = searchParams.q?.trim().slice(0, 66) ?? "";
 
-  const rows = await listPositions({ kind: type === "all" ? undefined : type, q: q || undefined, limit: 100 });
+  const rows = type === "burn" ? [] : await listPositions({ kind: type === "all" ? undefined : type, q: q || undefined, limit: 100 });
+  const burnRows = type === "burn" ? await listBurns({ q: q || undefined, limit: 100 }) : [];
 
-  const tabHref = (t: "all" | "lock" | "vesting") => {
+  const tabHref = (t: keyof typeof COPY) => {
     const params = new URLSearchParams();
     if (t !== "all") params.set("type", t);
     if (q) params.set("q", q);
@@ -45,9 +50,9 @@ export default async function PositionsPage({
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <nav className="filter-tabs" aria-label="Filter by type">
-          {(["all", "lock", "vesting"] as const).map((t) => (
+          {(["all", "lock", "vesting", "burn"] as const).map((t) => (
             <Link key={t} href={tabHref(t)} aria-current={type === t ? "page" : undefined}>
-              {t === "all" ? "All" : t === "lock" ? "Locks" : "Vesting"}
+              {t === "all" ? "All" : t === "lock" ? "Locks" : t === "vesting" ? "Vesting" : "Burns"}
             </Link>
           ))}
         </nav>
@@ -62,7 +67,9 @@ export default async function PositionsPage({
       </div>
 
       <section className="card">
-        {rows.length === 0 ? (
+        {type === "burn" ? (
+          <BurnTable rows={burnRows} q={q} />
+        ) : rows.length === 0 ? (
           <div className="empty-hero">
             <span className="ic">
               <svg className="icon-lg" aria-hidden="true"><use href="#i-layers" /></svg>
@@ -123,5 +130,83 @@ export default async function PositionsPage({
         )}
       </section>
     </main>
+  );
+}
+
+function BurnTable({ rows, q }: { rows: BurnView[]; q: string }) {
+  if (rows.length === 0) {
+    return (
+      <div className="empty-hero">
+        <span className="ic">
+          <svg className="icon-lg" aria-hidden="true"><use href="#i-flame" /></svg>
+        </span>
+        <h2>{q ? "No burns match" : "No burns indexed yet"}</h2>
+        <p>
+          {q
+            ? "Try a full wallet, token address or transaction hash."
+            : "Burns made from the Burn page appear here once their transaction is mined."}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Kind</th>
+          <th>Token</th>
+          <th>Amount</th>
+          <th>Burned</th>
+          <th>Burner</th>
+          <th>Supply cut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((b) => {
+          const sym = burnSymbol(b);
+          const pct = burnPct(b);
+          const explorer = chainById(b.chainId)?.blockExplorers.default.url ?? "https://robinhoodchain.blockscout.com";
+          return (
+            <tr key={`${b.chainId}-${b.txHash}-${b.logIndex}`}>
+              <td>
+                <span className="badge">
+                  <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true">
+                    <use href={b.mode === "burn" ? "#i-flame" : "#i-dead"} />
+                  </svg>
+                  {b.mode === "burn" ? "burn" : "dead"}
+                </span>
+              </td>
+              <td>
+                <span style={{ display: "block" }}>{b.tokenName ?? sym}</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--faint)" }}>{shortAddress(b.txHash)} · {shortAddress(b.token)}</span>
+              </td>
+              <td className="mono">{formatBurnAmount(b)} {sym}</td>
+              <td className="mono">{formatShort(new Date(Number(b.timestamp) * 1000))}</td>
+              <td className="mono">{shortAddress(b.burner)}</td>
+              <td className="mono">{pct === "—" ? "—" : `-${pct}%`}</td>
+              <td>
+                <div className="pos-actions">
+                  <BurnShareButton
+                    burn={{
+                      txHash: b.txHash,
+                      amount: formatBurnAmount(b),
+                      symbol: sym,
+                      tokenAddress: b.token,
+                      burnMode: b.mode,
+                      newSupply: b.totalSupplyAfter ? formatBurnAmount(b, b.totalSupplyAfter) : "—",
+                      pctReduction: pct,
+                      chainId: b.chainId,
+                    }}
+                    txUrl={`${explorer}/tx/${b.txHash}`}
+                  />
+                  <Link href={burnProofPath(b)} className="btn btn-ghost btn-sm">Proof</Link>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

@@ -114,6 +114,25 @@ export const faucetClaims = pgTable("faucet_claims", {
   pk: primaryKey({ columns: [t.chainId, t.address] }),
 }));
 
+// One row per ERC-20 Transfer into a burn sink: 0x0 (native burn()) or 0x…dEaD.
+// Ingested per transaction via /api/burns/sync; there is no log backfill.
+export const burns = pgTable("burns", {
+  chainId: integer("chain_id").notNull(),
+  txHash: text("tx_hash").notNull(),
+  logIndex: integer("log_index").notNull(),
+  token: text("token").notNull(),
+  burner: text("burner").notNull(),
+  mode: text("mode").notNull(), // 'burn' | 'dead'
+  amount: numeric("amount", { precision: 78, scale: 0 }).notNull(),
+  totalSupplyAfter: numeric("total_supply_after", { precision: 78, scale: 0 }), // null if the read failed
+  blockNumber: bigint("block_number", { mode: "bigint" }).notNull(),
+  timestamp: bigint("timestamp", { mode: "bigint" }).notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.txHash, t.logIndex] }),
+  byToken: index("burns_by_token").on(t.chainId, t.token),
+  byBurner: index("burns_by_burner").on(t.chainId, t.burner),
+}));
+
 export const tokenPolicies = pgTable("token_policies", {
   chainId: integer("chain_id").notNull(),
   managerAddress: text("manager_address").notNull(),
