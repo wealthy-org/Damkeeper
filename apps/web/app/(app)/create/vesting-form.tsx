@@ -58,6 +58,20 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
     args: address && VESTING_MANAGER_ADDRESS ? [address, VESTING_MANAGER_ADDRESS] : undefined,
     query: { enabled: Boolean(address && tokenReady && VESTING_MANAGER_ADDRESS) },
   });
+  const { data: isTokenEnabled, isLoading: loadingTokenEnabled } = useReadContract({
+    address: VESTING_MANAGER_ADDRESS,
+    abi: vestingManagerAbi,
+    functionName: "tokenEnabled",
+    args: tokenReady ? [token as `0x${string}`] : undefined,
+    query: { enabled: Boolean(VESTING_MANAGER_ADDRESS && tokenReady) },
+  });
+  const { data: tokenLiabilityCap } = useReadContract({
+    address: VESTING_MANAGER_ADDRESS,
+    abi: vestingManagerAbi,
+    functionName: "liabilityCap",
+    args: tokenReady ? [token as `0x${string}`] : undefined,
+    query: { enabled: Boolean(VESTING_MANAGER_ADDRESS && tokenReady) },
+  });
 
   const wrongNetwork = useWrongNetwork();
 
@@ -118,12 +132,21 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
     { label: "+4 years", get: () => addMonths(base(), 48) },
   ];
 
+  const tokenNotEnabled = tokenReady && !loadingTokenEnabled && isTokenEnabled === false;
+  const capExceeded =
+    tokenReady &&
+    parsedAmount !== null &&
+    tokenLiabilityCap !== undefined &&
+    parsedAmount > (tokenLiabilityCap as bigint);
+
   const amountError =
     amount && parsedAmount === null
       ? "Enter a number, like 1000 or 12.5."
       : parsedAmount !== null && balance !== undefined && parsedAmount > (balance as bigint)
         ? "More than this wallet holds."
-        : null;
+        : capExceeded
+          ? "Amount exceeds contract liability cap for this token."
+          : null;
   const startError =
     start && start.getTime() < minStart.getTime()
       ? `Pick a start at least ${MIN_LEAD_MINUTES} minutes from now, or choose "When confirmed".`
@@ -136,7 +159,7 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
 
   const canSubmit =
     Boolean(tokenReady && beneficiary && parsedAmount && parsedAmount > 0n && end) &&
-    !amountError && !startError && !endError && !cliffError && !wrongNetwork;
+    !amountError && !startError && !endError && !cliffError && !wrongNetwork && !tokenNotEnabled;
 
   const preview = parsedAmount && end && !endError && !cliffError ? buildPreview(parsedAmount, effectiveStart, cliff, end) : null;
 
@@ -301,6 +324,11 @@ export function VestingForm({ onClose }: { onClose: () => void }) {
             </span>
           </div>
         ) : null}
+        {tokenNotEnabled && (
+          <p className="field-note" style={{ color: "var(--danger)", marginTop: 4 }}>
+            This token is not enabled on VestingManager yet. Contact the protocol admin to enable it.
+          </p>
+        )}
       </div>
 
       <div className="field">

@@ -66,6 +66,20 @@ export const lockManagerAbi = [
   },
   {
     type: "function",
+    name: "tokenEnabled",
+    stateMutability: "view",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "liabilityCap",
+    stateMutability: "view",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
     name: "withdraw",
     stateMutability: "nonpayable",
     inputs: [{ name: "positionId", type: "uint256" }],
@@ -137,9 +151,24 @@ export const vestingManagerAbi = [
   },
   {
     type: "function",
+    name: "tokenEnabled",
+    stateMutability: "view",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "liabilityCap",
+    stateMutability: "view",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
     name: "claim",
     stateMutability: "nonpayable",
     inputs: [{ name: "positionId", type: "uint256" }],
     outputs: [{ name: "amount", type: "uint256" }],
   },
 ] as const;
+

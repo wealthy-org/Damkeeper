@@ -13,6 +13,7 @@
     "cli:build": "npm run build --workspace=packages/cli",
     "cli:test": "npm run test --workspace=packages/cli",
     "showcase": "tsx scripts/run.ts",
+    "showcase:vesting": "tsx scripts/vesting.ts",
     "db:generate": "npm run db:generate --workspace=apps/web",
     "db:migrate": "npm run db:migrate --workspace=apps/web",
     "contracts:build": "cd packages/contracts && forge build",
