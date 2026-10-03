@@ -234,7 +234,7 @@ export function BurnForm() {
               className="link-btn"
               onClick={() => setCustomTokenOpen(!customTokenOpen)}
             >
-              {customTokenOpen ? "Hide input" : "Custom ERC-20"}
+              {customTokenOpen ? "Hide manual input" : "Manual address"}
             </button>
           )}
         </div>
@@ -244,7 +244,8 @@ export function BurnForm() {
             className="input"
             value={tokenAddress}
             onChange={(e) => setTokenAddress(e.target.value.trim())}
-            placeholder="0x…"
+            placeholder="Paste token address (0x…)"
+            autoFocus
           />
         )}
         {tokenReady && (
