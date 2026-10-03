@@ -7,6 +7,7 @@ import { robinhoodMainnet } from "@/lib/chains";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
 import { useTxFlow } from "@/lib/use-tx-flow";
 import { useWrongNetwork } from "../wrong-network-banner";
+import { BurnSuccessModal, type BurnSuccessDetails } from "./burn-success-modal";
 
 const DEFAULT_TOKEN = "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4";
 const DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD" as const;
@@ -30,14 +31,8 @@ export function BurnForm() {
   const [tokenAddress, setTokenAddress] = useState<string>(DEFAULT_TOKEN);
   const [amount, setAmount] = useState<string>("");
   const [burnMode, setBurnMode] = useState<"burn" | "dead">("burn");
-  const [createdReceipt, setCreatedReceipt] = useState<{
-    txHash: string;
-    amount: string;
-    symbol: string;
-    initialSupply: string;
-    newSupply: string;
-    pctReduction: string;
-  } | null>(null);
+  const [successDetails, setSuccessDetails] = useState<BurnSuccessDetails | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
   const txFlow = useTxFlow();
 
@@ -148,90 +143,45 @@ export function BurnForm() {
 
     await Promise.all([refetchSupply(), refetchBalance()]);
 
-    setCreatedReceipt({
+    const details: BurnSuccessDetails = {
       txHash: receipt.transactionHash,
       amount: formatTokenAmount(parsedAmount, decimals),
       symbol,
+      tokenAddress,
+      burnMode,
       initialSupply: initialFormatted,
       newSupply: newSupplyFormatted,
       pctReduction,
-    });
+      chainId: robinhoodMainnet.id,
+    };
+
+    setSuccessDetails(details);
+    setShowSuccessModal(true);
+    setAmount("");
   };
-
-  if (createdReceipt) {
-    const explorerUrl = `https://robinhoodchain.blockscout.com/tx/${createdReceipt.txHash}`;
-    const tweetText = encodeURIComponent(
-      `🔥 Proof of Burn on Robinhood Chain!\n\n` +
-      `Just permanently destroyed ${createdReceipt.amount} $${createdReceipt.symbol} via @damkeeper_fi!\n` +
-      `• Supply reduction: -${createdReceipt.pctReduction}%\n` +
-      `• New Total Supply: ${createdReceipt.newSupply} $${createdReceipt.symbol}\n\n` +
-      `On-Chain Proof: ${explorerUrl}\n\n` +
-      `#RobinhoodChain #Damkeeper #ProofOfBurn`
-    );
-
-    return (
-      <div className="burn-success-card">
-        <div className="burn-flame-badge">
-          <svg className="icon" aria-hidden="true" style={{ width: 28, height: 28 }}>
-            <use href="#i-flame" />
-          </svg>
-        </div>
-        <h2 style={{ fontSize: 24, margin: "10px 0 6px" }}>Tokens Successfully Burned!</h2>
-        <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 440, margin: "0 auto 20px" }}>
-          The token destruction was mined and confirmed on Robinhood Chain Mainnet.
-        </p>
-
-        <div className="burn-receipt-box">
-          <div className="burn-receipt-row">
-            <span>Burned Amount</span>
-            <strong style={{ color: "#ff7a45" }}>
-              {createdReceipt.amount} {createdReceipt.symbol}
-            </strong>
-          </div>
-          <div className="burn-receipt-row">
-            <span>Circulating Impact</span>
-            <strong style={{ color: "var(--accent)" }}>-{createdReceipt.pctReduction}% of supply</strong>
-          </div>
-          <div className="burn-receipt-row">
-            <span>New Total Supply</span>
-            <strong>
-              {createdReceipt.newSupply} {createdReceipt.symbol}
-            </strong>
-          </div>
-          <div className="burn-receipt-row">
-            <span>Transaction Hash</span>
-            <code className="mono" style={{ fontSize: 11, color: "var(--text-2)" }}>
-              {createdReceipt.txHash.slice(0, 10)}...{createdReceipt.txHash.slice(-8)}
-            </code>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-          <a
-            href={`https://twitter.com/intent/tweet?text=${tweetText}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary"
-            style={{ background: "linear-gradient(135deg, #ff7a45 0%, #ff4d4f 100%)", borderColor: "#ff7a45" }}
-          >
-            <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14 }}>
-              <use href="#i-x" />
-            </svg>
-            Share Proof on X
-          </a>
-          <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
-            View on Blockscout <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
-          </a>
-          <button type="button" className="btn btn-ghost" onClick={() => { setCreatedReceipt(null); setAmount(""); }}>
-            Burn more
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="burn-console">
+      {/* Recent Burn Banner if any */}
+      {successDetails && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255, 122, 69, 0.08)", border: "1px solid rgba(255, 122, 69, 0.28)", borderRadius: "8px", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "#ff7a45" }}>🔥</span>
+            <span style={{ fontSize: 12 }}>
+              Last Burn: <strong style={{ color: "#ff7a45" }}>{successDetails.amount} {successDetails.symbol}</strong> (-{successDetails.pctReduction}%)
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ fontSize: 11, padding: "2px 10px", minHeight: 28 }}
+            onClick={() => setShowSuccessModal(true)}
+          >
+            View Proof Modal
+          </button>
+        </div>
+      )}
+
       {/* Target Token Card */}
       <div className="field">
         <div className="field-row">
@@ -398,6 +348,13 @@ export function BurnForm() {
       {txFlow.status === "error" && (
         <p className="modal-note" style={{ color: "var(--danger)" }}>{txFlow.errorMessage}</p>
       )}
+
+      {/* Burn Success Modal dialog */}
+      <BurnSuccessModal
+        open={showSuccessModal}
+        details={successDetails}
+        onClose={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 }
