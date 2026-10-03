@@ -2381,6 +2381,80 @@ tbody tr:last-child td {
   margin-top: 2px;
 }
 
+/* Highly visible & interactive burn mechanism segmented control */
+.burn-mech-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--bg-deep);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--hair-2);
+}
+
+.burn-mech-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 7px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.burn-mech-btn:hover:not(:disabled) {
+  background: rgba(184, 243, 107, 0.05);
+  color: var(--text);
+  border-color: rgba(184, 243, 107, 0.2);
+}
+
+.burn-mech-btn[aria-pressed="true"] {
+  background: rgba(184, 243, 107, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(184, 243, 107, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.burn-mech-btn[aria-pressed="true"] .icon {
+  color: var(--accent);
+}
+
+.burn-mech-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.burn-mech-radio {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hair-2);
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: all 0.18s ease;
+}
+
+.burn-mech-btn[aria-pressed="true"] .burn-mech-radio {
+  border-color: var(--accent);
+}
+
+.burn-mech-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
 /* ---- burn success modal ---- */
 
 .modal.burn-modal {

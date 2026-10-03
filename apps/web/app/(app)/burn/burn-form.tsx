@@ -269,32 +269,37 @@ export function BurnForm() {
             </span>
           )}
         </div>
-        <div className="segmented" style={{ width: "100%" }}>
+        <div className="burn-mech-control">
           <button
             type="button"
-            className="mode-btn"
-            style={{ flex: 1, minHeight: 38, fontSize: 11.5, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            className="burn-mech-btn"
             aria-pressed={burnMode === "burn"}
             disabled={supportsNativeBurn === false}
-            title={supportsNativeBurn === false ? "Contract does not implement burn(uint256)" : ""}
+            title={supportsNativeBurn === false ? "Contract does not implement burn(uint256)" : "Burn tokens and reduce total supply"}
             onClick={() => setBurnMode("burn")}
           >
+            <span className="burn-mech-radio">
+              {burnMode === "burn" && <span className="burn-mech-radio-dot" />}
+            </span>
             <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14 }}>
               <use href="#i-flame" />
             </svg>
-            Native burn()
+            <span>Native burn()</span>
           </button>
           <button
             type="button"
-            className="mode-btn"
-            style={{ flex: 1, minHeight: 38, fontSize: 11.5, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            className="burn-mech-btn"
             aria-pressed={burnMode === "dead"}
+            title="Transfer tokens to dead address"
             onClick={() => setBurnMode("dead")}
           >
+            <span className="burn-mech-radio">
+              {burnMode === "dead" && <span className="burn-mech-radio-dot" />}
+            </span>
             <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14 }}>
               <use href="#i-dead" />
             </svg>
-            Dead Sink (0x...dEaD)
+            <span>Dead Sink (0x...dEaD)</span>
           </button>
         </div>
         <p className="field-note" style={{ margin: "2px 0 0" }}>
