@@ -2320,25 +2320,21 @@ tbody tr:last-child td {
    Token Burn Section & Console
    ========================================================================== */
 
-.burn-layout-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .burn-layout-grid {
-    grid-template-columns: 1fr;
-  }
+.burn-page-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .burn-container-card {
   padding: 24px;
   background: var(--bg-card);
   border: 1px solid var(--hair-2);
-  border-radius: 14px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   position: relative;
   overflow: hidden;
 }
@@ -2351,13 +2347,13 @@ tbody tr:last-child td {
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, #ff7a45, #ff4d4f, transparent);
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .burn-icon-box {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: rgba(255, 122, 69, 0.12);
   border: 1px solid rgba(255, 122, 69, 0.3);
   display: grid;
@@ -2368,88 +2364,273 @@ tbody tr:last-child td {
 .burn-console {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
-.burn-presets {
+/* Modern recessed swap-like input container */
+.burn-asset-box {
+  background: #0a110c;
+  border: 1px solid var(--hair-2);
+  border-radius: 12px;
+  padding: 16px 18px;
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
 }
 
-.burn-preset-btn {
-  flex: 1;
+.burn-asset-box:focus-within {
+  border-color: rgba(255, 122, 69, 0.45);
+  box-shadow: 0 0 16px rgba(255, 122, 69, 0.08);
+}
+
+.burn-asset-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.burn-asset-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.burn-asset-bal {
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.burn-max-pill {
+  background: rgba(255, 122, 69, 0.12);
+  border: 1px solid rgba(255, 122, 69, 0.3);
+  color: #ff7a45;
+  font: 10px/1 var(--mono);
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.burn-max-pill:hover {
+  background: rgba(255, 122, 69, 0.22);
+  color: #fff;
+  border-color: #ff7a45;
+}
+
+.burn-asset-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.burn-amount-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--heading);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+
+.burn-amount-input::placeholder {
+  color: var(--faint);
+}
+
+.burn-token-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 122, 69, 0.12);
+  border: 1px solid rgba(255, 122, 69, 0.3);
+  padding: 6px 12px;
+  border-radius: 999px;
+  flex: none;
+  font-weight: 600;
+  font-size: 13px;
+  color: #ff7a45;
+}
+
+.burn-asset-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+.burn-quick-presets {
+  display: flex;
+  gap: 6px;
+}
+
+.burn-chip-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hair);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font: 11px/1.2 var(--mono);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.burn-chip-btn:hover {
+  color: #fff;
+  background: rgba(255, 122, 69, 0.15);
+  border-color: rgba(255, 122, 69, 0.4);
+}
+
+/* Mode selector tab grid */
+.burn-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.burn-mode-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
   background: var(--bg-deep);
   border: 1px solid var(--hair-2);
-  color: var(--muted);
-  padding: 5px 0;
-  border-radius: 6px;
-  font: 11px/1.4 var(--mono);
-  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
   text-align: center;
-  transition: all 0.15s ease;
 }
 
-.burn-preset-btn:hover {
+.burn-mode-tab:hover:not(:disabled) {
+  border-color: rgba(255, 122, 69, 0.3);
+  background: rgba(255, 122, 69, 0.05);
+}
+
+.burn-mode-tab[aria-pressed="true"] {
   background: rgba(255, 122, 69, 0.12);
-  border-color: rgba(255, 122, 69, 0.4);
-  color: #fff;
+  border-color: #ff7a45;
+  box-shadow: 0 0 16px rgba(255, 122, 69, 0.18);
 }
 
-.burn-preset-btn.highlight {
-  color: #ff7a45;
-  border-color: rgba(255, 122, 69, 0.35);
+.burn-mode-tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.burn-mode-tab-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--heading);
 }
 
-.burn-impact-card {
-  background: linear-gradient(180deg, rgba(255, 122, 69, 0.05) 0%, rgba(15, 23, 18, 0.4) 100%);
-  border: 1px solid rgba(255, 122, 69, 0.28);
-  border-radius: 10px;
-  padding: 14px 16px;
+.burn-mode-tab-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* Live Telemetry Impact Card */
+.burn-telemetry-box {
+  background: linear-gradient(180deg, rgba(255, 122, 69, 0.05) 0%, rgba(13, 20, 15, 0.6) 100%);
+  border: 1px solid rgba(255, 122, 69, 0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.burn-impact-header {
+.burn-telemetry-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.burn-impact-grid {
+.burn-telemetry-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #ff7a45;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.burn-telemetry-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
-@media (max-width: 600px) {
-  .burn-impact-grid {
+@media (max-width: 500px) {
+  .burn-telemetry-grid {
     grid-template-columns: 1fr;
     gap: 8px;
   }
 }
 
-.burn-impact-item {
+.burn-telemetry-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-.burn-impact-lbl {
+.burn-telemetry-lbl {
   font-size: 10px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.burn-impact-val {
+.burn-telemetry-val {
   font-family: var(--mono);
   font-size: 13px;
   color: var(--heading);
   word-break: break-all;
+}
+
+.burn-telemetry-note {
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.4;
+}
+
+/* Secondary info grid below console */
+.burn-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  .burn-info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .burn-warning-callout {
@@ -2468,17 +2649,19 @@ tbody tr:last-child td {
   color: #ffffff !important;
   box-shadow: 0 4px 16px rgba(255, 77, 79, 0.35);
   width: 100%;
-  min-height: 46px;
+  min-height: 48px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  border-radius: 10px;
   transition: all 0.2s ease;
+  font-size: 14px;
 }
 
 .burn-submit-btn:hover:not(:disabled) {
-  box-shadow: 0 6px 22px rgba(255, 77, 79, 0.55);
+  box-shadow: 0 6px 24px rgba(255, 77, 79, 0.55);
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
@@ -2487,68 +2670,11 @@ tbody tr:last-child td {
   transform: translateY(0);
 }
 
-.burn-success-card {
-  padding: 32px 20px;
-  text-align: center;
-  background: var(--bg-card);
-  border: 1px solid rgba(255, 122, 69, 0.35);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(255, 77, 79, 0.15);
-  animation: fadeIn 0.3s ease-out;
-}
-
-.burn-flame-badge {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(255, 122, 69, 0.15);
-  border: 1px solid #ff7a45;
-  color: #ff7a45;
-  display: inline-grid;
-  place-items: center;
-  margin-bottom: 12px;
-  box-shadow: 0 0 24px rgba(255, 122, 69, 0.35);
-  animation: flame-pulse 2s infinite ease-in-out;
-}
-
-@keyframes flame-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 16px rgba(255, 122, 69, 0.3);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 28px rgba(255, 122, 69, 0.55);
-  }
-}
-
-.burn-receipt-box {
-  background: var(--bg-deep);
-  border: 1px solid var(--hair-2);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin: 16px auto;
-  max-width: 440px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.burn-receipt-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .burn-info-card {
   background: var(--bg-card);
   border: 1px solid var(--hair-2);
   border-radius: 12px;
   padding: 18px;
-  margin-bottom: 16px;
 }
 
 .burn-feature-list {
@@ -2556,8 +2682,8 @@ tbody tr:last-child td {
   padding-left: 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 11.5px;
   color: var(--body);
   line-height: 1.5;
 }

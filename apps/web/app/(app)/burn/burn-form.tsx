@@ -34,6 +34,7 @@ export function BurnForm() {
   const [supportsNativeBurn, setSupportsNativeBurn] = useState<boolean | null>(null);
   const [successDetails, setSuccessDetails] = useState<BurnSuccessDetails | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [customTokenOpen, setCustomTokenOpen] = useState<boolean>(false);
 
   const txFlow = useTxFlow();
 
@@ -212,157 +213,202 @@ export function BurnForm() {
         </div>
       )}
 
-      {/* Target Token Card */}
-      <div className="field">
-        <div className="field-row">
-          <label className="field-label" htmlFor="burn-token">Token Contract</label>
-          {tokenAddress !== DEFAULT_TOKEN && (
-            <button type="button" className="link-btn" onClick={() => setTokenAddress(DEFAULT_TOKEN)}>
-              Reset to $DAM
+      {/* Token Selector Row */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", fontWeight: 600 }}>
+              Target Asset
+            </span>
+            {tokenReady && (
+              <span className="ok-tag" style={{ color: "#ff7a45", borderColor: "rgba(255, 122, 69, 0.3)", padding: "2px 8px", fontSize: 11 }}>
+                {name} ({symbol}) · Verified
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {tokenAddress !== DEFAULT_TOKEN && (
+              <button
+                type="button"
+                className="link-btn"
+                style={{ fontSize: 11 }}
+                onClick={() => {
+                  setTokenAddress(DEFAULT_TOKEN);
+                  setCustomTokenOpen(false);
+                }}
+              >
+                Reset to $DAM
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ fontSize: 11, padding: "2px 10px", minHeight: 28 }}
+              onClick={() => setCustomTokenOpen(!customTokenOpen)}
+            >
+              {customTokenOpen ? "Hide Contract" : "Custom ERC-20 ▾"}
             </button>
-          )}
+          </div>
         </div>
-        <input
-          id="burn-token"
-          className="input"
-          value={tokenAddress}
-          onChange={(e) => setTokenAddress(e.target.value.trim())}
-          placeholder="0x…"
-        />
-        {tokenReady && (
-          <div className="tok-row" style={{ marginTop: 6 }}>
-            <span className="tok-ic" style={{ background: "rgba(255, 122, 69, 0.15)", color: "#ff7a45" }}>
-              <svg className="icon" aria-hidden="true" style={{ width: 12, height: 12 }}>
-                <use href="#i-flame" />
-              </svg>
-            </span>
-            <b style={{ fontSize: 13 }}>{name} ({symbol})</b>
-            <span className="ok-tag" style={{ color: "#ff7a45", borderColor: "rgba(255, 122, 69, 0.3)" }}>
-              {decimals} decimals · Verified
-            </span>
+
+        {customTokenOpen && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, background: "rgba(0,0,0,0.3)", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--hair-2)" }}>
+            <label className="field-label" htmlFor="burn-token" style={{ fontSize: 11 }}>Contract Address</label>
+            <input
+              id="burn-token"
+              className="input"
+              value={tokenAddress}
+              onChange={(e) => setTokenAddress(e.target.value.trim())}
+              placeholder="0x…"
+              style={{ fontSize: 12, height: 36 }}
+            />
           </div>
         )}
       </div>
 
-      {/* Mode Selector */}
-      <div className="field">
-        <div className="field-row">
-          <label className="field-label">Burn Execution Mechanism</label>
-          {supportsNativeBurn !== null && (
-            <span style={{ fontSize: 11, color: supportsNativeBurn ? "var(--accent)" : "var(--muted)" }}>
-              {supportsNativeBurn ? "✓ ERC20Burnable detected in contract" : "Standard ERC-20 (Dead sink)"}
+      {/* Recessed Swap-Style Amount Box */}
+      <div className="burn-asset-box">
+        <div className="burn-asset-top">
+          <span className="burn-asset-label">Amount to Burn</span>
+          {isConnected && (
+            <span className="burn-asset-bal">
+              Balance: <b>{formatTokenAmount(balance, decimals)} {symbol}</b>
+              <button
+                type="button"
+                className="burn-max-pill"
+                onClick={() => setPercent(100)}
+                title="Use full balance"
+              >
+                MAX
+              </button>
             </span>
           )}
         </div>
-        <div className="segmented" style={{ width: "100%", marginTop: 4 }}>
-          <button
-            type="button"
-            className="mode-btn"
-            style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-            aria-pressed={burnMode === "burn"}
-            disabled={supportsNativeBurn === false}
-            title={supportsNativeBurn === false ? "This token contract does not implement native burn()" : ""}
-            onClick={() => setBurnMode("burn")}
-          >
-            <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13, color: "currentColor" }}>
+
+        <div className="burn-asset-main">
+          <input
+            id="burn-amount"
+            className="burn-amount-input"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.0"
+            inputMode="decimal"
+            autoComplete="off"
+          />
+          <div className="burn-token-badge">
+            <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14, color: "#ff7a45" }}>
               <use href="#i-flame" />
             </svg>
-            Native burn() (Reduces Total Supply)
+            <span>{symbol || "DAM"}</span>
+          </div>
+        </div>
+
+        <div className="burn-asset-bottom">
+          <div className="burn-quick-presets">
+            <button type="button" className="burn-chip-btn" onClick={() => setPercent(25)}>25%</button>
+            <button type="button" className="burn-chip-btn" onClick={() => setPercent(50)}>50%</button>
+            <button type="button" className="burn-chip-btn" onClick={() => setPercent(75)}>75%</button>
+            <button type="button" className="burn-chip-btn" onClick={() => setPercent(100)}>100%</button>
+          </div>
+          {amountError && (
+            <span style={{ fontSize: 11, color: "var(--danger)", fontWeight: 500 }}>
+              {amountError}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Burn Execution Mechanism Tabs */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)", fontWeight: 600 }}>
+            Execution Mechanism
+          </span>
+          {supportsNativeBurn !== null && (
+            <span style={{ fontSize: 11, color: supportsNativeBurn ? "var(--accent)" : "var(--muted)" }}>
+              {supportsNativeBurn ? "✓ ERC20Burnable supported" : "Standard ERC-20 (Dead sink only)"}
+            </span>
+          )}
+        </div>
+        <div className="burn-mode-tabs">
+          <button
+            type="button"
+            className="burn-mode-tab"
+            aria-pressed={burnMode === "burn"}
+            disabled={supportsNativeBurn === false}
+            title={supportsNativeBurn === false ? "Contract does not implement burn(uint256)" : ""}
+            onClick={() => setBurnMode("burn")}
+          >
+            <span className="burn-mode-tab-title">
+              <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14, color: burnMode === "burn" ? "#ff7a45" : "inherit" }}>
+                <use href="#i-flame" />
+              </svg>
+              Native burn()
+            </span>
+            <span className="burn-mode-tab-sub">Reduces Total Supply</span>
           </button>
           <button
             type="button"
-            className="mode-btn"
-            style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            className="burn-mode-tab"
             aria-pressed={burnMode === "dead"}
             onClick={() => setBurnMode("dead")}
           >
-            <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13, color: "currentColor" }}>
-              <use href="#i-dead" />
-            </svg>
-            Send to Dead Address (0x...dEaD)
+            <span className="burn-mode-tab-title">
+              <svg className="icon" aria-hidden="true" style={{ width: 14, height: 14, color: burnMode === "dead" ? "#ff7a45" : "inherit" }}>
+                <use href="#i-dead" />
+              </svg>
+              Dead Address Sink
+            </span>
+            <span className="burn-mode-tab-sub">0x000...dEaD transfer</span>
           </button>
         </div>
-        <p className="field-note" style={{ marginTop: 6, fontSize: 11 }}>
-          {burnMode === "burn"
-            ? "Directly calls ERC20Burnable burn() to destroy tokens and reduce onchain contract totalSupply."
-            : "Transfers tokens to unspendable dead address 0x000...dEaD. Note: Total supply stays unchanged in contract, but tokens are locked permanently out of circulation."}
-        </p>
       </div>
 
-      {/* Amount Input */}
-      <div className="field">
-        <div className="field-row">
-          <label className="field-label" htmlFor="burn-amount">Amount to Burn</label>
-          {isConnected && (
-            <span className="field-note" style={{ color: "var(--text-2)" }}>
-              Balance: <b>{formatTokenAmount(balance, decimals)} {symbol}</b>
-            </span>
-          )}
-        </div>
-        <input
-          id="burn-amount"
-          className="input"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.0"
-          inputMode="decimal"
-        />
-        {/* Preset Percentage Selector */}
-        <div className="burn-presets">
-          <button type="button" className="burn-preset-btn" onClick={() => setPercent(25)}>25%</button>
-          <button type="button" className="burn-preset-btn" onClick={() => setPercent(50)}>50%</button>
-          <button type="button" className="burn-preset-btn" onClick={() => setPercent(75)}>75%</button>
-          <button type="button" className="burn-preset-btn highlight" onClick={() => setPercent(100)}>MAX</button>
-        </div>
-        {amountError && <p className="field-note" style={{ color: "var(--danger)" }}>{amountError}</p>}
-      </div>
-
-      {/* Proof of Supply Impact Preview */}
-      <div className="burn-impact-card">
-        <div className="burn-impact-header">
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: "#ff7a45" }}>
+      {/* Verifiable Supply Impact Telemetry Box */}
+      <div className="burn-telemetry-box">
+        <div className="burn-telemetry-head">
+          <span className="burn-telemetry-tag">
             <span className="dot" style={{ background: "#ff7a45", boxShadow: "0 0 8px #ff7a45" }} />
-            VERIFIABLE SUPPLY IMPACT
+            Verifiable Supply Impact
           </span>
           <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>
-            Robinhood Chain Mainnet
+            Robinhood Chain
           </span>
         </div>
-        <div className="burn-impact-grid">
-          <div className="burn-impact-item">
-            <span className="burn-impact-lbl">Contract Total Supply</span>
-            <strong className="burn-impact-val">{formatTokenAmount(currentSupply, decimals)} {symbol}</strong>
+
+        <div className="burn-telemetry-grid">
+          <div className="burn-telemetry-cell">
+            <span className="burn-telemetry-lbl">Contract Supply</span>
+            <strong className="burn-telemetry-val">
+              {formatTokenAmount(currentSupply, decimals)}
+            </strong>
           </div>
-          {burnMode === "burn" ? (
-            <div className="burn-impact-item">
-              <span className="burn-impact-lbl">Supply After Burn</span>
-              <strong className="burn-impact-val" style={{ color: "#ff7a45" }}>
-                {formatTokenAmount(projectedSupply, decimals)} {symbol}
-              </strong>
-            </div>
-          ) : (
-            <div className="burn-impact-item">
-              <span className="burn-impact-lbl">Dead Sink (0x...dEaD)</span>
-              <strong className="burn-impact-val" style={{ color: "#ff7a45" }}>
-                {formatTokenAmount(projectedDead, decimals)} {symbol}
-              </strong>
-            </div>
-          )}
-          <div className="burn-impact-item">
-            <span className="burn-impact-lbl">Supply Contraction</span>
-            <strong className="burn-impact-val" style={{ color: "var(--accent)" }}>
+          <div className="burn-telemetry-cell">
+            <span className="burn-telemetry-lbl">
+              {burnMode === "burn" ? "After Burn" : "Dead Sink"}
+            </span>
+            <strong className="burn-telemetry-val" style={{ color: "#ff7a45" }}>
+              {burnMode === "burn"
+                ? formatTokenAmount(projectedSupply, decimals)
+                : formatTokenAmount(projectedDead, decimals)}
+            </strong>
+          </div>
+          <div className="burn-telemetry-cell">
+            <span className="burn-telemetry-lbl">Contraction</span>
+            <strong className="burn-telemetry-val" style={{ color: "var(--accent)" }}>
               -{pctReduction}%
             </strong>
           </div>
         </div>
-        <div style={{ marginTop: 6, padding: "8px 10px", background: "rgba(0,0,0,0.25)", borderRadius: "6px", fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
+
+        <div className="burn-telemetry-note">
           <svg className="icon" aria-hidden="true" style={{ width: 13, height: 13, color: burnMode === "burn" ? "#ff7a45" : "var(--muted)", flex: "none" }}>
             <use href={burnMode === "burn" ? "#i-flame" : "#i-dead"} />
           </svg>
           <span>
             {burnMode === "burn"
               ? `Contract totalSupply will decrease on-chain by ${amount ? `${amount} ${symbol}` : "the burned amount"}.`
-              : `Tokens sent to 0x...dEaD. Total supply remains constant, but circulating supply is permanently reduced.`}
+              : `Tokens sent to 0x...dEaD. Total supply stays constant; circulating supply decreases.`}
           </span>
         </div>
       </div>
