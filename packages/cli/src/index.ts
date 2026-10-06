@@ -3,6 +3,14 @@ import { banner, c, fail, isJson } from "./ui";
 import { account, TESTNET } from "./config";
 import { claimCmd, lockCreate, vestingCreate, withdrawCmd } from "./write";
 import { burnCmd } from "./burn";
+import {
+  stakingClaimCmd,
+  stakingCreateCmd,
+  stakingListCmd,
+  stakingPoolCmd,
+  stakingStakeCmd,
+  stakingUnstakeCmd,
+} from "./staking";
 import { contractsCmd, exploreCmd, positionsCmd, showCmd, statusCmd, tokensCmd } from "./read";
 import { balanceCmd, faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
 import { showcaseCmd } from "./showcase";
@@ -23,6 +31,14 @@ const PANEL = `
   ${c.lime("CREATE")}
     lock create              Hold tokens until one fixed unlock date
     vesting create           Release tokens per second, optional cliff
+
+  ${c.lime("STAKING & YIELD")}
+    staking                  List active staking reward pools
+    staking pool <address>   Inspect pool state, rates and your staked yield
+    staking stake [address]  Stake tokens into pool to earn yield
+    staking unstake [address] Unstake principal tokens
+    staking claim [address]  Harvest earned reward tokens
+    staking create           Launch new community staking pool via factory
 
   ${c.lime("BURN & SUPPLY")}
     burn                     Permanently destroy tokens via burn() or dead sink
@@ -101,6 +117,38 @@ vesting.command("create").description("Release tokens per second, optional cliff
   .option("--title <text>").option("-y, --yes", "skip the confirmation prompt")
   .addHelpText("after", "\nExamples:\n  damkeeper vesting create\n  damkeeper vesting create --token 0xb5b0… --amount 1200 --to 0xAlice… --start now --cliff +3mo --end +1y")
   .action(run(vestingCreate));
+
+const staking = program.command("staking").description("Staking reward pools and continuous yields")
+  .action(run(stakingListCmd));
+
+staking.command("list").description("List all active staking pools on Robinhood Chain")
+  .action(run(stakingListCmd));
+
+staking.command("pool [address]").description("Inspect pool state, rates, and user earned yield")
+  .action(run((addr) => stakingPoolCmd(addr)));
+
+staking.command("stake [address]").description("Stake tokens into pool")
+  .option("--amount <n>", "amount to stake (e.g. 1000 or max)")
+  .option("-y, --yes", "skip confirmation prompt")
+  .action(run((addr, opts) => stakingStakeCmd(addr, opts)));
+
+staking.command("unstake [address]").description("Unstake principal tokens from pool")
+  .option("--amount <n>", "amount to unstake (e.g. 1000 or max)")
+  .option("--emergency", "emergency withdraw principal without reward calculation")
+  .option("-y, --yes", "skip confirmation prompt")
+  .action(run((addr, opts) => stakingUnstakeCmd(addr, opts)));
+
+staking.command("claim [address]").description("Harvest earned reward tokens")
+  .option("-y, --yes", "skip confirmation prompt")
+  .action(run((addr, opts) => stakingClaimCmd(addr, opts)));
+
+staking.command("create").description("Deploy a new community staking pool via factory")
+  .option("--staking-token <address>", "token to deposit")
+  .option("--reward-token <address>", "token to reward")
+  .option("--lock-days <n>", "timelock duration in days (0 for flexible)")
+  .option("--name <text>", "pool name")
+  .option("-y, --yes", "skip confirmation prompt")
+  .action(run(stakingCreateCmd));
 
 program.command("burn").description("Permanently burn tokens via native burn() or dead address sink")
   .option("--token <address>", "token contract address (default: $DAM)")

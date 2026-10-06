@@ -5,6 +5,8 @@ import { formatAmount, proofPath, releaseAt, shortAddress, statusOf, STATUS_LABE
 import { BurnShareButton, ShareButton } from "../share/share-button";
 import { burnPct, burnProofPath, burnSymbol, formatBurnAmount, listBurns, type BurnView } from "@/lib/burns";
 import { chainById } from "@/lib/chains";
+import { formatLockPolicy, listStakingPools, type StakingPoolView } from "@/lib/staking";
+import { formatTokenAmount } from "@/lib/amounts";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,7 @@ const COPY = {
   lock: { eyebrow: "Locks", title: "Token locks" },
   vesting: { eyebrow: "Vesting", title: "Vesting schedules" },
   burn: { eyebrow: "Burns", title: "Token burns" },
+  staking: { eyebrow: "Staking", title: "Staking reward pools" },
 } as const;
 
 export default async function PositionsPage({
@@ -21,11 +24,20 @@ export default async function PositionsPage({
   searchParams: { type?: string; q?: string };
 }) {
   const type =
-    searchParams.type === "lock" || searchParams.type === "vesting" || searchParams.type === "burn" ? searchParams.type : "all";
+    searchParams.type === "lock" ||
+    searchParams.type === "vesting" ||
+    searchParams.type === "burn" ||
+    searchParams.type === "staking"
+      ? searchParams.type
+      : "all";
   const q = searchParams.q?.trim().slice(0, 66) ?? "";
 
-  const rows = type === "burn" ? [] : await listPositions({ kind: type === "all" ? undefined : type, q: q || undefined, limit: 100 });
+  const rows =
+    type === "burn" || type === "staking"
+      ? []
+      : await listPositions({ kind: type === "all" ? undefined : type, q: q || undefined, limit: 100 });
   const burnRows = type === "burn" ? await listBurns({ q: q || undefined, limit: 100 }) : [];
+  const stakingRows = type === "staking" ? await listStakingPools(undefined, q || undefined) : [];
 
   const tabHref = (t: keyof typeof COPY) => {
     const params = new URLSearchParams();
@@ -50,9 +62,9 @@ export default async function PositionsPage({
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <nav className="filter-tabs" aria-label="Filter by type">
-          {(["all", "lock", "vesting", "burn"] as const).map((t) => (
+          {(["all", "lock", "vesting", "burn", "staking"] as const).map((t) => (
             <Link key={t} href={tabHref(t)} aria-current={type === t ? "page" : undefined}>
-              {t === "all" ? "All" : t === "lock" ? "Locks" : t === "vesting" ? "Vesting" : "Burns"}
+              {t === "all" ? "All" : t === "lock" ? "Locks" : t === "vesting" ? "Vesting" : t === "burn" ? "Burns" : "Staking"}
             </Link>
           ))}
         </nav>
@@ -69,6 +81,8 @@ export default async function PositionsPage({
       <section className="card">
         {type === "burn" ? (
           <BurnTable rows={burnRows} q={q} />
+        ) : type === "staking" ? (
+          <StakingTable rows={stakingRows} q={q} />
         ) : rows.length === 0 ? (
           <div className="empty-hero">
             <span className="ic">
@@ -210,3 +224,106 @@ function BurnTable({ rows, q }: { rows: BurnView[]; q: string }) {
     </table>
   );
 }
+
+function StakingTable({ rows, q }: { rows: StakingPoolView[]; q: string }) {
+  if (rows.length === 0) {
+    return (
+      <div className="empty-hero">
+        <span className="ic">
+          <svg className="icon-lg" aria-hidden="true"><use href="#i-sparkle" /></svg>
+        </span>
+        <h2>{q ? "No staking pools match" : "No staking pools launched yet"}</h2>
+        <p>
+          {q
+            ? "Try a token name, symbol or pool address."
+            : "Permissionless staking pools deployed via Damkeeper Staking Factory appear here."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Pool</th>
+          <th>Staking Token</th>
+          <th>Reward Token</th>
+          <th>Total Staked</th>
+          <th>Lock Policy</th>
+          <th>Estimated APR</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((s) => {
+          const explorer = chainById(s.chainId)?.blockExplorers.default.url ?? "https://robinhoodchain.blockscout.com";
+          const contractUrl = `${explorer}/address/${s.poolAddress}`;
+          const formattedStaked = formatTokenAmount(BigInt(s.totalStaked), s.stakingDecimals);
+
+          return (
+            <tr key={`${s.chainId}-${s.poolAddress}`}>
+              <td>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className={s.isOfficial ? "badge" : "badge badge-muted"}>
+                    <svg className="icon" style={{ width: 11, height: 11 }} aria-hidden="true">
+                      <use href="#i-sparkle" />
+                    </svg>
+                    {s.isOfficial ? "Official $DAM" : "Community"}
+                  </span>
+                  <div>
+                    <span style={{ fontWeight: 600 }}>{s.name}</span>
+                    <span className="mono" style={{ fontSize: 10, color: "var(--faint)", display: "block" }}>
+                      {shortAddress(s.poolAddress)}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span className="mono" style={{ fontWeight: 500 }}>{s.stakingSymbol}</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--faint)", display: "block" }}>
+                  {shortAddress(s.stakingToken)}
+                </span>
+              </td>
+              <td>
+                <span className="mono" style={{ fontWeight: 500 }}>{s.rewardSymbol}</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--faint)", display: "block" }}>
+                  {shortAddress(s.rewardToken)}
+                </span>
+              </td>
+              <td className="mono">{formattedStaked} {s.stakingSymbol}</td>
+              <td>
+                <span className="badge" style={{ fontSize: 11 }}>
+                  {formatLockPolicy(s.lockDuration)}
+                </span>
+              </td>
+              <td className="mono" style={{ color: "var(--accent)", fontWeight: 600 }}>
+                {s.apr > 0 ? `${s.apr.toFixed(1)}%` : "Active"}
+              </td>
+              <td>
+                <div className="pos-actions">
+                  <a
+                    href={contractUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost btn-sm"
+                    title="View verified contract on Blockscout"
+                  >
+                    Proof
+                    <svg className="icon" style={{ width: 10, height: 10, marginLeft: 4 }} aria-hidden="true">
+                      <use href="#i-up" />
+                    </svg>
+                  </a>
+                  <Link href={`/staking?pool=${s.poolAddress}`} className="btn btn-primary btn-sm">
+                    Stake
+                  </Link>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+

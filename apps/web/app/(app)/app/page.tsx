@@ -83,6 +83,18 @@ export default async function HomePage() {
             Burn tokens
           </Link>
         </article>
+        <article className="start-card">
+          <span className="tile">
+            <svg className="icon" aria-hidden="true"><use href="#i-sparkle" /></svg>
+          </span>
+          <h3>Token staking</h3>
+          <p>
+            Stake $DAM or launch community reward pools on Robinhood Chain. Flexible or locked with live APY.
+          </p>
+          <Link href="/staking" className="btn btn-primary">
+            Stake & earn
+          </Link>
+        </article>
       </div>
 
       <div className="section-title">

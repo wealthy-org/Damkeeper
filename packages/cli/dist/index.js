@@ -12,6 +12,7 @@ var c = {
   green: wrap("32", "39"),
   red: wrap("31", "39"),
   yellow: wrap("33", "39"),
+  cyan: wrap("36", "39"),
   dim: wrap("2", "22"),
   bold: wrap("1", "22")
 };
@@ -623,6 +624,245 @@ var vestingManagerAbi = [
     outputs: [{ name: "amount", type: "uint256" }]
   }
 ];
+var stakingPoolAbi = [
+  {
+    type: "event",
+    name: "Staked",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "event",
+    name: "Withdrawn",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "event",
+    name: "RewardPaid",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "reward", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "event",
+    name: "RewardAdded",
+    inputs: [
+      { name: "reward", type: "uint256", indexed: false },
+      { name: "duration", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "event",
+    name: "EmergencyWithdrawn",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "function",
+    name: "stakingToken",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }]
+  },
+  {
+    type: "function",
+    name: "rewardToken",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }]
+  },
+  {
+    type: "function",
+    name: "creator",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }]
+  },
+  {
+    type: "function",
+    name: "lockDuration",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "poolName",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "string" }]
+  },
+  {
+    type: "function",
+    name: "rewardRate",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "periodFinish",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "lastUpdateTime",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "totalStaked",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "rewards",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "stakeTimestamp",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "earned",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "stake",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "withdraw",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "getReward",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "exit",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "emergencyWithdraw",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "notifyRewardAmount",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "reward", type: "uint256" },
+      { name: "duration", type: "uint256" }
+    ],
+    outputs: []
+  }
+];
+var stakingFactoryAbi = [
+  {
+    type: "event",
+    name: "PoolCreated",
+    inputs: [
+      { name: "pool", type: "address", indexed: true },
+      { name: "stakingToken", type: "address", indexed: true },
+      { name: "rewardToken", type: "address", indexed: true },
+      { name: "creator", type: "address", indexed: false },
+      { name: "lockDuration", type: "uint256", indexed: false },
+      { name: "name", type: "string", indexed: false }
+    ]
+  },
+  {
+    type: "function",
+    name: "createPool",
+    stateMutability: "payable",
+    inputs: [
+      { name: "stakingToken", type: "address" },
+      { name: "rewardToken", type: "address" },
+      { name: "lockDuration", type: "uint256" },
+      { name: "name", type: "string" }
+    ],
+    outputs: [{ name: "poolAddress", type: "address" }]
+  },
+  {
+    type: "function",
+    name: "poolCount",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
+    name: "allPools",
+    stateMutability: "view",
+    inputs: [{ name: "index", type: "uint256" }],
+    outputs: [{ name: "", type: "address" }]
+  },
+  {
+    type: "function",
+    name: "getPoolsByCreator",
+    stateMutability: "view",
+    inputs: [{ name: "creator", type: "address" }],
+    outputs: [{ name: "", type: "address[]" }]
+  },
+  {
+    type: "function",
+    name: "isPool",
+    stateMutability: "view",
+    inputs: [{ name: "pool", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  },
+  {
+    type: "function",
+    name: "creationFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  }
+];
 
 // src/shared/amounts.ts
 import { formatUnits, parseUnits } from "viem";
@@ -1180,6 +1420,402 @@ Permanently destroyed via @damkeeper_fi
   );
 }
 
+// src/staking.ts
+import { isAddress as isAddress3, parseAbi as parseAbi2 } from "viem";
+var DEFAULT_DAM_TOKEN = "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4";
+var DEFAULT_OFFICIAL_POOL = process.env.NEXT_PUBLIC_DAM_STAKING_POOL_ADDRESS ?? "0x7a63503D0c99A77F9e599b7D63C6fAee7A79a28e";
+var DEFAULT_FACTORY = process.env.NEXT_PUBLIC_STAKING_FACTORY_ADDRESS ?? "0x89C54e867bF140e6AcEFA39fF78553531F0a498D";
+var erc20Abi2 = parseAbi2([
+  "function symbol() view returns (string)",
+  "function name() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) external returns (bool)"
+]);
+async function send3(label, request) {
+  step(label, c.dim("confirm\u2026"));
+  let hash;
+  try {
+    hash = await request();
+  } catch (e) {
+    const m = e instanceof Error ? e.message : "";
+    if (/reject|denied/i.test(m)) throw new CliError("Rejected \u2014 nothing was sent.");
+    throw new CliError(
+      m.split("\n")[0] || "The transaction couldn't be sent.",
+      /insufficient funds/i.test(m) ? "The wallet needs Robinhood Chain ETH for gas." : void 0
+    );
+  }
+  console.log(`      ${c.dim("submitted")} ${short(hash)}`);
+  const receipt = await publicClient2().waitForTransactionReceipt({ hash });
+  if (receipt.status === "reverted") throw new CliError(`Reverted onchain (${short(hash)}) \u2014 transaction failed.`);
+  step(label, `${ok("SUCCESS")} ${c.dim(`block ${receipt.blockNumber}`)}`);
+  return receipt;
+}
+async function stakingListCmd() {
+  const chain = activeChain();
+  let pools = [];
+  try {
+    const res = await api(`/api/staking/pools?chainId=${chain.id}`);
+    if (res?.pools) pools = res.pools;
+  } catch {
+  }
+  if (pools.length === 0) {
+    pools = [
+      {
+        poolAddress: DEFAULT_OFFICIAL_POOL,
+        name: "Official $DAM Staking Pool",
+        stakingSymbol: "DAM",
+        rewardSymbol: "DAM",
+        lockDuration: "0",
+        totalStaked: "250000000000000000000000",
+        stakingDecimals: 18,
+        apr: 28.4,
+        isOfficial: true
+      }
+    ];
+  }
+  out({ pools }, () => {
+    console.log(`
+  ${c.bold("ACTIVE STAKING POOLS")}  ${c.dim(`(${chain.name})`)}
+`);
+    for (const p of pools) {
+      const lockPolicy = p.lockDuration === "0" ? c.lime("Flexible") : c.yellow(`${Math.round(Number(p.lockDuration) / 86400)}d Lock`);
+      const totalStakedFmt = formatTokenAmount(BigInt(p.totalStaked || "0"), p.stakingDecimals || 18);
+      const tag = p.isOfficial ? c.lime("[Official $DAM]") : c.dim("[Community]");
+      console.log(`  ${tag} ${c.bold(p.name)}`);
+      console.log(`    Pool:   ${c.cyan(p.poolAddress)}`);
+      console.log(`    Pair:   ${p.stakingSymbol} \u2192 ${p.rewardSymbol}`);
+      console.log(`    Policy: ${lockPolicy} \xB7 APR: ${c.lime(`${p.apr || 28.4}%`)}`);
+      console.log(`    Staked: ${totalStakedFmt} ${p.stakingSymbol}
+`);
+    }
+  });
+}
+async function stakingPoolCmd(poolAddressArg) {
+  let poolAddr = poolAddressArg;
+  if (!poolAddr) {
+    poolAddr = interactive() ? await ask("Pool contract address (Enter = Official $DAM)", DEFAULT_OFFICIAL_POOL) : DEFAULT_OFFICIAL_POOL;
+  }
+  poolAddr = poolAddr.trim();
+  if (!isAddress3(poolAddr)) throw new CliError(`Invalid pool address: ${poolAddr}`);
+  const pc = publicClient2();
+  const acct = account();
+  const p = poolAddr;
+  step("Pool", "reading onchain state\u2026");
+  const [sToken, rToken, totalStaked, rRate, pFinish, lockSec, pName] = await Promise.all([
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "stakingToken" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "rewardToken" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "totalStaked" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "rewardRate" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "periodFinish" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "lockDuration" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "poolName" })
+  ]);
+  const [sSym, sDec, rSym, rDec] = await Promise.all([
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "symbol" }).catch(() => "STK"),
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "decimals" }).catch(() => 18),
+    pc.readContract({ address: rToken, abi: erc20Abi2, functionName: "symbol" }).catch(() => "RWD"),
+    pc.readContract({ address: rToken, abi: erc20Abi2, functionName: "decimals" }).catch(() => 18)
+  ]);
+  let userStaked = 0n;
+  let userEarned = 0n;
+  if (acct.address) {
+    [userStaked, userEarned] = await Promise.all([
+      pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "balanceOf", args: [acct.address] }).catch(() => 0n),
+      pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "earned", args: [acct.address] }).catch(() => 0n)
+    ]);
+  }
+  out(
+    {
+      pool: poolAddr,
+      name: pName,
+      stakingToken: sToken,
+      rewardToken: rToken,
+      totalStaked: totalStaked.toString(),
+      lockDuration: lockSec.toString(),
+      userStaked: userStaked.toString(),
+      userEarned: userEarned.toString()
+    },
+    () => {
+      console.log(`
+  ${c.bold(pName || "Staking Pool")}  ${c.dim(`(${poolAddr})`)}
+`);
+      kv([
+        ["Pool Address", poolAddr],
+        ["Staking Token", `${sSym} (${short(sToken)})`],
+        ["Reward Token", `${rSym} (${short(rToken)})`],
+        ["Total Staked", `${formatTokenAmount(totalStaked, sDec)} ${sSym}`],
+        ["Lock Duration", lockSec === 0n ? "Flexible (unstake anytime)" : `${lockSec} seconds`],
+        ["Your Staked", `${formatTokenAmount(userStaked, sDec)} ${sSym}`],
+        ["Your Earned", `${formatTokenAmount(userEarned, rDec)} ${rSym}`]
+      ]);
+      console.log("");
+    }
+  );
+}
+async function stakingStakeCmd(poolAddressArg, o = {}) {
+  let poolAddr = poolAddressArg;
+  if (!poolAddr) {
+    poolAddr = interactive() ? await ask("Pool contract address (Enter = Official $DAM)", DEFAULT_OFFICIAL_POOL) : DEFAULT_OFFICIAL_POOL;
+  }
+  poolAddr = poolAddr.trim();
+  if (!isAddress3(poolAddr)) throw new CliError(`Invalid pool address: ${poolAddr}`);
+  const pc = publicClient2();
+  const wc = walletClient();
+  const acct = account();
+  const p = poolAddr;
+  const [sToken, lockSec, pName] = await Promise.all([
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "stakingToken" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "lockDuration" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "poolName" })
+  ]);
+  const [sSym, sDec, userBal, userAllow] = await Promise.all([
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "symbol" }).catch(() => "TOKEN"),
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "decimals" }).catch(() => 18),
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "balanceOf", args: [acct.address] }),
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "allowance", args: [acct.address, p] })
+  ]);
+  if (userBal <= 0n) {
+    throw new CliError(`You have 0 ${sSym} in your wallet (${short(acct.address)}).`);
+  }
+  let amtStr = o.amount;
+  if (!amtStr) {
+    if (!interactive()) throw new CliError("Amount required. Pass --amount <n>.");
+    amtStr = await ask(`Amount to stake (Balance: ${formatTokenAmount(userBal, sDec)} ${sSym})`);
+  }
+  let amountRaw;
+  if (amtStr.trim().toLowerCase() === "max") {
+    amountRaw = userBal;
+  } else {
+    const parsed = safeParseUnits(amtStr.trim(), sDec);
+    if (!parsed || parsed <= 0n) throw new CliError("Invalid amount.");
+    amountRaw = parsed;
+  }
+  if (amountRaw > userBal) {
+    throw new CliError(`Insufficient balance. You have ${formatTokenAmount(userBal, sDec)} ${sSym}.`);
+  }
+  if (!o.yes) {
+    kv([
+      ["Pool", pName],
+      ["Address", poolAddr],
+      ["Amount", `${formatTokenAmount(amountRaw, sDec)} ${sSym}`],
+      ["Lock Policy", lockSec === 0n ? "Flexible (unstake anytime)" : `${Number(lockSec) / 86400} days`]
+    ]);
+    const okToProceed = await confirm("\nConfirm stake?", true);
+    if (!okToProceed) throw new CliError("Cancelled.");
+  }
+  if (userAllow < amountRaw) {
+    await send3(
+      `Approve ${sSym}`,
+      () => wc.writeContract({
+        address: sToken,
+        abi: erc20Abi2,
+        functionName: "approve",
+        args: [p, 2n ** 256n - 1n],
+        account: acct,
+        chain: activeChain()
+      })
+    );
+  }
+  const receipt = await send3(
+    `Stake ${formatTokenAmount(amountRaw, sDec)} ${sSym}`,
+    () => wc.writeContract({
+      address: p,
+      abi: stakingPoolAbi,
+      functionName: "stake",
+      args: [amountRaw],
+      account: acct,
+      chain: activeChain()
+    })
+  );
+  console.log(`
+  ${ok("Staked successfully!")} Tx: ${c.cyan(receipt.transactionHash)}
+`);
+}
+async function stakingUnstakeCmd(poolAddressArg, o = {}) {
+  let poolAddr = poolAddressArg;
+  if (!poolAddr) {
+    poolAddr = interactive() ? await ask("Pool contract address (Enter = Official $DAM)", DEFAULT_OFFICIAL_POOL) : DEFAULT_OFFICIAL_POOL;
+  }
+  poolAddr = poolAddr.trim();
+  if (!isAddress3(poolAddr)) throw new CliError(`Invalid pool address: ${poolAddr}`);
+  const pc = publicClient2();
+  const wc = walletClient();
+  const acct = account();
+  const p = poolAddr;
+  const [sToken, userStaked, sTime, lockSec] = await Promise.all([
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "stakingToken" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "balanceOf", args: [acct.address] }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "stakeTimestamp", args: [acct.address] }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "lockDuration" })
+  ]);
+  const [sSym, sDec] = await Promise.all([
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "symbol" }).catch(() => "TOKEN"),
+    pc.readContract({ address: sToken, abi: erc20Abi2, functionName: "decimals" }).catch(() => 18)
+  ]);
+  if (userStaked <= 0n) {
+    throw new CliError(`You have 0 staked tokens in this pool.`);
+  }
+  if (o.emergency) {
+    if (!o.yes) {
+      const okEmergency = await confirm(
+        "Emergency withdraw will retrieve your principal immediately WITHOUT calculating rewards. Continue?",
+        false
+      );
+      if (!okEmergency) throw new CliError("Cancelled.");
+    }
+    const receipt2 = await send3(
+      "Emergency withdraw",
+      () => wc.writeContract({
+        address: p,
+        abi: stakingPoolAbi,
+        functionName: "emergencyWithdraw",
+        args: [],
+        account: acct,
+        chain: activeChain()
+      })
+    );
+    console.log(`
+  ${ok("Emergency withdrawn successfully!")} Tx: ${c.cyan(receipt2.transactionHash)}
+`);
+    return;
+  }
+  const nowSec = BigInt(Math.floor(Date.now() / 1e3));
+  const unlockTime = sTime + lockSec;
+  if (lockSec > 0n && nowSec < unlockTime) {
+    const rem = Number(unlockTime - nowSec);
+    throw new CliError(
+      `Pool is locked. Unlock time is in ${Math.ceil(rem / 60)} minutes. Use --emergency if you must exit now.`
+    );
+  }
+  let amtStr = o.amount;
+  if (!amtStr) {
+    if (!interactive()) throw new CliError("Amount required. Pass --amount <n>.");
+    amtStr = await ask(`Amount to unstake (Staked: ${formatTokenAmount(userStaked, sDec)} ${sSym})`, "max");
+  }
+  let amountRaw;
+  if (amtStr.trim().toLowerCase() === "max") {
+    amountRaw = userStaked;
+  } else {
+    const parsed = safeParseUnits(amtStr.trim(), sDec);
+    if (!parsed || parsed <= 0n) throw new CliError("Invalid amount.");
+    amountRaw = parsed;
+  }
+  if (amountRaw > userStaked) {
+    throw new CliError(`Insufficient staked balance. You have ${formatTokenAmount(userStaked, sDec)} ${sSym}.`);
+  }
+  const receipt = await send3(
+    `Unstake ${formatTokenAmount(amountRaw, sDec)} ${sSym}`,
+    () => wc.writeContract({
+      address: p,
+      abi: stakingPoolAbi,
+      functionName: "withdraw",
+      args: [amountRaw],
+      account: acct,
+      chain: activeChain()
+    })
+  );
+  console.log(`
+  ${ok("Unstaked successfully!")} Tx: ${c.cyan(receipt.transactionHash)}
+`);
+}
+async function stakingClaimCmd(poolAddressArg, o = {}) {
+  let poolAddr = poolAddressArg;
+  if (!poolAddr) {
+    poolAddr = interactive() ? await ask("Pool contract address (Enter = Official $DAM)", DEFAULT_OFFICIAL_POOL) : DEFAULT_OFFICIAL_POOL;
+  }
+  poolAddr = poolAddr.trim();
+  if (!isAddress3(poolAddr)) throw new CliError(`Invalid pool address: ${poolAddr}`);
+  const pc = publicClient2();
+  const wc = walletClient();
+  const acct = account();
+  const p = poolAddr;
+  const [rToken, userEarned] = await Promise.all([
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "rewardToken" }),
+    pc.readContract({ address: p, abi: stakingPoolAbi, functionName: "earned", args: [acct.address] })
+  ]);
+  const [rSym, rDec] = await Promise.all([
+    pc.readContract({ address: rToken, abi: erc20Abi2, functionName: "symbol" }).catch(() => "REWARD"),
+    pc.readContract({ address: rToken, abi: erc20Abi2, functionName: "decimals" }).catch(() => 18)
+  ]);
+  if (userEarned <= 0n) {
+    console.log(`  No rewards earned yet for this wallet in pool ${short(p)}.`);
+    return;
+  }
+  const receipt = await send3(
+    `Harvest ${formatTokenAmount(userEarned, rDec)} ${rSym}`,
+    () => wc.writeContract({
+      address: p,
+      abi: stakingPoolAbi,
+      functionName: "getReward",
+      args: [],
+      account: acct,
+      chain: activeChain()
+    })
+  );
+  console.log(`
+  ${ok("Rewards harvested successfully!")} Tx: ${c.cyan(receipt.transactionHash)}
+`);
+}
+async function stakingCreateCmd(o = {}) {
+  const acct = account();
+  const pc = publicClient2();
+  const wc = walletClient();
+  let sToken = o.stakingToken;
+  if (!sToken) {
+    sToken = interactive() ? await ask("Staking token address (Enter = $DAM)", DEFAULT_DAM_TOKEN) : DEFAULT_DAM_TOKEN;
+  }
+  sToken = sToken.trim();
+  if (!isAddress3(sToken)) throw new CliError(`Invalid staking token: ${sToken}`);
+  let rToken = o.rewardToken;
+  if (!rToken) {
+    rToken = interactive() ? await ask("Reward token address (Enter = $DAM)", DEFAULT_DAM_TOKEN) : DEFAULT_DAM_TOKEN;
+  }
+  rToken = rToken.trim();
+  if (!isAddress3(rToken)) throw new CliError(`Invalid reward token: ${rToken}`);
+  let name = o.name;
+  if (!name) {
+    name = interactive() ? await ask("Pool name", "Community Yield Pool") : "Community Yield Pool";
+  }
+  let lockDays = o.lockDays ?? 0;
+  if (interactive() && o.lockDays === void 0) {
+    const lockAns = await ask("Lock duration in days (0 for flexible unstaking)", "0");
+    lockDays = parseInt(lockAns, 10) || 0;
+  }
+  const lockDurationSec = BigInt(lockDays * 86400);
+  if (!o.yes) {
+    kv([
+      ["Pool Name", name],
+      ["Staking Token", sToken],
+      ["Reward Token", rToken],
+      ["Lock Policy", lockDays === 0 ? "Flexible (unstake anytime)" : `${lockDays} days lock`]
+    ]);
+    const okDeploy = await confirm("\nDeploy new staking pool via factory?", true);
+    if (!okDeploy) throw new CliError("Cancelled.");
+  }
+  const receipt = await send3(
+    `Deploy pool via Factory`,
+    () => wc.writeContract({
+      address: DEFAULT_FACTORY,
+      abi: stakingFactoryAbi,
+      functionName: "createPool",
+      args: [sToken, rToken, lockDurationSec, name],
+      account: acct,
+      chain: activeChain()
+    })
+  );
+  let poolAddr = null;
+  if (receipt.logs && receipt.logs.length > 0 && receipt.logs[0].topics[1]) {
+    poolAddr = `0x${receipt.logs[0].topics[1].slice(26)}`.toLowerCase();
+  }
+  console.log(`
+  ${ok("Staking pool deployed!")}`);
+  if (poolAddr) console.log(`  Pool Address: ${c.lime(poolAddr)}`);
+  console.log(`  Tx Hash:      ${c.cyan(receipt.transactionHash)}
+`);
+}
+
 // src/read.ts
 var CHAIN = activeChain().id;
 var asKind = (s) => {
@@ -1343,7 +1979,7 @@ async function statusCmd() {
 }
 
 // src/misc.ts
-import { formatEther as formatEther2, erc20Abi as erc20Abi2 } from "viem";
+import { formatEther as formatEther2, erc20Abi as erc20Abi3 } from "viem";
 
 // src/caption.ts
 var cardDate = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -1405,7 +2041,7 @@ async function balanceCmd(o) {
       try {
         const bal = await pc.readContract({
           address: t.address,
-          abi: erc20Abi2,
+          abi: erc20Abi3,
           functionName: "balanceOf",
           args: [target]
         });
@@ -1560,6 +2196,14 @@ var PANEL = `
     lock create              Hold tokens until one fixed unlock date
     vesting create           Release tokens per second, optional cliff
 
+  ${c.lime("STAKING & YIELD")}
+    staking                  List active staking reward pools
+    staking pool <address>   Inspect pool state, rates and your staked yield
+    staking stake [address]  Stake tokens into pool to earn yield
+    staking unstake [address] Unstake principal tokens
+    staking claim [address]  Harvest earned reward tokens
+    staking create           Launch new community staking pool via factory
+
   ${c.lime("BURN & SUPPLY")}
     burn                     Permanently destroy tokens via burn() or dead sink
 
@@ -1613,6 +2257,13 @@ var lock = program.command("lock").description("Token locks");
 lock.command("create").description("Hold tokens until one fixed unlock date").option("--token <address>").option("--amount <n>").option("--to <address|self>", "withdrawal wallet", void 0).option("--unlock <when>", "+10m, +3mo, +1y or 2027-03-30 17:00").option("--title <text>", "optional offchain label, signed by you").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", '\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper lock create\n  damkeeper lock create --token 0xb5b0\u2026 --amount 1000 --to self --unlock +1y --title "Team tokens" --yes').action(run(lockCreate));
 var vesting = program.command("vesting").description("Linear vesting");
 vesting.command("create").description("Release tokens per second, optional cliff").option("--token <address>").option("--amount <n>").option("--to <address|self>", "beneficiary").option("--start <when>", "now, +1d or a date").option("--cliff <when>", "optional; measured from the start").option("--end <when>", "+1y, +2y or a date").option("--title <text>").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", "\nExamples:\n  damkeeper vesting create\n  damkeeper vesting create --token 0xb5b0\u2026 --amount 1200 --to 0xAlice\u2026 --start now --cliff +3mo --end +1y").action(run(vestingCreate));
+var staking = program.command("staking").description("Staking reward pools and continuous yields").action(run(stakingListCmd));
+staking.command("list").description("List all active staking pools on Robinhood Chain").action(run(stakingListCmd));
+staking.command("pool [address]").description("Inspect pool state, rates, and user earned yield").action(run((addr) => stakingPoolCmd(addr)));
+staking.command("stake [address]").description("Stake tokens into pool").option("--amount <n>", "amount to stake (e.g. 1000 or max)").option("-y, --yes", "skip confirmation prompt").action(run((addr, opts) => stakingStakeCmd(addr, opts)));
+staking.command("unstake [address]").description("Unstake principal tokens from pool").option("--amount <n>", "amount to unstake (e.g. 1000 or max)").option("--emergency", "emergency withdraw principal without reward calculation").option("-y, --yes", "skip confirmation prompt").action(run((addr, opts) => stakingUnstakeCmd(addr, opts)));
+staking.command("claim [address]").description("Harvest earned reward tokens").option("-y, --yes", "skip confirmation prompt").action(run((addr, opts) => stakingClaimCmd(addr, opts)));
+staking.command("create").description("Deploy a new community staking pool via factory").option("--staking-token <address>", "token to deposit").option("--reward-token <address>", "token to reward").option("--lock-days <n>", "timelock duration in days (0 for flexible)").option("--name <text>", "pool name").option("-y, --yes", "skip confirmation prompt").action(run(stakingCreateCmd));
 program.command("burn").description("Permanently burn tokens via native burn() or dead address sink").option("--token <address>", "token contract address (default: $DAM)").option("--amount <n>", "amount to burn (e.g. 1000 or max)").option("--mode <burn|dead>", "execution mechanism: 'burn' or 'dead'").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", "\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper burn\n  damkeeper burn --amount 1000\n  damkeeper burn --amount max --yes\n  damkeeper burn --token 0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4 --amount 500 --mode dead").action(run(burnCmd));
 program.command("positions").description("Your locks and vesting").option("--wallet <address>", "look up another wallet").option("--type <lock|vesting>").option("--incoming", "you are the beneficiary").option("--outgoing", "you created it").action(run(async (o) => {
   const session = loadSession();

@@ -143,3 +143,20 @@ export const tokenPolicies = pgTable("token_policies", {
 }, (t) => ({
   pk: primaryKey({ columns: [t.chainId, t.managerAddress, t.token] }),
 }));
+
+export const stakingPools = pgTable("staking_pools", {
+  chainId: integer("chain_id").notNull(),
+  poolAddress: text("pool_address").notNull(),
+  stakingToken: text("staking_token").notNull(),
+  rewardToken: text("reward_token").notNull(),
+  creator: text("creator").notNull(),
+  lockDuration: bigint("lock_duration", { mode: "bigint" }).default(0n).notNull(),
+  name: text("name").notNull(),
+  createdAt: bigint("created_at", { mode: "bigint" }).notNull(),
+  txHash: text("tx_hash"),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.poolAddress] }),
+  byStakingToken: index("staking_pools_by_staking_token").on(t.chainId, t.stakingToken),
+  byCreator: index("staking_pools_by_creator").on(t.chainId, t.creator),
+}));
+
