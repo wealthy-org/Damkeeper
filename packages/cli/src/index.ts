@@ -167,7 +167,7 @@ program.command("positions").description("Your locks and vesting")
   }));
 program.command("withdraw <lock-id>").description("Take tokens out of an unlocked lock").option("-y, --yes").action(run(withdrawCmd));
 program.command("claim <vesting-id>").description("Claim what has vested").option("-y, --yes").action(run(claimCmd));
-program.command("share <kind> <id>").description("Caption and link for a position").action(run(shareCmd));
+program.command("share <kind> [id]").description("Caption and link for a position or staking pool").action(run(shareCmd));
 program.command("show <kind> <id>").description("Full proof page for one position")
   .addHelpText("after", "\nExamples:\n  damkeeper show lock 1\n  damkeeper show vesting 1 --json").action(run(showCmd));
 program.command("explore").description("Every lock and vesting").option("--type <lock|vesting>").option("--q <text>", "address, symbol, label or position number").action(run(exploreCmd));

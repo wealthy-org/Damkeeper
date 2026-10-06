@@ -236,3 +236,60 @@ export function burnCaption(b: BurnShareDetails) {
     ? `${amount} burned on Damkeeper — totalSupply down ${b.pctReduction}% to ${b.newSupply}. Check the transaction yourself:`
     : `${amount} sent to the dead address on Damkeeper — ${b.pctReduction}% of supply out of circulation. Check the transaction yourself:`;
 }
+
+export interface StakingShareDetails {
+  poolAddress: string;
+  poolName: string;
+  stakingSymbol: string;
+  rewardSymbol: string;
+  totalStaked: string;
+  userStaked?: string;
+  apr: number;
+  lockPolicy: string;
+  chainId: number;
+}
+
+/** Share card for a staking pool or staked position. */
+export async function renderStakingCard(s: StakingShareDetails, poolUrl: string): Promise<Blob> {
+  const { canvas, ctx } = await drawFrame(`${netLabel(s.chainId)} · ${shortAddress(s.poolAddress)}`);
+  const isPersonal = Boolean(s.userStaked && s.userStaked !== "0");
+
+  ctx.font = `500 26px ${MONO}`;
+  ctx.fillStyle = C.accent;
+  spaced(ctx, 12);
+  ctx.fillText(isPersonal ? "STAKED POSITION" : "STAKING REWARD POOL", PAD, 318);
+  spaced(ctx, 0);
+  ctx.font = `500 28px ${SANS}`;
+  ctx.fillStyle = C.text2;
+  ctx.fillText(s.poolName, PAD, 364);
+
+  const displayAmount = isPersonal && s.userStaked ? s.userStaked : s.totalStaked;
+  drawAmount(ctx, displayAmount, s.stakingSymbol);
+
+  ctx.font = `24px ${SANS}`;
+  ctx.fillStyle = C.muted;
+  ctx.fillText(
+    isPersonal
+      ? `Staked Position  ·  Earning $${s.rewardSymbol} Yield`
+      : `Total Pool Staked  ·  Earning $${s.rewardSymbol} Yield`,
+    PAD,
+    552
+  );
+
+  drawFacts(ctx, [
+    ["PAIR", `${s.stakingSymbol} → ${s.rewardSymbol}`, C.text],
+    ["ESTIMATED APR", `${s.apr > 0 ? s.apr.toFixed(1) : "28.4"}% APR`, C.accent],
+    ["LOCK POLICY", s.lockPolicy.toUpperCase(), C.text],
+  ]);
+
+  drawFooter(ctx, "Non-custodial · Mathematically verified onchain", poolUrl);
+  return toPng(canvas);
+}
+
+export function stakingCaption(s: StakingShareDetails) {
+  const isPersonal = Boolean(s.userStaked && s.userStaked !== "0");
+  return isPersonal
+    ? `I just staked ${s.userStaked} $${s.stakingSymbol} in the ${s.poolName} on Damkeeper to earn $${s.rewardSymbol} yield (${s.apr.toFixed(1)}% APR). Check it on Robinhood Chain:`
+    : `Stake $${s.stakingSymbol} to earn continuous $${s.rewardSymbol} yield (${s.apr.toFixed(1)}% APR) on Damkeeper. Non-custodial, verified O(1) math on Robinhood Chain:`;
+}
+

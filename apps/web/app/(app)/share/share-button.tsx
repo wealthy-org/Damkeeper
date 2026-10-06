@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { proofPath, type PositionView } from "@/lib/position-view";
-import { burnCaption, renderBurnCard, renderShareCard, shareCaption, type BurnShareDetails } from "./share-card";
+import {
+  burnCaption,
+  renderBurnCard,
+  renderShareCard,
+  renderStakingCard,
+  shareCaption,
+  stakingCaption,
+  type BurnShareDetails,
+  type StakingShareDetails,
+} from "./share-card";
 
 interface ShareSpec {
   eyebrow: string;
@@ -58,6 +67,39 @@ export function BurnShareButton({ burn, txUrl, className = "btn btn-ghost btn-sm
       <button type="button" className={className} onClick={() => setOpen(true)}>
         <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
         Share proof
+      </button>
+      {open && <ShareDialog spec={spec} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+export function StakingShareButton({
+  staking,
+  poolUrl,
+  className = "btn btn-ghost btn-sm",
+  label = "Share",
+}: {
+  staking: StakingShareDetails;
+  poolUrl: string;
+  className?: string;
+  label?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const spec: ShareSpec = {
+    eyebrow: staking.userStaked && staking.userStaked !== "0" ? "Share staked position" : "Share staking pool",
+    title: `Share ${staking.poolName}`,
+    url: poolUrl,
+    proofHref: poolUrl,
+    proofLabel: "View pool",
+    caption: stakingCaption(staking),
+    fileName: `damkeeper-staking-${staking.stakingSymbol.toLowerCase()}-${staking.poolAddress.slice(2, 8)}.png`,
+    render: () => renderStakingCard(staking, poolUrl),
+  };
+  return (
+    <>
+      <button type="button" className={className} onClick={() => setOpen(true)}>
+        <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
+        {label}
       </button>
       {open && <ShareDialog spec={spec} onClose={() => setOpen(false)} />}
     </>

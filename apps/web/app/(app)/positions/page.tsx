@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listPositions } from "@/lib/positions-query";
 import { formatShort } from "@/lib/dates";
 import { formatAmount, proofPath, releaseAt, shortAddress, statusOf, STATUS_LABEL, tokenLabel } from "@/lib/position-view";
-import { BurnShareButton, ShareButton } from "../share/share-button";
+import { BurnShareButton, ShareButton, StakingShareButton } from "../share/share-button";
 import { burnPct, burnProofPath, burnSymbol, formatBurnAmount, listBurns, type BurnView } from "@/lib/burns";
 import { chainById } from "@/lib/chains";
 import { formatLockPolicy, listStakingPools, type StakingPoolView } from "@/lib/staking";
@@ -302,6 +302,19 @@ function StakingTable({ rows, q }: { rows: StakingPoolView[]; q: string }) {
               </td>
               <td>
                 <div className="pos-actions">
+                  <StakingShareButton
+                    staking={{
+                      poolAddress: s.poolAddress,
+                      poolName: s.name,
+                      stakingSymbol: s.stakingSymbol,
+                      rewardSymbol: s.rewardSymbol,
+                      totalStaked: formattedStaked,
+                      apr: s.apr,
+                      lockPolicy: formatLockPolicy(s.lockDuration),
+                      chainId: s.chainId,
+                    }}
+                    poolUrl={`https://damkeeper.com/staking?pool=${s.poolAddress}`}
+                  />
                   <a
                     href={contractUrl}
                     target="_blank"

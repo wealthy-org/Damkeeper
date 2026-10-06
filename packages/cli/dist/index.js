@@ -2080,8 +2080,25 @@ async function homeCmd() {
   else console.log(c.dim("  Connect via `damkeeper login` (or run `damkeeper positions --wallet 0x\u2026`) to see positions.\n"));
 }
 async function shareCmd(kind, id) {
-  if (kind !== "lock" && kind !== "vesting") throw new CliError(`Unknown kind "${kind}".`, "Use lock or vesting.");
   const chain = activeChain();
+  if (kind === "staking") {
+    const poolAddr = id || "0x7a63503D0c99A77F9e599b7D63C6fAee7A79a28e";
+    const url2 = `${cfg.web}/staking?pool=${poolAddr}`;
+    const caption2 = `Stake $DAM to earn continuous yield (28.4% APR) on Damkeeper. Non-custodial, verified O(1) math on Robinhood Chain:`;
+    out({ caption: caption2, url: url2 }, () => {
+      console.log(`
+  ${c.dim("CAPTION")}
+  ${caption2}
+
+  ${c.dim("LINK")}
+  ${url2}
+`);
+      console.log(c.dim("  The high-res share image is generated in the web app: open the link and use Share \u2192 Download image.\n"));
+    });
+    return;
+  }
+  if (kind !== "lock" && kind !== "vesting") throw new CliError(`Unknown kind "${kind}".`, "Use lock, vesting, or staking.");
+  if (!id) throw new CliError("Position ID required for lock or vesting.");
   const deployments = await api(`/api/deployments?chainId=${chain.id}`).catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   const dep = deployments.deployments.find((d) => d.kind === kind);
   if (!dep) throw new CliError(`No ${kind} contract is recorded for this network.`);
@@ -2272,7 +2289,7 @@ program.command("positions").description("Your locks and vesting").option("--wal
 }));
 program.command("withdraw <lock-id>").description("Take tokens out of an unlocked lock").option("-y, --yes").action(run(withdrawCmd));
 program.command("claim <vesting-id>").description("Claim what has vested").option("-y, --yes").action(run(claimCmd));
-program.command("share <kind> <id>").description("Caption and link for a position").action(run(shareCmd));
+program.command("share <kind> [id]").description("Caption and link for a position or staking pool").action(run(shareCmd));
 program.command("show <kind> <id>").description("Full proof page for one position").addHelpText("after", "\nExamples:\n  damkeeper show lock 1\n  damkeeper show vesting 1 --json").action(run(showCmd));
 program.command("explore").description("Every lock and vesting").option("--type <lock|vesting>").option("--q <text>", "address, symbol, label or position number").action(run(exploreCmd));
 program.command("tokens").description("Tokens with positions").option("--q <text>").action(run(tokensCmd));

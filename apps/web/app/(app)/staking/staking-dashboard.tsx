@@ -16,6 +16,7 @@ import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
 import { useTxFlow } from "@/lib/use-tx-flow";
 import { useWrongNetwork } from "../wrong-network-banner";
 import { CreatePoolModal } from "./create-pool-modal";
+import { StakingShareButton } from "../share/share-button";
 
 interface StakingDashboardProps {
   pools: StakingPoolView[];
@@ -298,7 +299,7 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
                   </span>
                 </div>
                 <h2 style={{ fontSize: 24, margin: "4px 0 6px" }}>{currentPool.name}</h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--muted)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--muted)", flexWrap: "wrap" }}>
                   <span>Contract:</span>
                   <a
                     href={`https://robinhoodchain.blockscout.com/address/${currentPool.poolAddress}`}
@@ -313,6 +314,22 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
                       <use href="#i-up" />
                     </svg>
                   </a>
+                  <StakingShareButton
+                    staking={{
+                      poolAddress: currentPool.poolAddress,
+                      poolName: currentPool.name,
+                      stakingSymbol: currentPool.stakingSymbol,
+                      rewardSymbol: currentPool.rewardSymbol,
+                      totalStaked: formatTokenAmount(poolTotalStaked > 0n ? poolTotalStaked : BigInt(currentPool.totalStaked), sDecimals),
+                      userStaked: userStakedBalance > 0n ? formatTokenAmount(userStakedBalance, sDecimals) : undefined,
+                      apr: currentPool.apr,
+                      lockPolicy: formatLockPolicy(currentPool.lockDuration),
+                      chainId: currentPool.chainId,
+                    }}
+                    poolUrl={typeof window !== "undefined" ? window.location.href : `https://damkeeper.com/staking?pool=${currentPool.poolAddress}`}
+                    className="btn btn-ghost btn-sm"
+                    label={userStakedBalance > 0n ? "Share Position" : "Share Pool"}
+                  />
                 </div>
               </div>
 
@@ -789,7 +806,20 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
                         {pool.apr > 0 ? `${pool.apr.toFixed(1)}%` : "Active"}
                       </td>
                       <td>
-                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+                          <StakingShareButton
+                            staking={{
+                              poolAddress: pool.poolAddress,
+                              poolName: pool.name,
+                              stakingSymbol: pool.stakingSymbol,
+                              rewardSymbol: pool.rewardSymbol,
+                              totalStaked: formatTokenAmount(BigInt(pool.totalStaked), pool.stakingDecimals),
+                              apr: pool.apr,
+                              lockPolicy: formatLockPolicy(pool.lockDuration),
+                              chainId: pool.chainId,
+                            }}
+                            poolUrl={`https://damkeeper.com/staking?pool=${pool.poolAddress}`}
+                          />
                           <a
                             href={`https://robinhoodchain.blockscout.com/address/${pool.poolAddress}`}
                             target="_blank"

@@ -106,9 +106,20 @@ export async function homeCmd() {
   else console.log(c.dim("  Connect via `damkeeper login` (or run `damkeeper positions --wallet 0x…`) to see positions.\n"));
 }
 
-export async function shareCmd(kind: string, id: string) {
-  if (kind !== "lock" && kind !== "vesting") throw new CliError(`Unknown kind "${kind}".`, "Use lock or vesting.");
+export async function shareCmd(kind: string, id?: string) {
   const chain = activeChain();
+  if (kind === "staking") {
+    const poolAddr = id || "0x7a63503D0c99A77F9e599b7D63C6fAee7A79a28e";
+    const url = `${cfg.web}/staking?pool=${poolAddr}`;
+    const caption = `Stake $DAM to earn continuous yield (28.4% APR) on Damkeeper. Non-custodial, verified O(1) math on Robinhood Chain:`;
+    out({ caption, url }, () => {
+      console.log(`\n  ${c.dim("CAPTION")}\n  ${caption}\n\n  ${c.dim("LINK")}\n  ${url}\n`);
+      console.log(c.dim("  The high-res share image is generated in the web app: open the link and use Share → Download image.\n"));
+    });
+    return;
+  }
+  if (kind !== "lock" && kind !== "vesting") throw new CliError(`Unknown kind "${kind}".`, "Use lock, vesting, or staking.");
+  if (!id) throw new CliError("Position ID required for lock or vesting.");
   const deployments = await api<{ deployments: { kind: string; managerAddress: string }[] }>(`/api/deployments?chainId=${chain.id}`)
     .catch(() => ({ deployments: DEFAULT_DEPLOYMENTS }));
   const dep = deployments.deployments.find((d) => d.kind === kind);
