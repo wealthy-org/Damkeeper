@@ -42,13 +42,13 @@ const CONTRACTS = {
   },
   officialPool: {
     name: "Official $DAM Staking Pool",
-    address: "0x7a63503D0c99A77F9e599b7D63C6fAee7A79a28e" as Hex,
+    address: "0x266237AED18D45846AE56723efeE55D4153fc1B0" as Hex,
     lockPolicy: "Flexible (lockDuration = 0, Unstake anytime)",
     apr: "28.4% APR (Auto-compounding / Continuous)",
   },
   stakingFactory: {
     name: "DamkeeperStakingFactory",
-    address: "0x89C54e867bF140e6AcEFA39fF78553531F0a498D" as Hex,
+    address: "0x66cea1D7C8C8566bb416B9372cBad614d324e2A6" as Hex,
     admin: FOUNDER_WALLET,
   },
 };
