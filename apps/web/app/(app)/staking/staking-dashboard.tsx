@@ -11,7 +11,7 @@ import {
   type StakingPoolView,
   DEFAULT_DAM_STAKING_POOL,
   DAM_TOKEN_ADDRESS,
-} from "@/lib/staking";
+} from "@/lib/staking-shared";
 import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
 import { useTxFlow } from "@/lib/use-tx-flow";
 import { useWrongNetwork } from "../wrong-network-banner";

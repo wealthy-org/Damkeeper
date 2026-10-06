@@ -5,7 +5,7 @@ import { useAccount, usePublicClient } from "wagmi";
 import { parseAbi, isAddress } from "viem";
 import { robinhoodMainnet } from "@/lib/chains";
 import { stakingFactoryAbi } from "@/lib/abi";
-import { DEFAULT_STAKING_FACTORY, DAM_TOKEN_ADDRESS } from "@/lib/staking";
+import { DEFAULT_STAKING_FACTORY, DAM_TOKEN_ADDRESS } from "@/lib/staking-shared";
 import { useTxFlow } from "@/lib/use-tx-flow";
 
 interface CreatePoolModalProps {

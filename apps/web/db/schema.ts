@@ -150,7 +150,7 @@ export const stakingPools = pgTable("staking_pools", {
   stakingToken: text("staking_token").notNull(),
   rewardToken: text("reward_token").notNull(),
   creator: text("creator").notNull(),
-  lockDuration: bigint("lock_duration", { mode: "bigint" }).default(0n).notNull(),
+  lockDuration: bigint("lock_duration", { mode: "bigint" }).notNull(),
   name: text("name").notNull(),
   createdAt: bigint("created_at", { mode: "bigint" }).notNull(),
   txHash: text("tx_hash"),
