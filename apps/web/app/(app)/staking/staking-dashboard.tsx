@@ -16,7 +16,9 @@ import { formatTokenAmount, safeParseUnits } from "@/lib/amounts";
 import { useTxFlow } from "@/lib/use-tx-flow";
 import { useWrongNetwork } from "../wrong-network-banner";
 import { CreatePoolModal } from "./create-pool-modal";
+import { AprInfoModal } from "./apr-info-modal";
 import { StakingShareButton } from "../share/share-button";
+
 
 interface StakingDashboardProps {
   pools: StakingPoolView[];
@@ -49,6 +51,7 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
   const [poolTotalStaked, setPoolTotalStaked] = useState<bigint>(0n);
 
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
+  const [aprModalOpen, setAprModalOpen] = useState<boolean>(false);
   const [filterType, setFilterType] = useState<"all" | "flexible" | "locked">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -333,20 +336,44 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
                 </div>
               </div>
 
-              {/* APR Stat Box */}
+              {/* APR Stat Box (Clickable for Formula & Yield Info) */}
               <div
+                onClick={() => setAprModalOpen(true)}
+                role="button"
+                tabIndex={0}
+                title="Click to view APR calculation formula & yield breakdown"
                 style={{
                   background: "rgba(184, 243, 107, 0.08)",
-                  border: "1px solid rgba(184, 243, 107, 0.2)",
+                  border: "1px solid rgba(184, 243, 107, 0.25)",
                   borderRadius: 12,
-                  padding: "12px 20px",
+                  padding: "12px 18px",
                   textAlign: "right",
-                  minWidth: 150,
+                  minWidth: 155,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
                 }}
               >
-                <span style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
-                  Estimated APR
-                </span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5, marginBottom: 2 }}>
+                  <span style={{ fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Estimated APR
+                  </span>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 14,
+                      height: 14,
+                      borderRadius: "50%",
+                      background: "rgba(184, 243, 107, 0.2)",
+                      color: "var(--accent)",
+                      fontSize: 10,
+                      fontWeight: 700,
+                    }}
+                  >
+                    i
+                  </span>
+                </div>
                 <span
                   className="mono"
                   style={{
@@ -359,7 +386,9 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
                 >
                   {currentPool.apr > 0 ? `${currentPool.apr.toFixed(1)}%` : "Active"}
                 </span>
-                <small style={{ fontSize: 10, color: "var(--muted)" }}>Continuous O(1) Yield</small>
+                <small style={{ fontSize: 10, color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+                  Continuous Yield · <span style={{ color: "var(--accent)", textDecoration: "underline" }}>How it works</span>
+                </small>
               </div>
             </div>
 
@@ -857,6 +886,13 @@ export function StakingDashboard({ pools, initialPoolAddress }: StakingDashboard
           setActivePoolAddress(newPool);
           setCreateModalOpen(false);
         }}
+      />
+
+      <AprInfoModal
+        open={aprModalOpen}
+        onClose={() => setAprModalOpen(false)}
+        pool={currentPool}
+        totalStaked={poolTotalStaked}
       />
     </>
   );
