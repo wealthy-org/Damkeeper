@@ -264,23 +264,78 @@ export function AprInfoModal({ open, onClose, pool, totalStaked }: AprInfoModalP
         </div>
 
         {/* Key Principles */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 12, color: "var(--text-2)" }}>
-          <div style={{ display: "flex", gap: 10 }}>
-            <span style={{ color: "var(--accent)", fontSize: 14 }}>⚡</span>
-            <div>
-              <strong>Streaming Reward Accrual:</strong> Rewards accumulate continuously every second. You don&apos;t have to wait for epochs; harvest anytime with a single click.
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 12, color: "var(--text-2)" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <span
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: "rgba(184, 243, 107, 0.1)",
+                border: "1px solid rgba(184, 243, 107, 0.22)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                color: "var(--accent)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+            </span>
+            <div style={{ paddingTop: 3 }}>
+              <strong style={{ color: "var(--text)" }}>Streaming Reward Accrual:</strong> Rewards accumulate continuously every second on-chain. You don&apos;t have to wait for epochs; harvest anytime with a single click.
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <span style={{ color: "var(--accent)", fontSize: 14 }}>📈</span>
-            <div>
-              <strong>Dynamic APR Equilibrium:</strong> APR adjusts dynamically with pool participation. When more tokens are staked, the yield dilutes across more deposits. When tokens are withdrawn, APR increases.
+
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <span
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: "rgba(184, 243, 107, 0.1)",
+                border: "1px solid rgba(184, 243, 107, 0.22)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                color: "var(--accent)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+            </span>
+            <div style={{ paddingTop: 3 }}>
+              <strong style={{ color: "var(--text)" }}>Dynamic APR Equilibrium:</strong> APR adjusts dynamically with pool participation. When more tokens are staked, the yield dilutes across more deposits. When tokens are withdrawn, APR increases.
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <span style={{ color: "var(--accent)", fontSize: 14 }}>🛡️</span>
-            <div>
-              <strong>Non-Custodial & Permissionless:</strong> Principal tokens are locked in the smart contract. Only the depositor can initiate an unstake or withdrawal.
+
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <span
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: "rgba(184, 243, 107, 0.1)",
+                border: "1px solid rgba(184, 243, 107, 0.22)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                color: "var(--accent)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </span>
+            <div style={{ paddingTop: 3 }}>
+              <strong style={{ color: "var(--text)" }}>Non-Custodial & Permissionless:</strong> Principal tokens are locked in the smart contract. Only the depositor can initiate an unstake or withdrawal.
             </div>
           </div>
         </div>
