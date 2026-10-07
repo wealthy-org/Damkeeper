@@ -160,3 +160,43 @@ export const stakingPools = pgTable("staking_pools", {
   byCreator: index("staking_pools_by_creator").on(t.chainId, t.creator),
 }));
 
+export const airdropCampaigns = pgTable("airdrop_campaigns", {
+  chainId: integer("chain_id").notNull(),
+  campaignId: text("campaign_id").notNull(),
+  creator: text("creator").notNull(),
+  token: text("token").notNull(),
+  tokenSymbol: text("token_symbol").notNull(),
+  tokenDecimals: integer("token_decimals").default(18).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  totalAmount: numeric("total_amount", { precision: 78, scale: 0 }).notNull(),
+  totalRecipients: integer("total_recipients").notNull(),
+  claimedAmount: numeric("claimed_amount", { precision: 78, scale: 0 }).default("0").notNull(),
+  claimedCount: integer("claimed_count").default(0).notNull(),
+  mode: text("mode").default("instant").notNull(), // 'instant' | 'vesting'
+  startTime: bigint("start_time", { mode: "bigint" }).notNull(),
+  endTime: bigint("end_time", { mode: "bigint" }),
+  vestingDuration: bigint("vesting_duration", { mode: "bigint" }),
+  txHash: text("tx_hash"),
+  createdAt: bigint("created_at", { mode: "bigint" }).notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.campaignId] }),
+  byCreator: index("airdrop_campaigns_by_creator").on(t.chainId, t.creator),
+  byToken: index("airdrop_campaigns_by_token").on(t.chainId, t.token),
+}));
+
+export const airdropRecipients = pgTable("airdrop_recipients", {
+  chainId: integer("chain_id").notNull(),
+  campaignId: text("campaign_id").notNull(),
+  recipient: text("recipient").notNull(),
+  amount: numeric("amount", { precision: 78, scale: 0 }).notNull(),
+  isClaimed: boolean("is_claimed").default(false).notNull(),
+  claimedAt: bigint("claimed_at", { mode: "bigint" }),
+  claimTxHash: text("claim_tx_hash"),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.campaignId, t.recipient] }),
+  byRecipient: index("airdrop_recipients_by_recipient").on(t.chainId, t.recipient),
+  byCampaign: index("airdrop_recipients_by_campaign").on(t.chainId, t.campaignId),
+}));
+
+

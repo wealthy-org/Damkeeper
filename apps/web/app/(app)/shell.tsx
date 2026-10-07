@@ -22,6 +22,7 @@ const productNav: NavItem[] = [
   { href: "/vesting", label: "Vesting", icon: "i-chart", match: (p) => p === "/vesting" },
   { href: "/burn", label: "Burn", icon: "i-flame", match: (p) => p === "/burn" },
   { href: "/staking", label: "Staking", icon: "i-sparkle", match: (p) => p.startsWith("/staking") },
+  { href: "/airdrops", label: "Airdrops", icon: "i-gift", match: (p) => p.startsWith("/airdrops") },
   { href: "/tokens", label: "Tokens", icon: "i-coins", match: (p) => p === "/tokens" },
   { href: "/positions", label: "Explore", icon: "i-layers", match: (p) => p.startsWith("/positions") },
 ];
