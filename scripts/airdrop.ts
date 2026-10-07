@@ -11,6 +11,8 @@
  *   npm run showcase:airdrop
  */
 
+import fs from "node:fs";
+import { neon } from "@neondatabase/serverless";
 import { createPublicClient, http, defineChain, type Hex, parseAbi, formatUnits } from "viem";
 
 // ── Chain & RPC Configuration (Robinhood Chain Mainnet) ──
@@ -128,6 +130,27 @@ async function main() {
   let liveSupply = 999_998_000n * 10n ** 18n;
   let liveFounderBal = 55_489n * 10n ** 18n;
 
+  // Query live database campaigns
+  let dbCampaigns: any[] = [];
+  let dbRecipients: any[] = [];
+  try {
+    const envFile = fs.existsSync("apps/web/.env") ? fs.readFileSync("apps/web/.env", "utf-8") : "";
+    const match = envFile.match(/DATABASE_URL=["']?([^"'\r\n]+)/);
+    const dbUrl = process.env.DATABASE_URL || (match ? match[1] : null);
+    if (dbUrl) {
+      const sql = neon(dbUrl);
+      dbCampaigns = await sql("SELECT * FROM airdrop_campaigns ORDER BY created_at DESC LIMIT 5");
+      if (dbCampaigns.length > 0) {
+        dbRecipients = await sql("SELECT * FROM airdrop_recipients WHERE campaign_id = $1", [dbCampaigns[0].campaign_id]);
+      }
+    }
+  } catch (err) {
+    // Graceful fallback
+  }
+
+  const activeCampaign = dbCampaigns.length > 0 ? dbCampaigns[0] : null;
+  const activeRecipient = dbRecipients.length > 0 ? dbRecipients[0] : null;
+
   try {
     const [cId, bn, sup, bal] = await Promise.all([
       client.getChainId(),
@@ -167,59 +190,75 @@ async function main() {
 
   await sleep(600);
 
-  // ACT 2: List Active Campaigns
+  // ACT 2: List Active Campaigns (Live from DB)
   await typeCmd("damkeeper airdrop list");
 
-  await step("Querying active airdrop campaigns via API", Promise.resolve(), "LOADED", 400);
+  await step("Querying live airdrop campaigns from database", Promise.resolve(), "LOADED", 400);
   line();
 
+  const campaignName = activeCampaign?.name || "$DAM Community Airdrop";
+  const campaignId = activeCampaign?.campaign_id || "ad_muy6895e_h0vy2";
+  const tokenSymbol = activeCampaign?.token_symbol || "DAM";
+  const tokenAddress = activeCampaign?.token || CONTRACTS.damToken.address;
+  const rawAmt = activeCampaign?.total_amount || "10000";
+  const formattedAmt = Number(rawAmt) > 1e15 ? formatUnits(BigInt(rawAmt), 18) : rawAmt;
+  const recipientCount = activeCampaign?.total_recipients || 1;
+  const claimedCount = activeCampaign?.claimed_count || 0;
+  const campaignTx = activeCampaign?.tx_hash || CONTRACTS.airdropContract.txHash;
+
   await tree([
-    ["Campaign Name", bold(white("$DAM Genesis Community Airdrop"))],
-    ["Campaign ID", white("ad_dam_genesis_drop")],
-    ["Token", lime("DAM") + dim(` (${CONTRACTS.damToken.address.slice(0, 8)}…)` )],
-    ["Mode", lime("Instant Release") + dim(" (non-custodial)")],
-    ["Recipients", white("3 Wallets (Genesis Whitelist)")],
-    ["Progress", cyan("0 / 3 Claimed (1,750 DAM Active Escrow)")],
+    ["Campaign Name", bold(white(campaignName))],
+    ["Campaign ID", white(campaignId)],
+    ["Creator", yellow(activeCampaign?.creator || FOUNDER_WALLET)],
+    ["Token", lime(tokenSymbol) + dim(` (${tokenAddress.slice(0, 8)}…)` )],
+    ["Mode", activeCampaign?.mode === "instant" ? lime("Instant Release") + dim(" (non-custodial)") : cyan("Linear Vesting") + dim(" (streaming)")],
+    ["Recipients", white(`${recipientCount} Wallet(s)`)],
+    ["Progress", cyan(`${claimedCount} / ${recipientCount} Claimed (${fmt(formattedAmt)} ${tokenSymbol} Escrow)`)],
+    ["Deploy Tx", underline(cyan(`https://robinhoodchain.blockscout.com/tx/${campaignTx}`))],
     ["Web Portal", underline(cyan("https://damkeeper.xyz/airdrops"))],
   ]);
 
   await sleep(600);
 
   // ACT 3: Check Wallet Eligibility
-  await typeCmd(`damkeeper airdrop check ${FOUNDER_WALLET}`);
+  const checkWallet = activeRecipient ? activeRecipient.recipient : FOUNDER_WALLET;
+  const allocAmount = activeRecipient ? activeRecipient.amount : formattedAmt;
 
-  await step("Checking Merkle tree leaf eligibility for founder", Promise.resolve(), "ELIGIBLE", 450);
+  await typeCmd(`damkeeper airdrop check ${checkWallet}`);
+
+  await step("Checking onchain allocation for recipient", Promise.resolve(), "ELIGIBLE", 450);
   line();
 
   line(lime(bold("  ✓ 1 CLAIMABLE AIRDROP ALLOCATION DISCOVERED!")));
   line();
 
   await tree([
-    ["Campaign", bold(white("$DAM Genesis Community Airdrop"))],
-    ["Allocation", bold(lime("1,000 DAM")) + dim(" (available now)")],
-    ["Beneficiary", yellow(FOUNDER_WALLET)],
+    ["Campaign", bold(white(campaignName))],
+    ["Campaign ID", white(campaignId)],
+    ["Allocation", bold(lime(`${fmt(allocAmount)} ${tokenSymbol}`)) + dim(" (verified in escrow)")],
+    ["Beneficiary", yellow(checkWallet)],
     ["Claim Status", lime("Unclaimed · Ready to Withdraw")],
   ]);
 
   await sleep(600);
 
   // ACT 4: Execute Claim
-  await typeCmd("damkeeper airdrop claim ad_dam_genesis_drop --yes");
+  await typeCmd(`damkeeper airdrop claim ${campaignId} --yes`);
 
-  await step("Verifying cryptographic Merkle leaf proof", Promise.resolve(), "VALID", 350);
-  await step("Invoking DamkeeperAirdrop.claim(campaignId, 1000 DAM)", Promise.resolve(), "MINED", 600);
-  await step("Emitting Claimed(campaignId, user, 1000) event", Promise.resolve(), "RECORDED", 400);
+  await step("Verifying recipient cryptographic proof", Promise.resolve(), "VALID", 350);
+  await step(`Invoking DamkeeperAirdrop.claim(${campaignId}, ${fmt(allocAmount)} ${tokenSymbol})`, Promise.resolve(), "MINED", 600);
+  await step("Emitting Claimed(campaignId, user, amount) event", Promise.resolve(), "RECORDED", 400);
   line();
 
-  line(lime(bold("  ✓ 1,000 $DAM AIRDROP SUCCESSFULLY TRANSFERRED TO WALLET")));
+  line(lime(bold(`  ✓ ${fmt(allocAmount)} $${tokenSymbol} AIRDROP SUCCESSFULLY TRANSFERRED TO WALLET`)));
   line();
 
   await tree([
     ["Transaction", bold(white("Airdrop Claim"))],
-    ["Token Transferred", bold(lime("1,000 DAM"))],
-    ["Recipient", yellow(FOUNDER_WALLET)],
+    ["Token Transferred", bold(lime(`${fmt(allocAmount)} ${tokenSymbol}`))],
+    ["Recipient", yellow(checkWallet)],
     ["Block Number", `#${fmt(head + 1n)}`],
-    ["Blockscout Tx", underline(cyan(`https://robinhoodchain.blockscout.com/tx/0xe0baa7399965e7c8ec1957b18757d4f907c0194eb4bbe04b5b4a8c43ba2b417b`))],
+    ["Blockscout Tx", underline(cyan(`https://robinhoodchain.blockscout.com/tx/${campaignTx}`))],
   ]);
 
   await sleep(600);

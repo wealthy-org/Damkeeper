@@ -42,18 +42,19 @@ export async function airdropListCmd() {
     const res = await api<{ ok: boolean; campaigns: any[] }>(`/api/airdrops/campaigns${query}`);
     campaigns = res.campaigns || [];
   } catch {
-    // Fallback display
-    campaigns = [
-      {
-        campaignId: "ad_dam_genesis_drop",
-        name: "$DAM Genesis Community Airdrop",
-        tokenSymbol: "DAM",
-        totalAmount: "1750000000000000000000",
-        totalRecipients: 3,
-        claimedCount: 0,
-        mode: "instant",
-      },
-    ];
+    // If remote API unreachable, try localhost dev server fallback
+    try {
+      const query = wallet ? `?chainId=${chain.id}&user=${wallet}&tab=all` : `?chainId=${chain.id}&tab=all`;
+      const localRes = await fetch(`http://localhost:3002/api/airdrops/campaigns${query}`)
+        .catch(() => fetch(`http://localhost:3000/api/airdrops/campaigns${query}`))
+        .catch(() => fetch(`http://localhost:3001/api/airdrops/campaigns${query}`));
+      if (localRes && localRes.ok) {
+        const data = await localRes.json();
+        campaigns = data.campaigns || [];
+      }
+    } catch {
+      campaigns = [];
+    }
   }
 
   if (campaigns.length === 0) {

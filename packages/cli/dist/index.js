@@ -1852,17 +1852,16 @@ async function airdropListCmd() {
     const res = await api(`/api/airdrops/campaigns${query}`);
     campaigns = res.campaigns || [];
   } catch {
-    campaigns = [
-      {
-        campaignId: "ad_dam_genesis_drop",
-        name: "$DAM Genesis Community Airdrop",
-        tokenSymbol: "DAM",
-        totalAmount: "1750000000000000000000",
-        totalRecipients: 3,
-        claimedCount: 0,
-        mode: "instant"
+    try {
+      const query = wallet ? `?chainId=${chain.id}&user=${wallet}&tab=all` : `?chainId=${chain.id}&tab=all`;
+      const localRes = await fetch(`http://localhost:3002/api/airdrops/campaigns${query}`).catch(() => fetch(`http://localhost:3000/api/airdrops/campaigns${query}`)).catch(() => fetch(`http://localhost:3001/api/airdrops/campaigns${query}`));
+      if (localRes && localRes.ok) {
+        const data = await localRes.json();
+        campaigns = data.campaigns || [];
       }
-    ];
+    } catch {
+      campaigns = [];
+    }
   }
   if (campaigns.length === 0) {
     console.log(c.dim("    No airdrop campaigns found."));
