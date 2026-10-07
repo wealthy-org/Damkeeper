@@ -33,17 +33,17 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
   const { writeContractAsync } = useWriteContract();
 
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
-  const [name, setName] = useState<string>("$DAM Community Airdrop");
-  const [description, setDescription] = useState<string>("Exclusive reward distribution for early community contributors.");
+  const [name, setName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [tokenAddress, setTokenAddress] = useState<string>(DAM_TOKEN_ADDRESS);
   const [tokenSymbol, setTokenSymbol] = useState<string>("DAM");
   const [tokenDecimals, setTokenDecimals] = useState<number>(18);
-  const [walletBalance, setWalletBalance] = useState<string>("0");
+  const [walletBalance, setWalletBalance] = useState<string | null>(null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
-  const [recipientsText, setRecipientsText] = useState<string>(SAMPLE_CSV);
+  const [recipientsText, setRecipientsText] = useState<string>("");
   const [parseResult, setParseResult] = useState<RecipientParseResult>(() =>
-    parseRecipientsList(SAMPLE_CSV, 18)
+    parseRecipientsList("", 18)
   );
 
   const [mode, setMode] = useState<"instant" | "vesting">("instant");
@@ -285,8 +285,23 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
                 className="input"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. $DAM Genesis Contributors Drop"
+                placeholder="e.g. Early Community Contributors Drop"
                 style={{ width: "100%", height: 40 }}
+              />
+            </div>
+
+            {/* 1b. Description (Optional) */}
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: 6 }}>
+                Description <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 400 }}>(Optional)</span>
+              </label>
+              <input
+                type="text"
+                className="input"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Official reward for testnet node operators & early traders"
+                style={{ width: "100%", height: 38 }}
               />
             </div>
 
@@ -296,11 +311,20 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
                 <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-2)" }}>
                   Token Address
                 </label>
-                {address && (
-                  <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                    Balance: <strong className="mono" style={{ color: "var(--accent)" }}>{Number(walletBalance).toLocaleString()} {tokenSymbol}</strong>
-                  </span>
-                )}
+                <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                  Balance:{" "}
+                  {address ? (
+                    isLoadingToken ? (
+                      <span>Loading…</span>
+                    ) : (
+                      <strong className="mono" style={{ color: "var(--accent)" }}>
+                        {walletBalance ? Number(walletBalance).toLocaleString() : "0"} {tokenSymbol}
+                      </strong>
+                    )
+                  ) : (
+                    <span style={{ color: "var(--muted-2, #888)" }}>Connect wallet</span>
+                  )}
+                </span>
               </div>
               <input
                 type="text"
@@ -359,40 +383,56 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
                 rows={5}
                 value={recipientsText}
                 onChange={(e) => setRecipientsText(e.target.value)}
-                placeholder="0x1234...5678, 100&#10;0xabcd...ef01, 250"
+                placeholder={"0x9178B573219C55586BbAf51Ecb24ACfb27BB7681, 1000\n0x70ecc8a7Af0c97bD5B5A420fFd35B5e693f4e4b4, 500"}
                 style={{ width: "100%", fontSize: 12, padding: "10px 12px", lineHeight: 1.5 }}
               />
 
               {/* Validation Summary */}
-              <div
-                style={{
-                  marginTop: 8,
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  background: parseResult.valid ? "rgba(184, 243, 107, 0.08)" : "rgba(255, 99, 99, 0.08)",
-                  border: `1px solid ${parseResult.valid ? "rgba(184, 243, 107, 0.25)" : "rgba(255, 99, 99, 0.3)"}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                {parseResult.valid ? (
-                  <>
-                    <span style={{ color: "var(--accent)", display: "flex", alignItems: "center", gap: 6 }}>
-                      <svg className="icon" style={{ width: 14, height: 14 }}><use href="#i-check" /></svg>
-                      <strong>{parseResult.rows.length} Valid Recipients</strong>
+              {recipientsText.trim() === "" ? (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    fontSize: 11,
+                    color: "var(--muted)",
+                    background: "var(--surface-2)",
+                    border: "1px dashed var(--border)",
+                  }}
+                >
+                  Enter recipient addresses and token amounts (e.g. <code>0x..., 100</code>).
+                </div>
+              ) : (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    background: parseResult.valid ? "rgba(184, 243, 107, 0.08)" : "rgba(255, 99, 99, 0.08)",
+                    border: `1px solid ${parseResult.valid ? "rgba(184, 243, 107, 0.25)" : "rgba(255, 99, 99, 0.3)"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  {parseResult.valid ? (
+                    <>
+                      <span style={{ color: "var(--accent)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <svg className="icon" style={{ width: 14, height: 14 }}><use href="#i-check" /></svg>
+                        <strong>{parseResult.rows.length} Valid Recipient{parseResult.rows.length > 1 ? "s" : ""}</strong>
+                      </span>
+                      <span className="mono" style={{ color: "var(--text)" }}>
+                        Total: <strong>{Number(parseResult.totalFormatted).toLocaleString()} {tokenSymbol}</strong>
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ color: "var(--danger, #ff6363)" }}>
+                      {parseResult.errors[0] || "Please enter valid recipient addresses and amounts."}
                     </span>
-                    <span className="mono" style={{ color: "var(--text)" }}>
-                      Total: <strong>{Number(parseResult.totalFormatted).toLocaleString()} {tokenSymbol}</strong>
-                    </span>
-                  </>
-                ) : (
-                  <span style={{ color: "var(--danger, #ff6363)" }}>
-                    {parseResult.errors[0] || "Please enter valid recipient addresses and amounts."}
-                  </span>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 4. Distribution Model (Instant vs Vesting) */}
@@ -552,7 +592,7 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
               type="button"
               className="btn btn-primary"
               onClick={handleCreateAirdrop}
-              disabled={isSubmitting || !parseResult.valid || parseResult.rows.length === 0}
+              disabled={isSubmitting || !name.trim() || !parseResult.valid || parseResult.rows.length === 0}
             >
               {isSubmitting ? "Deploying Airdrop Escrow…" : `Deploy Airdrop (${parseResult.rows.length} Recipients)`}
             </button>

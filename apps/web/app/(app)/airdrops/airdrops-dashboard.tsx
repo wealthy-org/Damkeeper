@@ -306,61 +306,102 @@ export function AirdropsDashboard({ initialCampaigns = [] }: AirdropsDashboardPr
                 }}
               >
                 <div>
-                  {/* Top Badges */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {/* Top Bar: Token & Mode Pill */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 12,
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                       <div
                         style={{
-                          width: 32,
-                          height: 32,
+                          width: 28,
+                          height: 28,
                           borderRadius: 8,
-                          background: "rgba(184, 243, 107, 0.12)",
+                          background: "rgba(184, 243, 107, 0.15)",
                           color: "var(--accent)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontWeight: 700,
-                          fontSize: 12,
+                          fontSize: 11,
+                          flexShrink: 0,
                         }}
                       >
                         {c.tokenSymbol.slice(0, 3)}
                       </div>
-                      <div>
-                        <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--text)" }}>
-                          {c.name}
-                        </h4>
-                        <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-                          {c.token.slice(0, 6)}…{c.token.slice(-4)}
-                        </span>
-                      </div>
+                      <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                        {c.token.slice(0, 6)}…{c.token.slice(-4)}
+                      </span>
                     </div>
 
                     <span
                       className="chip"
                       style={{
                         fontSize: 10,
-                        padding: "3px 8px",
+                        fontWeight: 600,
+                        padding: "4px 8px",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
                         background: c.mode === "instant" ? "rgba(184, 243, 107, 0.1)" : "rgba(125, 211, 252, 0.1)",
                         color: c.mode === "instant" ? "var(--accent)" : "rgb(125, 211, 252)",
-                        borderColor: "transparent",
+                        borderColor: c.mode === "instant" ? "rgba(184, 243, 107, 0.25)" : "rgba(125, 211, 252, 0.25)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
                       }}
                     >
+                      <span style={{ fontSize: 9 }}>{c.mode === "instant" ? "⚡" : "⏳"}</span>
                       {c.mode === "instant" ? "Instant Release" : "Linear Vesting"}
                     </span>
                   </div>
 
-                  {c.description && (
-                    <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 14px", lineHeight: 1.4 }}>
-                      {c.description}
-                    </p>
-                  )}
+                  {/* Title & Description */}
+                  <div style={{ marginBottom: 14 }}>
+                    <h4
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 700,
+                        margin: "0 0 6px",
+                        color: "var(--text)",
+                        lineHeight: 1.3,
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {c.name}
+                    </h4>
+                    {c.description ? (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "var(--muted)",
+                          margin: 0,
+                          lineHeight: 1.5,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {c.description}
+                      </p>
+                    ) : (
+                      <p style={{ fontSize: 12, color: "var(--muted-2, #666)", margin: 0, fontStyle: "italic" }}>
+                        No description provided
+                      </p>
+                    )}
+                  </div>
 
                   {/* Allocation Info Box */}
                   {hasAllocation && (
                     <div
                       style={{
-                        background: "rgba(184, 243, 107, 0.06)",
-                        border: "1px solid rgba(184, 243, 107, 0.2)",
+                        background: isClaimed ? "var(--surface)" : "rgba(184, 243, 107, 0.08)",
+                        border: `1px solid ${isClaimed ? "var(--border)" : "rgba(184, 243, 107, 0.25)"}`,
                         borderRadius: 8,
                         padding: "10px 12px",
                         marginBottom: 14,
@@ -370,7 +411,7 @@ export function AirdropsDashboard({ initialCampaigns = [] }: AirdropsDashboardPr
                       }}
                     >
                       <span style={{ fontSize: 11, color: "var(--muted)" }}>Your Allocation:</span>
-                      <strong className="mono" style={{ fontSize: 13, color: "var(--accent)" }}>
+                      <strong className="mono" style={{ fontSize: 13, color: isClaimed ? "var(--muted)" : "var(--accent)" }}>
                         {Number(c.userAllocation?.amount).toLocaleString()} {c.tokenSymbol}
                       </strong>
                     </div>
@@ -405,29 +446,77 @@ export function AirdropsDashboard({ initialCampaigns = [] }: AirdropsDashboardPr
 
                 {/* Card Action */}
                 <div style={{ marginTop: 16 }}>
-                  {isEligibleToClaim ? (
+                  {!isConnected ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={handleConnectWallet}
+                      style={{
+                        width: "100%",
+                        height: 38,
+                        fontSize: 12,
+                        borderColor: "var(--border)",
+                      }}
+                    >
+                      Connect Wallet to Claim
+                    </button>
+                  ) : isEligibleToClaim ? (
                     <button
                       type="button"
                       className="btn btn-primary"
                       onClick={() => setSelectedClaimCampaign(c)}
-                      style={{ width: "100%", height: 38, fontSize: 13 }}
+                      style={{ width: "100%", height: 38, fontSize: 13, fontWeight: 600 }}
                     >
                       Claim {Number(c.userAllocation?.amount).toLocaleString()} {c.tokenSymbol}
                     </button>
                   ) : isClaimed ? (
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled
-                      style={{ width: "100%", height: 38, fontSize: 12, color: "var(--muted)" }}
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 36,
+                        borderRadius: 8,
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        color: "var(--muted)",
+                        gap: 6,
+                      }}
                     >
-                      ✓ Already Claimed
-                    </button>
+                      <svg className="icon" style={{ width: 14, height: 14, color: "var(--accent)" }}><use href="#i-check" /></svg>
+                      Already Claimed
+                    </div>
                   ) : (
-                    <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "center", padding: "8px 0" }}>
-                      Created by {c.creator.slice(0, 6)}…{c.creator.slice(-4)}
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 36,
+                        borderRadius: 8,
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        color: "var(--muted)",
+                      }}
+                    >
+                      Not In Recipient List
                     </div>
                   )}
+
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--muted)",
+                      textAlign: "center",
+                      marginTop: 10,
+                    }}
+                  >
+                    Created by <span className="mono" style={{ color: "var(--text-2)" }}>{c.creator.slice(0, 6)}…{c.creator.slice(-4)}</span>
+                  </div>
                 </div>
               </div>
             );
