@@ -11,6 +11,13 @@ import {
   stakingStakeCmd,
   stakingUnstakeCmd,
 } from "./staking";
+import {
+  airdropCheckCmd,
+  airdropClaimCmd,
+  airdropCreateCmd,
+  airdropInfoCmd,
+  airdropListCmd,
+} from "./airdrop";
 import { contractsCmd, exploreCmd, positionsCmd, showCmd, statusCmd, tokensCmd } from "./read";
 import { balanceCmd, faucetCmd, homeCmd, loginCmd, logoutCmd, shareCmd } from "./misc";
 import { showcaseCmd } from "./showcase";
@@ -39,6 +46,12 @@ const PANEL = `
     staking unstake [address] Unstake principal tokens
     staking claim [address]  Harvest earned reward tokens
     staking create           Launch new community staking pool via factory
+
+  ${c.lime("AIRDROPS")}
+    airdrop                  List active token airdrops
+    airdrop check [address]  Check your wallet's claimable allocations
+    airdrop claim [id]       Claim your allocated tokens
+    airdrop create           Deploy new community airdrop with CSV
 
   ${c.lime("BURN & SUPPLY")}
     burn                     Permanently destroy tokens via burn() or dead sink
@@ -149,6 +162,30 @@ staking.command("create").description("Deploy a new community staking pool via f
   .option("--name <text>", "pool name")
   .option("-y, --yes", "skip confirmation prompt")
   .action(run(stakingCreateCmd));
+
+const airdrop = program.command("airdrop").description("Token airdrops & community claims")
+  .action(run(airdropListCmd));
+
+airdrop.command("list").description("List all active token airdrops")
+  .action(run(airdropListCmd));
+
+airdrop.command("check [address]").description("Check your wallet eligibility across all airdrops")
+  .action(run((addr) => airdropCheckCmd(addr)));
+
+airdrop.command("claim [campaignId]").description("Claim your allocated tokens from an airdrop")
+  .option("-y, --yes", "skip confirmation prompt")
+  .action(run((id, opts) => airdropClaimCmd(id, opts)));
+
+airdrop.command("create").description("Deploy a new token airdrop campaign")
+  .option("--name <text>", "campaign title")
+  .option("--token <address>", "token to distribute")
+  .option("--file <path>", "path to CSV file (address, amount)")
+  .option("--mode <instant|vesting>", "claim distribution mode")
+  .option("-y, --yes", "skip confirmation prompt")
+  .action(run(airdropCreateCmd));
+
+airdrop.command("info <campaignId>").description("Inspect airdrop campaign details")
+  .action(run((id) => airdropInfoCmd(id)));
 
 program.command("burn").description("Permanently burn tokens via native burn() or dead address sink")
   .option("--token <address>", "token contract address (default: $DAM)")

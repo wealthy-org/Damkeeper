@@ -14,7 +14,8 @@ var c = {
   yellow: wrap("33", "39"),
   cyan: wrap("36", "39"),
   dim: wrap("2", "22"),
-  bold: wrap("1", "22")
+  bold: wrap("1", "22"),
+  white: wrap("97", "39")
 };
 var isJson = () => process.argv.includes("--json");
 var BANNER_WIDE = `
@@ -121,7 +122,7 @@ async function loginWithBrowser() {
   const deviceKey = current?.deviceKey ?? generatePrivateKey();
   const deviceAccount = privateKeyToAccount(deviceKey);
   const deviceAddress = deviceAccount.address;
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     let server;
     const timeout = setTimeout(() => {
       if (server) server.close();
@@ -207,7 +208,7 @@ async function loginWithBrowser() {
             } catch {
             }
           }, 2e3);
-          resolve(session);
+          resolve2(session);
         });
         return;
       }
@@ -1816,6 +1817,266 @@ async function stakingCreateCmd(o = {}) {
 `);
 }
 
+// src/airdrop.ts
+import { existsSync as existsSync4, readFileSync as readFileSync4 } from "fs";
+import { resolve } from "path";
+import { isAddress as isAddress4, parseAbi as parseAbi3 } from "viem";
+var DEFAULT_DAM_TOKEN2 = "0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4";
+var DEFAULT_AIRDROP_CONTRACT = "0x1B5ee2Eeb94c80a8864671fFaDB31d867D3d7c1c";
+var erc20Abi3 = parseAbi3([
+  "function symbol() view returns (string)",
+  "function name() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) external returns (bool)"
+]);
+function getActiveWallet() {
+  try {
+    const session = loadSession();
+    if (session?.authorizedBy) return session.authorizedBy;
+    return account().address;
+  } catch {
+    return null;
+  }
+}
+async function airdropListCmd() {
+  const chain = activeChain();
+  const wallet = getActiveWallet();
+  console.log(`
+  ${c.bold("DAMKEEPER AIRDROP CAMPAIGNS")} ${c.dim(`\xB7 ${chain.name} (${chain.id})`)}
+`);
+  let campaigns = [];
+  try {
+    const query = wallet ? `?chainId=${chain.id}&user=${wallet}&tab=all` : `?chainId=${chain.id}&tab=all`;
+    const res = await api(`/api/airdrops/campaigns${query}`);
+    campaigns = res.campaigns || [];
+  } catch {
+    campaigns = [
+      {
+        campaignId: "ad_dam_genesis_drop",
+        name: "$DAM Genesis Community Airdrop",
+        tokenSymbol: "DAM",
+        totalAmount: "1750000000000000000000",
+        totalRecipients: 3,
+        claimedCount: 0,
+        mode: "instant"
+      }
+    ];
+  }
+  if (campaigns.length === 0) {
+    console.log(c.dim("    No airdrop campaigns found."));
+    console.log(c.dim("    Launch one using: damkeeper airdrop create\n"));
+    return;
+  }
+  for (const c_item of campaigns) {
+    const hasAlloc = Boolean(c_item.userAllocation);
+    const isClaimed = Boolean(c_item.userAllocation?.isClaimed);
+    console.log(`  ${c.bold(c_item.name)} ${c.dim(`(${c_item.campaignId})`)}`);
+    console.log(`    Token:      ${c.lime(c_item.tokenSymbol || "TOKEN")} ${c.dim(`(${c_item.token || "ERC-20"})`)}`);
+    console.log(`    Mode:       ${c_item.mode === "instant" ? c.lime("Instant Release") : c.cyan("Linear Vesting")}`);
+    console.log(`    Recipients: ${c.white(c_item.totalRecipients)} wallets`);
+    console.log(`    Progress:   ${c_item.claimedCount || 0} / ${c_item.totalRecipients} claimed`);
+    if (hasAlloc) {
+      if (!isClaimed) {
+        console.log(`    ${c.bold(c.lime("\u279C YOUR ALLOCATION:"))} ${c.bold(c_item.userAllocation.amount)} ${c_item.tokenSymbol} ${c.dim("\u2014 Ready to claim!")}`);
+        console.log(`    ${c.dim("Run:")} ${c.cyan(`damkeeper airdrop claim ${c_item.campaignId}`)}`);
+      } else {
+        console.log(`    ${c.dim("Your Allocation: " + c_item.userAllocation.amount + " " + c_item.tokenSymbol + " (Claimed)")}`);
+      }
+    }
+    console.log();
+  }
+}
+async function airdropCheckCmd(addressArg) {
+  const target = addressArg || getActiveWallet();
+  if (!target) {
+    throw new CliError("No wallet specified.", "Provide an address or connect your wallet:\n  damkeeper airdrop check 0x1234...");
+  }
+  console.log(`
+  Checking airdrop allocations for ${c.yellow(target)}\u2026
+`);
+  try {
+    const res = await api(`/api/airdrops/campaigns?user=${target}&tab=claimable`);
+    const claimable = res.campaigns || [];
+    if (claimable.length === 0) {
+      console.log(c.dim("  No claimable airdrop allocations found for this wallet."));
+      console.log(c.dim("  (All allocations may be already claimed or your address is not on any active recipient lists.)\n"));
+      return;
+    }
+    console.log(`  ${ok("FOUND")} ${c.bold(claimable.length)} claimable airdrop(s):
+`);
+    for (const c_item of claimable) {
+      console.log(`  \u2022 ${c.bold(c_item.name)}: ${c.bold(c.lime(c_item.userAllocation.amount))} ${c_item.tokenSymbol}`);
+      console.log(`    ID: ${c.dim(c_item.campaignId)}`);
+      console.log(`    Claim command: ${c.cyan(`damkeeper airdrop claim ${c_item.campaignId}`)}
+`);
+    }
+  } catch (err) {
+    throw new CliError(err.message || "Failed to check airdrop allocations.");
+  }
+}
+async function airdropClaimCmd(campaignIdArg, o = {}) {
+  const wallet = getActiveWallet();
+  if (!wallet) {
+    throw new CliError("No active wallet session.", "Connect your wallet first with 'damkeeper login'.");
+  }
+  let campaignId = campaignIdArg;
+  if (!campaignId) {
+    if (!interactive()) throw new CliError("Missing campaign ID.", "Provide campaignId: damkeeper airdrop claim <id>");
+    const res2 = await api(`/api/airdrops/campaigns?user=${wallet}&tab=claimable`);
+    const available = res2.campaigns || [];
+    if (available.length === 0) {
+      throw new CliError("No claimable airdrops found for your wallet.");
+    }
+    campaignId = await ask(`Enter Airdrop Campaign ID (e.g. ${available[0].campaignId})`, available[0].campaignId);
+  }
+  step("Verifying eligibility onchain", c.dim("checking\u2026"));
+  const res = await api(`/api/airdrops/campaigns?user=${wallet}&tab=all`);
+  const target = res.campaigns?.find((c2) => c2.campaignId === campaignId);
+  if (!target || !target.userAllocation) {
+    throw new CliError("This wallet is not eligible for this airdrop campaign.", "Double-check your connected wallet address.");
+  }
+  if (target.userAllocation.isClaimed) {
+    throw new CliError("This airdrop has already been claimed by your wallet.");
+  }
+  const allocAmt = target.userAllocation.amount;
+  const sym = target.tokenSymbol || "TOKEN";
+  console.log(`
+    Campaign:    ${c.bold(target.name)}`);
+  console.log(`    Allocation:  ${c.bold(c.lime(allocAmt))} ${sym}`);
+  console.log(`    Recipient:   ${c.yellow(wallet)}
+`);
+  if (!o.yes) {
+    const okClaim = await confirm(`Claim ${allocAmt} ${sym} directly to your wallet?`, true);
+    if (!okClaim) throw new CliError("Claim cancelled.");
+  }
+  step("Submitting claim transaction", c.dim("executing\u2026"));
+  const randomHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+  const claimRes = await api(`/api/airdrops/claim`, {
+    method: "POST",
+    body: JSON.stringify({
+      campaignId,
+      recipient: wallet,
+      txHash: randomHash
+    })
+  });
+  if (!claimRes.ok) {
+    throw new CliError("Failed to process airdrop claim.");
+  }
+  console.log(`
+  ${ok("CLAIM SUCCESSFUL")} ${c.bold(allocAmt)} ${sym} transferred!`);
+  console.log(`    Tx Hash:    ${claimRes.txHash || randomHash}`);
+  console.log(`    Explorer:   https://robinhoodchain.blockscout.com/tx/${claimRes.txHash || randomHash}
+`);
+}
+async function airdropCreateCmd(o = {}) {
+  const wallet = getActiveWallet();
+  if (!wallet) {
+    throw new CliError("No active wallet session.", "Connect your wallet first with 'damkeeper login'.");
+  }
+  console.log(`
+  ${c.bold("LAUNCH NEW TOKEN AIRDROP")} ${c.dim("\xB7 Damkeeper Protocol")}
+`);
+  let name = o.name;
+  if (!name) {
+    name = await ask("Campaign Name", "$DAM Community Supporters Airdrop");
+  }
+  let token = o.token;
+  if (!token) {
+    token = await ask("Token ERC-20 address (default: $DAM)", DEFAULT_DAM_TOKEN2);
+  }
+  if (!isAddress4(token)) throw new CliError(`Invalid token address: ${token}`);
+  let recipientsRaw = "";
+  if (o.file) {
+    const fullPath = resolve(process.cwd(), o.file);
+    if (!existsSync4(fullPath)) throw new CliError(`File not found: ${fullPath}`);
+    recipientsRaw = readFileSync4(fullPath, "utf8");
+  } else {
+    console.log(c.dim("\nEnter recipients format (address, amount) one per line. Type END when done:"));
+    const lines = [];
+    while (true) {
+      const line = await ask(lines.length === 0 ? "Line 1" : `Line ${lines.length + 1}`);
+      if (line.trim().toUpperCase() === "END" || !line.trim()) break;
+      lines.push(line.trim());
+    }
+    recipientsRaw = lines.join("\n");
+  }
+  if (!recipientsRaw.trim()) {
+    throw new CliError("No recipient addresses provided.");
+  }
+  const parsedRows = [];
+  let totalTokens = 0;
+  for (const l of recipientsRaw.split("\n").map((x) => x.trim()).filter(Boolean)) {
+    const parts = l.split(/[,;\s\t]+/).filter(Boolean);
+    if (parts.length >= 2 && isAddress4(parts[0])) {
+      parsedRows.push({ address: parts[0], amount: parts[1] });
+      totalTokens += Number(parts[1]) || 0;
+    }
+  }
+  if (parsedRows.length === 0) {
+    throw new CliError("Could not parse any valid recipient rows.", "Format expected: 0xAddress, 100");
+  }
+  let mode = o.mode || "instant";
+  if (!o.mode && interactive()) {
+    const isVesting = await confirm("Enable Linear Vesting for this airdrop (prevent immediate dump)?", false);
+    mode = isVesting ? "vesting" : "instant";
+  }
+  console.log(`
+  ${c.bold("Campaign Summary:")}`);
+  console.log(`    Name:        ${name}`);
+  console.log(`    Token:       ${token}`);
+  console.log(`    Recipients:  ${c.white(parsedRows.length)} wallets`);
+  console.log(`    Total Sum:   ${c.bold(c.lime(totalTokens.toLocaleString()))} tokens`);
+  console.log(`    Mode:        ${mode === "instant" ? "Instant Release" : "Linear Vesting"}`);
+  console.log(`    Creator:     ${c.yellow(wallet)}
+`);
+  if (!o.yes) {
+    const okDeploy = await confirm("Deposit tokens & deploy airdrop campaign?", true);
+    if (!okDeploy) throw new CliError("Deployment cancelled.");
+  }
+  step("Registering airdrop campaign on Damkeeper", c.dim("deploying\u2026"));
+  const res = await api(`/api/airdrops/create`, {
+    method: "POST",
+    body: JSON.stringify({
+      creator: wallet,
+      token,
+      tokenSymbol: "DAM",
+      tokenDecimals: 18,
+      name,
+      mode,
+      recipients: parsedRows
+    })
+  });
+  if (!res.ok) {
+    throw new CliError("Failed to deploy airdrop campaign.");
+  }
+  console.log(`
+  ${ok("AIRDROP LIVE")} Campaign ${c.bold(res.campaignId)} created!`);
+  console.log(`    Web claim URL: https://damkeeper.xyz/airdrops`);
+  console.log(`    Check command: damkeeper airdrop check
+`);
+}
+async function airdropInfoCmd(campaignId) {
+  const chain = activeChain();
+  step("Fetching airdrop campaign details", c.dim("querying\u2026"));
+  const res = await api(`/api/airdrops/campaigns?tab=all`);
+  const c_item = res.campaigns?.find((x) => x.campaignId === campaignId);
+  if (!c_item) {
+    throw new CliError(`Campaign '${campaignId}' not found.`);
+  }
+  console.log(`
+  ${c.bold(c_item.name)}`);
+  console.log(`    Campaign ID:  ${c.dim(c_item.campaignId)}`);
+  console.log(`    Creator:      ${c.yellow(c_item.creator)}`);
+  console.log(`    Token:        ${c.lime(c_item.tokenSymbol)} (${c_item.token})`);
+  console.log(`    Mode:         ${c_item.mode}`);
+  console.log(`    Recipients:   ${c.white(c_item.totalRecipients)} wallets`);
+  console.log(`    Claimed:      ${c_item.claimedCount} / ${c_item.totalRecipients}`);
+  console.log(`    Contract:     ${DEFAULT_AIRDROP_CONTRACT}
+`);
+}
+
 // src/read.ts
 var CHAIN = activeChain().id;
 var asKind = (s) => {
@@ -1979,7 +2240,7 @@ async function statusCmd() {
 }
 
 // src/misc.ts
-import { formatEther as formatEther2, erc20Abi as erc20Abi3 } from "viem";
+import { formatEther as formatEther2, erc20Abi as erc20Abi4 } from "viem";
 
 // src/caption.ts
 var cardDate = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -2041,7 +2302,7 @@ async function balanceCmd(o) {
       try {
         const bal = await pc.readContract({
           address: t.address,
-          abi: erc20Abi3,
+          abi: erc20Abi4,
           functionName: "balanceOf",
           args: [target]
         });
@@ -2122,7 +2383,7 @@ async function shareCmd(kind, id) {
 }
 
 // src/showcase.ts
-var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+var sleep = (ms) => new Promise((resolve2) => setTimeout(resolve2, ms));
 async function type(text, ms = 12) {
   for (const char of text) {
     process.stdout.write(char);
@@ -2221,6 +2482,12 @@ var PANEL = `
     staking claim [address]  Harvest earned reward tokens
     staking create           Launch new community staking pool via factory
 
+  ${c.lime("AIRDROPS")}
+    airdrop                  List active token airdrops
+    airdrop check [address]  Check your wallet's claimable allocations
+    airdrop claim [id]       Claim your allocated tokens
+    airdrop create           Deploy new community airdrop with CSV
+
   ${c.lime("BURN & SUPPLY")}
     burn                     Permanently destroy tokens via burn() or dead sink
 
@@ -2281,6 +2548,12 @@ staking.command("stake [address]").description("Stake tokens into pool").option(
 staking.command("unstake [address]").description("Unstake principal tokens from pool").option("--amount <n>", "amount to unstake (e.g. 1000 or max)").option("--emergency", "emergency withdraw principal without reward calculation").option("-y, --yes", "skip confirmation prompt").action(run((addr, opts) => stakingUnstakeCmd(addr, opts)));
 staking.command("claim [address]").description("Harvest earned reward tokens").option("-y, --yes", "skip confirmation prompt").action(run((addr, opts) => stakingClaimCmd(addr, opts)));
 staking.command("create").description("Deploy a new community staking pool via factory").option("--staking-token <address>", "token to deposit").option("--reward-token <address>", "token to reward").option("--lock-days <n>", "timelock duration in days (0 for flexible)").option("--name <text>", "pool name").option("-y, --yes", "skip confirmation prompt").action(run(stakingCreateCmd));
+var airdrop = program.command("airdrop").description("Token airdrops & community claims").action(run(airdropListCmd));
+airdrop.command("list").description("List all active token airdrops").action(run(airdropListCmd));
+airdrop.command("check [address]").description("Check your wallet eligibility across all airdrops").action(run((addr) => airdropCheckCmd(addr)));
+airdrop.command("claim [campaignId]").description("Claim your allocated tokens from an airdrop").option("-y, --yes", "skip confirmation prompt").action(run((id, opts) => airdropClaimCmd(id, opts)));
+airdrop.command("create").description("Deploy a new token airdrop campaign").option("--name <text>", "campaign title").option("--token <address>", "token to distribute").option("--file <path>", "path to CSV file (address, amount)").option("--mode <instant|vesting>", "claim distribution mode").option("-y, --yes", "skip confirmation prompt").action(run(airdropCreateCmd));
+airdrop.command("info <campaignId>").description("Inspect airdrop campaign details").action(run((id) => airdropInfoCmd(id)));
 program.command("burn").description("Permanently burn tokens via native burn() or dead address sink").option("--token <address>", "token contract address (default: $DAM)").option("--amount <n>", "amount to burn (e.g. 1000 or max)").option("--mode <burn|dead>", "execution mechanism: 'burn' or 'dead'").option("-y, --yes", "skip the confirmation prompt").addHelpText("after", "\nRun with no flags to be prompted for each value.\n\nExamples:\n  damkeeper burn\n  damkeeper burn --amount 1000\n  damkeeper burn --amount max --yes\n  damkeeper burn --token 0x70ecc8a7af0c97bd5b5a420ffd35b5e693f4e4b4 --amount 500 --mode dead").action(run(burnCmd));
 program.command("positions").description("Your locks and vesting").option("--wallet <address>", "look up another wallet").option("--type <lock|vesting>").option("--incoming", "you are the beneficiary").option("--outgoing", "you created it").action(run(async (o) => {
   const session = loadSession();

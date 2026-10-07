@@ -11,6 +11,7 @@ export const c = {
   cyan: wrap("36", "39"),
   dim: wrap("2", "22"),
   bold: wrap("1", "22"),
+  white: wrap("97", "39"),
 };
 
 export const isJson = () => process.argv.includes("--json");
