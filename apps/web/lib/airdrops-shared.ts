@@ -1,5 +1,9 @@
 import { isAddress, parseUnits, formatUnits } from "viem";
 
+export const DEFAULT_AIRDROP_ADDRESS = (
+  process.env.NEXT_PUBLIC_AIRDROP_ADDRESS ?? "0x1B5ee2Eeb94c80a8864671fFaDB31d867D3d7c1c"
+) as `0x${string}`;
+
 export interface AirdropRecipientView {
   recipient: string;
   amount: string; // formatted human-readable or string raw

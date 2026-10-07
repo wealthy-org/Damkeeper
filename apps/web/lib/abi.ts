@@ -413,4 +413,92 @@ export const stakingFactoryAbi = [
   },
 ] as const;
 
+export const airdropAbi = [
+  {
+    type: "event",
+    name: "CampaignCreated",
+    inputs: [
+      { name: "campaignId", type: "uint256", indexed: true },
+      { name: "creator", type: "address", indexed: true },
+      { name: "token", type: "address", indexed: true },
+      { name: "totalAmount", type: "uint256", indexed: false },
+      { name: "totalRecipients", type: "uint256", indexed: false },
+      { name: "merkleRoot", type: "bytes32", indexed: false },
+      { name: "startTime", type: "uint64", indexed: false },
+      { name: "endTime", type: "uint64", indexed: false },
+      { name: "name", type: "string", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "Claimed",
+    inputs: [
+      { name: "campaignId", type: "uint256", indexed: true },
+      { name: "claimant", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "timestamp", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "UnclaimedSwept",
+    inputs: [
+      { name: "campaignId", type: "uint256", indexed: true },
+      { name: "creator", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "function",
+    name: "createCampaign",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "token", type: "address" },
+      { name: "totalAmount", type: "uint256" },
+      { name: "totalRecipients", type: "uint256" },
+      { name: "merkleRoot", type: "bytes32" },
+      { name: "startTime", type: "uint64" },
+      { name: "endTime", type: "uint64" },
+      { name: "vestingDuration", type: "uint64" },
+      { name: "name", type: "string" },
+    ],
+    outputs: [{ name: "campaignId", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "claim",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "campaignId", type: "uint256" },
+      { name: "amount", type: "uint256" },
+      { name: "merkleProof", type: "bytes32[]" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "sweepUnclaimed",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "campaignId", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "campaignCount",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "hasClaimed",
+    stateMutability: "view",
+    inputs: [
+      { name: "campaignId", type: "uint256" },
+      { name: "account", type: "address" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const;
+
 
