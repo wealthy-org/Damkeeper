@@ -293,3 +293,60 @@ export function stakingCaption(s: StakingShareDetails) {
     : `Stake $${s.stakingSymbol} to earn continuous $${s.rewardSymbol} yield (${s.apr.toFixed(1)}% APR) on Damkeeper. Non-custodial, verified O(1) math on Robinhood Chain:`;
 }
 
+export interface AirdropShareDetails {
+  campaignId: string;
+  name: string;
+  token: string;
+  tokenSymbol: string;
+  totalAllocated: string;
+  totalRecipients: number;
+  mode: "instant" | "vesting";
+  vestingDays?: number;
+  chainId: number;
+  txHash?: string;
+}
+
+/** Share card for an airdrop campaign on Robinhood Chain. */
+export async function renderAirdropCard(a: AirdropShareDetails, airdropUrl: string): Promise<Blob> {
+  const idLabel = a.campaignId.length > 14 ? `${a.campaignId.slice(0, 13)}…` : a.campaignId;
+  const { canvas, ctx } = await drawFrame(`${netLabel(a.chainId)} · ${idLabel}`);
+
+  // Mode eyebrow tag
+  ctx.font = `500 26px ${MONO}`;
+  ctx.fillStyle = C.accent;
+  spaced(ctx, 12);
+  ctx.fillText(a.mode === "instant" ? "COMMUNITY AIRDROP" : "VESTED AIRDROP", PAD, 318);
+  spaced(ctx, 0);
+
+  // Campaign Title
+  ctx.font = `500 28px ${SANS}`;
+  ctx.fillStyle = C.text2;
+  const title = a.name.length > 46 ? `${a.name.slice(0, 45)}…` : a.name;
+  ctx.fillText(title, PAD, 364);
+
+  // Total allocated amount
+  drawAmount(ctx, a.totalAllocated, a.tokenSymbol);
+
+  ctx.font = `24px ${SANS}`;
+  ctx.fillStyle = C.muted;
+  ctx.fillText(`${a.tokenSymbol}  ·  ${shortAddress(a.token)}`, PAD, 552);
+
+  const releaseModeLabel = a.mode === "instant" ? "INSTANT CLAIM" : a.vestingDays ? `${a.vestingDays}D VESTING` : "LINEAR VESTING";
+
+  drawFacts(ctx, [
+    ["RECIPIENTS", `${a.totalRecipients} WALLETS`, C.text],
+    ["RELEASE MODE", releaseModeLabel, C.accent],
+    ["STATUS", "ACTIVE ESCROW", C.accent],
+  ]);
+
+  drawFooter(ctx, "Community Airdrop · Non-custodial on Robinhood Chain", airdropUrl);
+  return toPng(canvas);
+}
+
+export function airdropCaption(a: AirdropShareDetails) {
+  const amount = `${a.totalAllocated} $${a.tokenSymbol}`;
+  const modeText = a.mode === "instant" ? "instant claim" : "linear vesting";
+  return `🎉 ${amount} Airdrop is live on Damkeeper for ${a.totalRecipients} community wallets (${modeText})! Check your wallet eligibility & claim directly on Robinhood Chain:`;
+}
+
+

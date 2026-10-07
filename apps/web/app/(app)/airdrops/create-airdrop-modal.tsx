@@ -6,6 +6,7 @@ import { parseAbi, isAddress, formatUnits, parseUnits } from "viem";
 import { robinhoodMainnet } from "@/lib/chains";
 import { DAM_TOKEN_ADDRESS } from "@/lib/staking-shared";
 import { parseRecipientsList, type RecipientParseResult } from "@/lib/airdrops-shared";
+import { AirdropShareButton } from "../share/share-button";
 
 interface CreateAirdropModalProps {
   open: boolean;
@@ -579,6 +580,44 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
                 <span style={{ color: "var(--text)" }}>{mode === "instant" ? "Instant Release" : `${vestingDays} Days Linear Vesting`}</span>
               </div>
             </div>
+
+            {/* Share Proof Card Banner */}
+            <div
+              style={{
+                marginTop: 16,
+                padding: "16px 18px",
+                borderRadius: 12,
+                background: "rgba(184, 243, 107, 0.05)",
+                border: "1px solid rgba(184, 243, 107, 0.2)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                Share Proof Card on Social Media
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", margin: 0, textAlign: "center", maxWidth: 360, lineHeight: 1.4 }}>
+                Generate an on-chain proof image card for X (Twitter) and Telegram with your allocation stats.
+              </p>
+              <AirdropShareButton
+                airdrop={{
+                  campaignId: createdCampaignId || "airdrop",
+                  name: name || "Community Airdrop",
+                  token: tokenAddress,
+                  tokenSymbol,
+                  totalAllocated: parseResult.totalFormatted,
+                  totalRecipients: parseResult.rows.length,
+                  mode,
+                  vestingDays,
+                  chainId: robinhoodMainnet.id,
+                  txHash: txHash || undefined,
+                }}
+                className="btn btn-primary"
+                label="Share Proof Card"
+              />
+            </div>
           </div>
         )}
       </div>
@@ -608,16 +647,34 @@ export function CreateAirdropModal({ open, onClose, onSuccess }: CreateAirdropMo
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              setStep("form");
-              onClose();
-            }}
-          >
-            Done & View Dashboard
-          </button>
+          <div style={{ display: "flex", gap: 10, width: "100%", justifyContent: "space-between" }}>
+            <AirdropShareButton
+              airdrop={{
+                campaignId: createdCampaignId || "airdrop",
+                name: name || "Community Airdrop",
+                token: tokenAddress,
+                tokenSymbol,
+                totalAllocated: parseResult.totalFormatted,
+                totalRecipients: parseResult.rows.length,
+                mode,
+                vestingDays,
+                chainId: robinhoodMainnet.id,
+                txHash: txHash || undefined,
+              }}
+              className="btn btn-ghost"
+              label="Share Image Card"
+            />
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                setStep("form");
+                onClose();
+              }}
+            >
+              Done & View Dashboard
+            </button>
+          </div>
         )}
       </div>
     </dialog>

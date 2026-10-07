@@ -6,6 +6,7 @@ import type { AirdropCampaignView } from "@/lib/airdrops-shared";
 import { CreateAirdropModal } from "./create-airdrop-modal";
 import { ClaimModal } from "./claim-modal";
 import { robinhoodMainnet } from "@/lib/chains";
+import { AirdropShareButton } from "../share/share-button";
 
 interface AirdropsDashboardProps {
   initialCampaigns?: AirdropCampaignView[];
@@ -509,13 +510,33 @@ export function AirdropsDashboard({ initialCampaigns = [] }: AirdropsDashboardPr
 
                   <div
                     style={{
-                      fontSize: 11,
-                      color: "var(--muted)",
-                      textAlign: "center",
-                      marginTop: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginTop: 12,
+                      paddingTop: 10,
+                      borderTop: "1px solid rgba(255, 255, 255, 0.05)",
                     }}
                   >
-                    Created by <span className="mono" style={{ color: "var(--text-2)" }}>{c.creator.slice(0, 6)}…{c.creator.slice(-4)}</span>
+                    <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                      By <span className="mono" style={{ color: "var(--text-2)" }}>{c.creator.slice(0, 6)}…{c.creator.slice(-4)}</span>
+                    </span>
+                    <AirdropShareButton
+                      airdrop={{
+                        campaignId: c.campaignId,
+                        name: c.name,
+                        token: c.token,
+                        tokenSymbol: c.tokenSymbol,
+                        totalAllocated: c.totalAmount,
+                        totalRecipients: c.totalRecipients,
+                        mode: c.mode,
+                        vestingDays: c.vestingDuration ? Math.round(Number(c.vestingDuration) / 86400) : 30,
+                        chainId: c.chainId || robinhoodMainnet.id,
+                        txHash: c.txHash || undefined,
+                      }}
+                      className="btn btn-ghost btn-sm"
+                      label="Share"
+                    />
                   </div>
                 </div>
               </div>

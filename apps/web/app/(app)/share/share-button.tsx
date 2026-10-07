@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { proofPath, type PositionView } from "@/lib/position-view";
 import {
+  airdropCaption,
   burnCaption,
+  renderAirdropCard,
   renderBurnCard,
   renderShareCard,
   renderStakingCard,
   shareCaption,
   stakingCaption,
+  type AirdropShareDetails,
   type BurnShareDetails,
   type StakingShareDetails,
 } from "./share-card";
@@ -94,6 +97,38 @@ export function StakingShareButton({
     caption: stakingCaption(staking),
     fileName: `damkeeper-staking-${staking.stakingSymbol.toLowerCase()}-${staking.poolAddress.slice(2, 8)}.png`,
     render: () => renderStakingCard(staking, poolUrl),
+  };
+  return (
+    <>
+      <button type="button" className={className} onClick={() => setOpen(true)}>
+        <svg className="icon" aria-hidden="true"><use href="#i-up" /></svg>
+        {label}
+      </button>
+      {open && <ShareDialog spec={spec} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+export function AirdropShareButton({
+  airdrop,
+  className = "btn btn-ghost btn-sm",
+  label = "Share",
+}: {
+  airdrop: AirdropShareDetails;
+  className?: string;
+  label?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const airdropUrl = typeof window === "undefined" ? "/airdrops" : `${window.location.origin}/airdrops`;
+  const spec: ShareSpec = {
+    eyebrow: airdrop.mode === "instant" ? "Share community airdrop" : "Share vested airdrop",
+    title: `Share ${airdrop.name}`,
+    url: airdropUrl,
+    proofHref: airdropUrl,
+    proofLabel: "View airdrops",
+    caption: airdropCaption(airdrop),
+    fileName: `damkeeper-airdrop-${airdrop.tokenSymbol.toLowerCase()}-${airdrop.campaignId.slice(0, 10)}.png`,
+    render: () => renderAirdropCard(airdrop, airdropUrl),
   };
   return (
     <>
