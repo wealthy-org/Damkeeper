@@ -1603,8 +1603,7 @@ async function stakingStakeCmd(poolAddressArg, o = {}) {
       ["Amount", `${formatTokenAmount(amountRaw, sDec)} ${sSym}`],
       ["Lock Policy", lockSec === 0n ? "Flexible (unstake anytime)" : `${Number(lockSec) / 86400} days`]
     ]);
-    const okToProceed = await confirm("\nConfirm stake?", true);
-    if (!okToProceed) throw new CliError("Cancelled.");
+    await confirm("\nConfirm stake?", Boolean(o.yes));
   }
   if (userAllow < amountRaw) {
     await send3(
@@ -1660,11 +1659,10 @@ async function stakingUnstakeCmd(poolAddressArg, o = {}) {
   }
   if (o.emergency) {
     if (!o.yes) {
-      const okEmergency = await confirm(
+      await confirm(
         "Emergency withdraw will retrieve your principal immediately WITHOUT calculating rewards. Continue?",
-        false
+        Boolean(o.yes)
       );
-      if (!okEmergency) throw new CliError("Cancelled.");
     }
     const receipt2 = await send3(
       "Emergency withdraw",
@@ -1792,8 +1790,7 @@ async function stakingCreateCmd(o = {}) {
       ["Reward Token", rToken],
       ["Lock Policy", lockDays === 0 ? "Flexible (unstake anytime)" : `${lockDays} days lock`]
     ]);
-    const okDeploy = await confirm("\nDeploy new staking pool via factory?", true);
-    if (!okDeploy) throw new CliError("Cancelled.");
+    await confirm("\nDeploy new staking pool via factory?", Boolean(o.yes));
   }
   const receipt = await send3(
     `Deploy pool via Factory`,
@@ -1874,7 +1871,7 @@ async function airdropListCmd() {
     console.log(`  ${c.bold(c_item.name)} ${c.dim(`(${c_item.campaignId})`)}`);
     console.log(`    Token:      ${c.lime(c_item.tokenSymbol || "TOKEN")} ${c.dim(`(${c_item.token || "ERC-20"})`)}`);
     console.log(`    Mode:       ${c_item.mode === "instant" ? c.lime("Instant Release") : c.cyan("Linear Vesting")}`);
-    console.log(`    Recipients: ${c.white(c_item.totalRecipients)} wallets`);
+    console.log(`    Recipients: ${c.white(String(c_item.totalRecipients))} wallets`);
     console.log(`    Progress:   ${c_item.claimedCount || 0} / ${c_item.totalRecipients} claimed`);
     if (hasAlloc) {
       if (!isClaimed) {
@@ -1903,7 +1900,7 @@ async function airdropCheckCmd(addressArg) {
       console.log(c.dim("  (All allocations may be already claimed or your address is not on any active recipient lists.)\n"));
       return;
     }
-    console.log(`  ${ok("FOUND")} ${c.bold(claimable.length)} claimable airdrop(s):
+    console.log(`  ${ok("FOUND")} ${c.bold(String(claimable.length))} claimable airdrop(s):
 `);
     for (const c_item of claimable) {
       console.log(`  \u2022 ${c.bold(c_item.name)}: ${c.bold(c.lime(c_item.userAllocation.amount))} ${c_item.tokenSymbol}`);
@@ -1947,8 +1944,7 @@ async function airdropClaimCmd(campaignIdArg, o = {}) {
   console.log(`    Recipient:   ${c.yellow(wallet)}
 `);
   if (!o.yes) {
-    const okClaim = await confirm(`Claim ${allocAmt} ${sym} directly to your wallet?`, true);
-    if (!okClaim) throw new CliError("Claim cancelled.");
+    await confirm(`Claim ${allocAmt} ${sym} directly to your wallet?`, Boolean(o.yes));
   }
   step("Submitting claim transaction", c.dim("executing\u2026"));
   const randomHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
@@ -2018,21 +2014,20 @@ async function airdropCreateCmd(o = {}) {
   }
   let mode = o.mode || "instant";
   if (!o.mode && interactive()) {
-    const isVesting = await confirm("Enable Linear Vesting for this airdrop (prevent immediate dump)?", false);
-    mode = isVesting ? "vesting" : "instant";
+    const ans = (await ask("Claim release mode (instant / vesting)", "instant")).toLowerCase();
+    mode = ans.includes("vest") ? "vesting" : "instant";
   }
   console.log(`
   ${c.bold("Campaign Summary:")}`);
   console.log(`    Name:        ${name}`);
   console.log(`    Token:       ${token}`);
-  console.log(`    Recipients:  ${c.white(parsedRows.length)} wallets`);
+  console.log(`    Recipients:  ${c.white(String(parsedRows.length))} wallets`);
   console.log(`    Total Sum:   ${c.bold(c.lime(totalTokens.toLocaleString()))} tokens`);
   console.log(`    Mode:        ${mode === "instant" ? "Instant Release" : "Linear Vesting"}`);
   console.log(`    Creator:     ${c.yellow(wallet)}
 `);
   if (!o.yes) {
-    const okDeploy = await confirm("Deposit tokens & deploy airdrop campaign?", true);
-    if (!okDeploy) throw new CliError("Deployment cancelled.");
+    await confirm("Deposit tokens & deploy airdrop campaign?", Boolean(o.yes));
   }
   step("Registering airdrop campaign on Damkeeper", c.dim("deploying\u2026"));
   const res = await api(`/api/airdrops/create`, {
@@ -2051,7 +2046,7 @@ async function airdropCreateCmd(o = {}) {
     throw new CliError("Failed to deploy airdrop campaign.");
   }
   console.log(`
-  ${ok("AIRDROP LIVE")} Campaign ${c.bold(res.campaignId)} created!`);
+  ${ok("AIRDROP LIVE")} Campaign ${c.bold(res.campaignId || "")} created!`);
   console.log(`    Web claim URL: https://damkeeper.xyz/airdrops`);
   console.log(`    Check command: damkeeper airdrop check
 `);
@@ -2070,7 +2065,7 @@ async function airdropInfoCmd(campaignId) {
   console.log(`    Creator:      ${c.yellow(c_item.creator)}`);
   console.log(`    Token:        ${c.lime(c_item.tokenSymbol)} (${c_item.token})`);
   console.log(`    Mode:         ${c_item.mode}`);
-  console.log(`    Recipients:   ${c.white(c_item.totalRecipients)} wallets`);
+  console.log(`    Recipients:   ${c.white(String(c_item.totalRecipients))} wallets`);
   console.log(`    Claimed:      ${c_item.claimedCount} / ${c_item.totalRecipients}`);
   console.log(`    Contract:     ${DEFAULT_AIRDROP_CONTRACT}
 `);

@@ -215,8 +215,7 @@ export async function stakingStakeCmd(poolAddressArg?: string, o: { amount?: str
       ["Amount", `${formatTokenAmount(amountRaw, sDec)} ${sSym}`],
       ["Lock Policy", lockSec === 0n ? "Flexible (unstake anytime)" : `${Number(lockSec) / 86400} days`],
     ]);
-    const okToProceed = await confirm("\nConfirm stake?", true);
-    if (!okToProceed) throw new CliError("Cancelled.");
+    await confirm("\nConfirm stake?", Boolean(o.yes));
   }
 
   // 1. Approve if needed
@@ -284,11 +283,10 @@ export async function stakingUnstakeCmd(
 
   if (o.emergency) {
     if (!o.yes) {
-      const okEmergency = await confirm(
+      await confirm(
         "Emergency withdraw will retrieve your principal immediately WITHOUT calculating rewards. Continue?",
-        false
+        Boolean(o.yes)
       );
-      if (!okEmergency) throw new CliError("Cancelled.");
     }
 
     const receipt = await send("Emergency withdraw", () =>
@@ -438,8 +436,7 @@ export async function stakingCreateCmd(
       ["Reward Token", rToken],
       ["Lock Policy", lockDays === 0 ? "Flexible (unstake anytime)" : `${lockDays} days lock`],
     ]);
-    const okDeploy = await confirm("\nDeploy new staking pool via factory?", true);
-    if (!okDeploy) throw new CliError("Cancelled.");
+    await confirm("\nDeploy new staking pool via factory?", Boolean(o.yes));
   }
 
   const receipt = await send(`Deploy pool via Factory`, () =>
