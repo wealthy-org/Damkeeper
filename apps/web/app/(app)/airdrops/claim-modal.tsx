@@ -89,43 +89,53 @@ export function ClaimModal({ open, campaign, onClose, onSuccess }: ClaimModalPro
       }}
       onClose={onClose}
     >
-      <div className="modal-head" style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(184, 243, 107, 0.12)",
-                color: "var(--accent)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <svg className="icon" style={{ width: 18, height: 18 }}><use href="#i-gift" /></svg>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 18, margin: 0, fontWeight: 700, color: "var(--text)" }}>
-                {isSuccess ? "Claim Confirmed!" : "Claim Airdrop"}
-              </h2>
-              <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 0" }}>
-                {campaign.name}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ width: 32, height: 32 }}
+      <header
+        className="modal-head"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 24px",
+          borderBottom: "1px solid var(--border)",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: "rgba(184, 243, 107, 0.12)",
+              color: "var(--accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
           >
-            <svg className="icon"><use href="#i-close" /></svg>
-          </button>
+            <svg className="icon" style={{ width: 18, height: 18 }}><use href="#i-gift" /></svg>
+          </div>
+          <div>
+            <h2 style={{ fontSize: 18, margin: 0, fontWeight: 700, color: "var(--text)" }}>
+              {isSuccess ? "Claim Confirmed!" : "Claim Airdrop"}
+            </h2>
+            <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 0" }}>
+              {campaign.name}
+            </p>
+          </div>
         </div>
-      </div>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={onClose}
+          aria-label="Close"
+          style={{ width: 34, height: 34, flexShrink: 0 }}
+        >
+          <svg className="icon" style={{ width: 14, height: 14 }}><use href="#i-close" /></svg>
+        </button>
+      </header>
 
       <div className="modal-body" style={{ padding: "24px" }}>
         {!isSuccess ? (
